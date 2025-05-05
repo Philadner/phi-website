@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-
+import { Analytics } from "@vercel/analytics/react";
 function App() {
   const [loaded, setLoaded] = useState(false);
 
@@ -37,6 +37,7 @@ function App() {
       <main id="main-site">
         <h1>Welcome to phil's website!!11</h1>
         <p>I was a bit bored so I made a website</p>
+        <Analytics />
 
         <section id="about">
           <h2>About</h2>
