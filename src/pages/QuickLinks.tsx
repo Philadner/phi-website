@@ -1,33 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 function QuickLinks() {
-  const [showGames, setShowGames] = useState(false);
+  const [showGame, setShowGame] = useState(false);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'g') {
-        setShowGames(prev => !prev); // press 'g' to toggle
+      if (e.key === "g") {
+        setShowGame((prev) => !prev);
       }
     };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  if (showGames) {
+  useEffect(() => {
+    if (showGame) {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/@ruffle-rs/ruffle";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [showGame]);
+
+  if (showGame) {
     return (
       <main id="main-site">
-        <h1 className="CenterTitle">Totally Normal Learning Page 😇</h1>
-        <p className="BodyTextLeft">Definitely not full of distractions.</p>
-        <iframe
-          src="https://2048game.com/"
-          width="100%"
-          height="600px"
-          style={{ border: 'none', borderRadius: '8px' }}
-        ></iframe>
-        <p className="BodyTextLeft">Press <code>g</code> again to go back.</p>
+        <h1 className="CenterTitle">Totally normal educational experience 😇</h1>
+        <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
+          <object
+            type="application/x-shockwave-flash"
+            data="https://9db2752a411807f82aa44f25cdacce11.r2.cloudflarestorage.com/phi-me-uk/papasfreezeria_v2.swf"
+            width="100%"
+            height="600"
+          >
+            <p>Flash not supported</p>
+          </object>
+        </div>
+        <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
       </main>
     );
   }
+
 
   return (
     <main id="main-site">
