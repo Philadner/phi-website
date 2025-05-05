@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react"
 function App() {
   const [loaded, setLoaded] = useState(false);
 
@@ -38,6 +39,7 @@ function App() {
         <h1>Welcome to phil's website!!11</h1>
         <p>I was a bit bored so I made a website</p>
         <Analytics />
+        <SpeedInsights />
 
         <section id="about">
           <h2>About</h2>
