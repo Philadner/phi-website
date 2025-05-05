@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import About from './pages/About';
+import QuickLinks from './pages/QuickLinks';
 import './App.css';
 
 function Loader() {
@@ -39,7 +40,7 @@ function App() {
         <Link to="/" className="logo">phi(l)</Link>
         <nav>
           <Link to="/about">About</Link>
-          <Link to="/projects">Projects</Link>
+          <Link to="/quickl">Quick links</Link>
           <Link to="/hehehe">hehehe</Link>
         </nav>
       </header>
@@ -48,6 +49,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/quickl" element={<QuickLinks />} />
         </Routes>
       )}
     </div>
