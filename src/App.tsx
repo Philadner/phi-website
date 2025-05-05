@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import { createRoot } from 'react-dom/client';
 import Home from './pages/Home';
 import About from './pages/About';
 import './App.css';
