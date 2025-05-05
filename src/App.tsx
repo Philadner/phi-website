@@ -27,7 +27,7 @@ function App() {
     const timer = setTimeout(() => {
       setLoaded(true);
       console.log("loader done")
-     }, 500);
+     }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
