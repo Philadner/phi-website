@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>phi.me.uk</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden; /* hide scroll until site loads */
+      background-color: #0d0d0d;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background-color: #0d0d0d; /* match your background */
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .logo {
+        font-size: 1.8rem;
+        font-weight: bolder;
+        color: gold;
+        text-shadow: 0 0 5px gold;
+    }
+    #loader {
+      position: fixed;
+      inset: 0;
+      background-color: #0d0d0d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 1s ease;
+    }
+
+    nav a {
+        margin-left: 2rem;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        position: relative;
+        transition: color 0.2s;
+    }
+
+    nav a::after {
+        content: '';
+        position: absolute;
+        width: 0%;
+        height: 2px;
+        bottom: -4px;
+        left: 0;
+        background: gold;
+        transition: width 0.3s ease;
+    }
+
+    nav a:hover {
+        color: gold;
+    }
+
+    nav a:hover::after {
+        width: 100%;
+    }
+
+
+    .phi path {
+      fill: none;
+      stroke: gold;
+      stroke-width: 2;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw 2.5s ease forwards;
+      filter: drop-shadow(0 0 4px gold);
+    }
+
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    #main-site {
+      padding: 4rem;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .loaded #loader {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loaded #main-site {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loader">
+    <svg class="phi" viewBox="0 0 84 96" width="120" height="auto" xmlns="http://www.w3.org/2000/svg">
+        <path d="M47.4691 94.8742V67.8693L47.9534 67.8537C52.3122 67.7166 56.6259 66.839 60.8958 65.2189V65.2199C64.8929 63.6903 68.4645 61.5771 71.6146 58.882L72.2396 58.3351L72.2454 58.3302C75.575 55.4373 78.2558 51.7818 80.2845 47.3546V47.3537C82.3061 42.928 83.3226 37.9032 83.3226 32.2697C83.3226 26.9517 82.5356 22.4635 80.9818 18.7882L80.6615 18.0636L80.6605 18.0627C79.0043 14.4679 76.8897 11.4427 74.3197 8.97964L73.7991 8.49429L73.7943 8.48941C71.3117 6.17323 68.5439 4.39348 65.4896 3.14664L64.8743 2.90445L64.8724 2.90347C61.5635 1.6319 58.291 0.999176 55.0521 0.999176C53.2704 0.999176 51.3345 1.22294 49.2425 1.67398L48.3363 1.88101L48.3333 1.88199L47.8841 1.99234C45.8085 2.52369 44.0577 3.2689 42.6224 4.22086L42.3197 4.42886H42.3187C40.5189 5.69142 39.0689 7.28919 37.9661 9.22574H37.9652C36.8915 11.1217 36.3441 13.4147 36.3441 16.1242V63.8459L35.8304 63.8322C29.1364 63.6535 23.7544 61.0487 19.7269 56.0246L19.3411 55.5314V55.5304C15.2859 50.1848 13.2816 43.2011 13.2816 34.6242C13.2816 26.5123 14.5431 20.091 17.1136 15.4044C19.6172 10.8398 23.2947 7.648 28.1283 5.84195L27.3236 1.50894C18.4518 3.72283 11.836 7.6445 7.42415 13.2462H7.42317C2.93466 18.9632 0.677078 26.0783 0.677078 34.6242C0.677079 44.2236 3.85313 52.0186 10.1888 58.0539C16.5273 64.0918 25.0701 67.3717 35.8665 67.8537L36.3441 67.8752V94.8742H47.4691ZM47.4691 13.1447C47.4691 10.8408 48.1377 8.9429 49.5091 7.50113L49.7923 7.2189C51.3473 5.75275 53.2424 5.01976 55.4476 5.01968C59.9233 5.01968 63.5868 7.49382 66.4398 12.2628L66.4388 12.2638C69.3084 17.0377 70.7191 23.5482 70.7191 31.7492C70.7191 40.5992 68.9526 47.9197 65.3841 53.6779L65.0335 54.2306C61.218 60.0959 55.5202 63.2933 48.0042 63.8312L47.4691 63.8693V13.1447Z" />
+    </svg>
+  </div>
+
+  <header>
+    <div class="logo">phi(l)</div>
+    <nav>
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#hehehe">hehehe</a>
+    </nav>
+
+    </header>
+
+  <div id="main-site">
+    <h1>Welcome to phil's website!!11</h1>
+    <p>I was a bit bored so i made a website</p>
+  </div>
+  <div id="about">
+    <h2>About</h2>
+    <p>hi</p>
+
+  </div>
+
+  <script>
+    // Wait for animation + fade
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.body.classList.add("loaded");
+        document.body.style.overflow = "auto"; // enable scrolling
+      }, 1000); // adjust delay to match your animation
+    });
+  </script>
+
+</body>
+</html>
