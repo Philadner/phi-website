@@ -7,7 +7,7 @@
 html, body, root {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
   background-color: #0d0d0d;
   color: white;
@@ -32,6 +32,29 @@ body.loaded {
   transition: opacity 1s ease;
 }
 
+.CenterTitle {
+  text-align: center;
+  font-family: "Helvetica", sans-serif;
+  padding-bottom: 5rem;
+}
+
+.HeadingLeft {
+  text-align: left;
+  font-family: "Helvetica", sans-serif;
+  font-size: 30px;
+  color: gold;
+}
+
+.BodyTextLeft {
+  text-align: left;
+  font-family: "Helvetica", sans-serif;
+  font-size: 20px;
+}
+
+.Home {
+  justify-content: center;
+  text-align: center;
+}
 /* Phi SVG Animation */
 .phi path {
   fill: none;
@@ -41,8 +64,7 @@ body.loaded {
   stroke-dashoffset: 1000;
   animation: 
   draw 2.5s ease forwards, 
-  scaleDraw 2.5s ease forwards,
-  scaleFade 2.5s ease forwards 2.5s;
+  scaleDraw 2.5s ease forwards;
 
   transform-origin: center;
   filter: drop-shadow(0 0 4px gold);
@@ -53,6 +75,7 @@ body.loaded {
   width: 100%;
   flex:1;
   min-height: 100vh;
+  padding: 0;
   display: flex;
   flex-direction: column;
 }
@@ -93,16 +116,18 @@ body.loaded {
   opacity: 1;
   padding: 4rem;
   transition: opacity 1s ease;
-  text-align: center;
   flex-grow: 1;
 }
 
 /* Header + Nav */
 header {
   display: flex;
+  width: 100%;
+  max-width: none;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  
+  padding: 1rem 2rem; /* ✅ top/bottom = 1rem, left/right = 2rem */
   background-color: #0d0d0d;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
@@ -118,6 +143,11 @@ header {
   text-shadow: 0 0 5px gold;
 }
 
+.logo:hover {
+  text-shadow: 0 0 10px gold;
+  color: gold;
+  text-decoration: none;
+}
 nav a {
   margin-left: 2rem;
   color: white;
@@ -148,11 +178,9 @@ nav a:hover::after {
 
 /* Main Content */
 #main-site {
-  padding: 4rem;
-  text-align: center;
   opacity: 0;
   transition: opacity 1s ease;
   display:flex;
   flex-direction: column;
-  align-items: center;
+  flex-grow: 1;
 }
