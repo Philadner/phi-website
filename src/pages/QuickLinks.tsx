@@ -8,6 +8,10 @@ function QuickLinks() {
       if (e.key === "g") {
         setShowGame((prev) => !prev);
       }
+      if (e.key === "F1") {
+        window.location.href = "https://www.sparxmaths.uk";
+      }
+      
     };
 
     window.addEventListener("keydown", handleKey);
@@ -30,7 +34,7 @@ function QuickLinks() {
         <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
           <object
             type="application/x-shockwave-flash"
-            data="https://cdn.phi.me.uk/papasfreezeria_v2.swf"
+            data="https://cdn.phi.me.uk/papasfreezeria[1].swf"
             width="100%"
             height="600"
           >
