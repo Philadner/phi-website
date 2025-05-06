@@ -50,7 +50,7 @@ function QuickLinks() {
           }} >Happy wheels</span>
         <span className = "FancyLink" onClick={() => {
           console.log("clicked");
-          setCurrentGame("https://cdn.phi.me.uk/PapasFreezeria[1].swf");
+          setCurrentGame("https://cdn.phi.me.uk/papasfreezeria[1].swf");
           }} >Papa's Freezeria</span>
         <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
       </main>
