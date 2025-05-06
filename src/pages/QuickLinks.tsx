@@ -5,7 +5,7 @@ function QuickLinks() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "g") {
+      if (e.key === "g" || e.key === "G"){
         setShowGame((prev) => !prev);
       }
       if (e.key === "F1") {
