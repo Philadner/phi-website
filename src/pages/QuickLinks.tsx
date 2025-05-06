@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 function QuickLinks() {
   const [showGame, setShowGame] = useState(false);
+  const [currentGame, setCurrentGame] = useState("https://cdn.phi.me.uk/papasfreezeria[1].swf");
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -34,13 +35,22 @@ function QuickLinks() {
         <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
           <object
             type="application/x-shockwave-flash"
-            data="https://cdn.phi.me.uk/papasfreezeria[1].swf"
+            data= {currentGame}
             width="100%"
             height="600"
           >
             <p>Flash not supported</p>
           </object>
         </div>
+        <p className="HeadingLeft">Select another flash game:</p>
+        <span className = "FancyLink" onClick={() => {
+          console.log("clicked");
+          setCurrentGame("https://cdn.phi.me.uk/HappyWheels.swf");
+          }} >Happy wheels</span>
+        <span className = "FancyLink" onClick={() => {
+          console.log("clicked");
+          setCurrentGame("https://cdn.phi.me.uk/PapasFreezeria[1].swf");
+          }} >Papa's Freezeria</span>
         <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
       </main>
     );
