@@ -29,7 +29,7 @@ function App() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLoaded(true);D
+      setLoaded(true);
       console.log("loader done")
      }, 1000);
     return () => clearTimeout(timer);
