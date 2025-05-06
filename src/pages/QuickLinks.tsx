@@ -30,7 +30,7 @@ function QuickLinks() {
         <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
           <object
             type="application/x-shockwave-flash"
-            data="https://9db2752a411807f82aa44f25cdacce11.r2.cloudflarestorage.com/phi-me-uk/papasfreezeria_v2.swf"
+            data="https://cdn.phi.me.uk/papasfreezeria_v2.swf"
             width="100%"
             height="600"
           >
