@@ -11,3 +11,6 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+const preloader = document.getElementById("preloader");
+if (preloader) preloader.remove();
