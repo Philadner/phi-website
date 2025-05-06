@@ -26,7 +26,7 @@ function QuickLinks() {
   if (showGame) {
     return (
       <main id="main-site">
-        <h1 className="CenterTitle">Totally normal educational experience 😇</h1>
+        <h1 className="CenterTitle">Quick Links</h1>
         <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
           <object
             type="application/x-shockwave-flash"
@@ -41,7 +41,6 @@ function QuickLinks() {
       </main>
     );
   }
-
 
   return (
     <main id="main-site">
