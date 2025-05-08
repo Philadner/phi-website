@@ -80,6 +80,7 @@ function Games() {
               
               
               <p className="BodyTextLeft">Plese don't use this on the school computers so school can't detect the website!</p>
+              <p className="BodyTextLeft">Instead, go to quick links and press <code>G</code></p>
             </main>
           );   
    
