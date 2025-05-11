@@ -3,7 +3,7 @@ import QuickLinks from "./QuickLinks";
 function Games() {
   return (
     <div>
-      <QuickLinks initialShowGame={true} />
+      <QuickLinks initialShowGame={true} forcegame = {true} />
     </div>
   );
 }

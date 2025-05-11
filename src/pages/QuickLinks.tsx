@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 
 interface QuickLinksProps {
   initialShowGame?: boolean;
+  forcegame?: boolean;
 }
 
-function QuickLinks( { initialShowGame = false }: QuickLinksProps ) {
+function QuickLinks( { initialShowGame = false, forcegame = false }: QuickLinksProps ) {
   const [showGame, setShowGame] = useState(initialShowGame);
   const [showPapaGames, setshowPapaGames] = useState(false);
   const [currentGame, setCurrentGame] = useState("https://cdn.phi.me.uk/papasfreezeria[1].swf");
@@ -38,7 +39,7 @@ function QuickLinks( { initialShowGame = false }: QuickLinksProps ) {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "g" || e.key === "G"){
+      if (e.key === "g" || e.key === "G" && !forcegame) {
         setShowGame((prev) => !prev);
       }
       if (e.key === "F1") {
@@ -106,8 +107,11 @@ function QuickLinks( { initialShowGame = false }: QuickLinksProps ) {
           ))
         )}
         
+        {showGame ? (
+          <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
+        ) : null
+        }
         
-        <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
       </main>
     );
   }
