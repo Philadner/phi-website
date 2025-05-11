@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 
-function QuickLinks() {
-  const [showGame, setShowGame] = useState(false);
+interface QuickLinksProps {
+  initialShowGame?: boolean;
+}
+
+function QuickLinks( { initialShowGame = false }: QuickLinksProps ) {
+  const [showGame, setShowGame] = useState(initialShowGame);
   const [showPapaGames, setshowPapaGames] = useState(false);
   const [currentGame, setCurrentGame] = useState("https://cdn.phi.me.uk/papasfreezeria[1].swf");
   // list to store game names and server locations to auto create game select elements because i am lazy
@@ -76,6 +80,10 @@ function QuickLinks() {
           console.log("clicked");
           setCurrentGame("https://cdn.phi.me.uk/HappyWheels.swf");
           }} >Happy wheels</span>
+        <span className = "FancyLink" onClick={() => {
+          console.log("clicked");
+          setCurrentGame("https://cdn.phi.me.uk/moto-x3m.swf");
+          }} >Moto X3M</span>
         <p 
           className="ClickableHeadingLeft" 
           onClick={() => setshowPapaGames(!showPapaGames)}
