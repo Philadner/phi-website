@@ -107,7 +107,7 @@ function QuickLinks( { initialShowGame = false, forcegame = false }: QuickLinksP
           ))
         )}
         
-        {showGame ? (
+        {!forcegame ? (
           <p className="BodyTextLeft">Press <code>g</code> again to go back to your links.</p>
         ) : null
         }
