@@ -1,8 +1,13 @@
 import { useState } from 'react';
 
+interface ArchiveItem {
+  identifier: string;
+  title: string;
+}
+
 function ArchiveMusicSearch() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<ArchiveItem[]>([]);
 
   const fetchMusic = async () => {
     try {
@@ -10,7 +15,9 @@ function ArchiveMusicSearch() {
         `https://archive.org/advancedsearch.php?q=title:"${encodeURIComponent(query)}"&fl[]=identifier,title&sort[]=downloads+desc&rows=10&output=json`
       );
       const data = await response.json();
-      setResults(data.response.docs);
+      // Properly typecast the response
+      const items: ArchiveItem[] = data.response.docs;
+      setResults(items);
     } catch (err) {
       console.error("Error fetching music:", err);
     }
