@@ -11,6 +11,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
   const [currentGame, setCurrentGame] = useState("https://cdn.phi.me.uk/papasfreezeria[1].swf");
   const [panicUrl, setPanicUrl] = useState("https://thedeanery.schoolsynergy.co.uk");
   const [showPanicSites, setShowPanicSites] = useState(false);
+  const [showGameMenu, setShowGameMenu] = useState(true);
 
   let Papagamenames = [
     "Papa's Freezeria",
@@ -75,62 +76,73 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
             <p>Flash not supported</p>
           </object>
         </div>
-        <p className="BodyTextLeft">Type the website you're supposed to be on here!</p>
         <p
           className="ClickableHeadingLeft"
-          onClick={() => setShowPanicSites(!showPanicSites)}
+          onClick={() => setShowGameMenu(!showGameMenu)}
         >
-          Quick Panic sites 
-          <span className="DropdownArrow">{showPanicSites ? "▲" : "▼"}</span>
+          {showGameMenu ? "Hide" : "Show"} game menu and panic sites
+          <span className="DropdownArrow">{showGameMenu ? "▲" : "▼"}</span>
         </p>
-        {showPanicSites && (
+        {showGameMenu && (
           <>
-            <span className="FancyLink" onClick={() => setPanicUrl("https://thedeanery.schoolsynergy.co.uk")}>
-              Synergy
-            </span>
-            <span className="FancyLink" onClick={() => setPanicUrl("https://sparxmaths.uk")}>
-            Sparx
-            </span>
-            <span className="FancyLink" onClick={() => setPanicUrl("https://www.cyberexplorers.co.uk/main-menu")}>
-            Cyber explorers menu
-            </span>
-            <span className="FancyLink" onClick={() => setPanicUrl("https://app.senecalearning.com/courses")}>
-            Seneca
-            </span>
-          </>
-        )}
-        <input
-          type="text"
-          value={panicUrl}
-          onChange={(e) => setPanicUrl(e.target.value)}
-          placeholder="Enter panic URL"
-          style={{ margin: "8px 0", padding: "5px", width: "80%" }}
-        />
+          <p
+            className="ClickableHeadingLeft"
+            onClick={() => setShowPanicSites(!showPanicSites)}
+          >
+            Quick Panic sites 
+            <span className="DropdownArrow">{showPanicSites ? "▲" : "▼"}</span>
+          </p>
+          {showPanicSites && (
+            <>
+              <span className="FancyLink" onClick={() => setPanicUrl("https://thedeanery.schoolsynergy.co.uk")}>
+                Synergy
+              </span>
+              <span className="FancyLink" onClick={() => setPanicUrl("https://sparxmaths.uk")}>
+              Sparx
+              </span>
+              <span className="FancyLink" onClick={() => setPanicUrl("https://www.cyberexplorers.co.uk/main-menu")}>
+              Cyber explorers menu
+              </span>
+              <span className="FancyLink" onClick={() => setPanicUrl("https://app.senecalearning.com/courses")}>
+              Seneca
+              </span>
+            </>
+          )}
+          <p className="BodyTextLeft">Type the website you're supposed to be on here!</p>
+          <input
+            type="text"
+            value={panicUrl}
+            onChange={(e) => setPanicUrl(e.target.value)}
+            placeholder="Enter panic URL"
+            style={{ margin: "8px 0", padding: "5px", width: "80%" }}
+          />
 
-        <p className="HeadingLeft">Select another flash game:</p>
-        <span className="FancyLink" onClick={() => setCurrentGame("https://cdn.phi.me.uk/HappyWheels.swf")}>
-          Happy wheels
-        </span>
-        <span className="FancyLink" onClick={() => setCurrentGame("https://cdn.phi.me.uk/moto-x3m.swf")}>
-          Moto X3M
-        </span>
-        <p 
-          className="ClickableHeadingLeft" 
-          onClick={() => setshowPapaGames(!showPapaGames)}
-        >
-          Papa's Cooking games 
-          <span className="DropdownArrow">{showPapaGames ? "▲" : "▼"}</span>
-        </p>
-        {showPapaGames && (
-          Papagamenames.map((game, index) => (
-            <span
-              key={index}
-              className="FancyLink"
-              onClick={() => setCurrentGame(Papagamenamelocations[index])}
-            >
-              {game}
-            </span>
-          ))
+          <p className="HeadingLeft">Select another flash game:</p>
+          <span className="FancyLink" onClick={() => setCurrentGame("https://cdn.phi.me.uk/HappyWheels.swf")}>
+            Happy wheels
+          </span>
+          <span className="FancyLink" onClick={() => setCurrentGame("https://cdn.phi.me.uk/moto-x3m.swf")}>
+            Moto X3M
+          </span>
+          <p 
+            className="ClickableHeadingLeft" 
+            onClick={() => setshowPapaGames(!showPapaGames)}
+          >
+            Papa's Cooking games 
+            <span className="DropdownArrow">{showPapaGames ? "▲" : "▼"}</span>
+          </p>
+          {showPapaGames && (
+            Papagamenames.map((game, index) => (
+              <span
+                key={index}
+                className="FancyLink"
+                onClick={() => setCurrentGame(Papagamenamelocations[index])}
+              >
+                {game}
+              </span>
+            ))
+          )}
+        </>
         )}
 
         {!forcegame ? (
