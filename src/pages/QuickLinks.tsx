@@ -10,6 +10,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
   const [showPapaGames, setshowPapaGames] = useState(false);
   const [currentGame, setCurrentGame] = useState("https://cdn.phi.me.uk/papasfreezeria[1].swf");
   const [panicUrl, setPanicUrl] = useState("https://thedeanery.schoolsynergy.co.uk");
+  const [showPanicSites, setShowPanicSites] = useState(false);
 
   let Papagamenames = [
     "Papa's Freezeria",
@@ -75,6 +76,29 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
           </object>
         </div>
         <p className="BodyTextLeft">Type the website you're supposed to be on here!</p>
+        <p
+          className="ClickableHeadingLeft"
+          onClick={() => setShowPanicSites(!showPanicSites)}
+        >
+          Quick Panic sites 
+          <span className="DropdownArrow">{showPanicSites ? "▲" : "▼"}</span>
+        </p>
+        {showPanicSites && (
+          <>
+            <span className="FancyLink" onClick={() => setPanicUrl("https://thedeanery.schoolsynergy.co.uk")}>
+              Synergy
+            </span>
+            <span className="FancyLink" onClick={() => setPanicUrl("https://sparxmaths.uk")}>
+            Sparx
+            </span>
+            <span className="FancyLink" onClick={() => setPanicUrl("https://www.cyberexplorers.co.uk/main-menu")}>
+            Cyber explorers menu
+            </span>
+            <span className="FancyLink" onClick={() => setPanicUrl("https://app.senecalearning.com/courses")}>
+            Seneca
+            </span>
+          </>
+        )}
         <input
           type="text"
           value={panicUrl}
