@@ -8,6 +8,7 @@ interface ArchiveItem {
 function ArchiveMusicSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ArchiveItem[]>([]);
+  const [audioUrls, setAudioUrls] = useState<{ [key: string]: string[] }>({});
 
   const fetchMusic = async () => {
     try {
@@ -15,9 +16,20 @@ function ArchiveMusicSearch() {
         `https://archive.org/advancedsearch.php?q=title:"${encodeURIComponent(query)}"&fl[]=identifier,title&sort[]=downloads+desc&rows=10&output=json`
       );
       const data = await response.json();
-      // Properly typecast the response
       const items: ArchiveItem[] = data.response.docs;
       setResults(items);
+
+      // Fetch audio files for each item
+      const audioFiles: { [key: string]: string[] } = {};
+      for (const item of items) {
+        const metaResponse = await fetch(`https://archive.org/metadata/${item.identifier}`);
+        const metaData = await metaResponse.json();
+        const files = metaData?.files || [];
+        audioFiles[item.identifier] = files
+          .filter((file: any) => file.format && file.format.toLowerCase().includes('audio'))
+          .map((file: any) => `https://archive.org/download/${item.identifier}/${file.name}`);
+      }
+      setAudioUrls(audioFiles);
     } catch (err) {
       console.error("Error fetching music:", err);
     }
@@ -39,10 +51,15 @@ function ArchiveMusicSearch() {
             <a href={`https://archive.org/details/${item.identifier}`} target="_blank" rel="noopener noreferrer">
               {item.title}
             </a>
-            <audio controls>
-              <source src={`https://archive.org/download/${item.identifier}/${item.identifier}.mp3`} type="audio/mpeg" />
-              Your browser does not support the audio element.
-            </audio>
+            {audioUrls[item.identifier]?.map((url, index) => (
+              <div key={index}>
+                <audio controls>
+                  <source src={url} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+                <p>File: {url.split('/').pop()}</p>
+              </div>
+            ))}
           </li>
         ))}
       </ul>
