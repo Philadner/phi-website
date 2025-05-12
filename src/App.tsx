@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
+import MusicPlayer from './pages/MusicPlayer';
 import './App.css';
 
 
@@ -45,7 +46,7 @@ function App() {
         <nav>
           <Link to="/about">About</Link>
           <Link to="/quickl">Quick links</Link>
-          <Link to="/hehehe">hehehe</Link>
+          <Link to="/musicpl">Music</Link>
         </nav>
       </header>
 
@@ -55,6 +56,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/quickl" element={<QuickLinks />} />
           <Route path="/games" element={<Games />} />
+          <Route path="/musicpl" element={<MusicPlayer />} />
         </Routes>
       )}
     </div>
