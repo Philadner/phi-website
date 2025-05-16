@@ -44,7 +44,7 @@ function ArchiveMusicSearch() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search for music"
       />
-      <button onClick={fetchMusic}>Search</button>
+      <span className='FancyLink' onClick={fetchMusic}> Search</span>
       <ul>
         {results.map((item) => (
           <li key={item.identifier}>
@@ -52,7 +52,7 @@ function ArchiveMusicSearch() {
               {item.title}
             </a>
             {audioUrls[item.identifier]?.map((url, index) => (
-              <div key={index}>
+              <div className='FancyLink' key={index}>
                 <audio controls>
                   <source src={url} type="audio/mpeg" />
                   Your browser does not support the audio element.
