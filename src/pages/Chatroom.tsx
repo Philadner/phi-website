@@ -6,6 +6,7 @@ const ChatRoom = () => {
   const [connecting, setConnecting] = useState(true);
   const [connectionFailed, setConnectionFailed] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const ws = new WebSocket('wss://phi-chat-server.onrender.com');
@@ -45,6 +46,11 @@ const ChatRoom = () => {
 
     return () => ws.close();
   }, []);
+
+  // scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const sendMessage = () => {
     if (wsRef.current && input.trim()) {
@@ -91,6 +97,7 @@ const ChatRoom = () => {
             <code>{new Date(m.timestamp).toLocaleTimeString()}</code>: {m.msg}
           </p>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
