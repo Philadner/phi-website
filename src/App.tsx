@@ -7,6 +7,7 @@ import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
 import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
+import Loading from './pages/Loading';
 import './App.css';
 
 
@@ -58,6 +59,7 @@ function App() {
           <Route path="/quickl" element={<QuickLinks />} />
           <Route path="/games" element={<Games />} />
           <Route path="/musicpl" element={<MusicPlayer />} />
+          <Route path="/loading" element={<Loading />} />
           <Route path="/chatroom" element={<Chatroom />} />
         </Routes>
       )}

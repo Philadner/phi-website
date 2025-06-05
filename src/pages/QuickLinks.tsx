@@ -13,7 +13,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
   const [showPanicSites, setShowPanicSites] = useState(false);
   const [showGameMenu, setShowGameMenu] = useState(true);
 
-  let Papagamenames = [
+  const Papagamenames = [
     "Papa's Freezeria",
     "Papa's Burgeria",
     "Papa's Cupcakeria",
@@ -26,7 +26,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
     "Papa's Wingeria",
   ];
 
-  let Papagamenamelocations = [
+  const Papagamenamelocations = [
     "https://cdn.phi.me.uk/papasfreezeria[1].swf",
     "https://cdn.phi.me.uk/PapasBurgeria.swf",
     "https://cdn.phi.me.uk/PapasCupcakeria.swf",
