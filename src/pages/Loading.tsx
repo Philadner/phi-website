@@ -1,5 +1,3 @@
-import React from 'react';
-
 function LoadingPage() {
   return (
     <main id="main-site" className="page">

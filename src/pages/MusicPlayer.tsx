@@ -5,6 +5,12 @@ interface ArchiveItem {
   title: string;
 }
 
+interface MetaFile {
+  name: string;
+  format?: string;
+  [key: string]: unknown;
+}
+
 function ArchiveMusicSearch() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ArchiveItem[]>([]);
@@ -24,10 +30,10 @@ function ArchiveMusicSearch() {
       for (const item of items) {
         const metaResponse = await fetch(`https://archive.org/metadata/${item.identifier}`);
         const metaData = await metaResponse.json();
-        const files = metaData?.files || [];
+        const files: MetaFile[] = metaData?.files || [];
         audioFiles[item.identifier] = files
-          .filter((file: any) => file.format && file.format.toLowerCase().includes('audio'))
-          .map((file: any) => `https://archive.org/download/${item.identifier}/${file.name}`);
+          .filter((file: MetaFile) => file.format && file.format.toLowerCase().includes('audio'))
+          .map((file: MetaFile) => `https://archive.org/download/${item.identifier}/${file.name}`);
       }
       setAudioUrls(audioFiles);
     } catch (err) {
