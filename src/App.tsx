@@ -7,6 +7,7 @@ import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
 import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
+import YTRedirect from './pages/YTRedirect';
 import './App.css';
 
 
@@ -59,6 +60,7 @@ function App() {
           <Route path="/games" element={<Games />} />
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
+          <Route path="/yt" element={<YTRedirect />} />
         </Routes>
       )}
     </div>
