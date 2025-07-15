@@ -48,6 +48,7 @@ function App() {
           <Link to="/about">About</Link>
           <Link to="/quickl">Quick links</Link>
           <Link to="/musicpl">Music</Link>
+          <Link to="/chatroom">Chatroom</Link>
         </nav>
       </header>
 

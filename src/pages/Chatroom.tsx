@@ -67,7 +67,7 @@ const ChatRoom = () => {
     return (
       <main id="main-site" className="page">
         <h1 className="CenterTitle">Connecting to Chatroom...</h1>
-        <p className="BodyTextLeft">Please wait — the server may be waking up from Render’s free-tier nap.</p>
+        <p className="BodyTextLeft">Please wait — the server may be waking up from nap.</p>
       </main>
     );
   }
