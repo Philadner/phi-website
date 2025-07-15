@@ -45,6 +45,7 @@ function App() {
 
       <header>
         <Link to="/" className="logo">phi(l)</Link>
+        <p className='HeadingLeft'>labs</p>
         <nav>
           <Link to="/about">About</Link>
           <Link to="/quickl">Quick links</Link>
