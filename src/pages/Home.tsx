@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import "../stylesheets/Home.css";
+import "../stylesheets/home.css";
 
 const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
