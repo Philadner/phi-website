@@ -8,6 +8,7 @@ const middlePhrases = [
   "enjoy your summer",
   "chillest website ever ever",
   "we love south park",
+  "do people actually read these?",
 ];
 
 // Fisher–Yates shuffle
@@ -70,14 +71,24 @@ const Home: React.FC = () => {
       const ry = (pos.current.x / 45) * tiltMax;
 
       if (phiRef.current) {
+        const baseSize = 1; // normal scale for short text
+        const maxLengthBeforeShrink = 20; // tweak for when to start shrinking
+        const scaleFactor = Math.min(
+          1,
+          (maxLengthBeforeShrink / text.length) * baseSize
+        );
+      
         phiRef.current.style.transform =
-          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0) rotateX(${rx}deg) rotateY(${ry}deg) scale(${isShrinking ? 0.5 : 1})`;
+          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
+           rotateX(${rx}deg) rotateY(${ry}deg)
+           scale(${scaleFactor})`;
+      
         phiRef.current.style.opacity = isShrinking ? "0" : "1";
         phiRef.current.style.textShadow =
           `0 0 ${8 + Math.abs(pos.current.x) * 0.1 + Math.abs(pos.current.y) * 0.1}px rgba(255, 221, 51, .45)`;
       }
       rafId.current = requestAnimationFrame(animate);
-    };
+      
 
     container.addEventListener("mousemove", handleMove);
     rafId.current = requestAnimationFrame(animate);
