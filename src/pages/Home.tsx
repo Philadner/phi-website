@@ -70,16 +70,18 @@ const Home: React.FC = () => {
       const rx = (-pos.current.y / 45) * tiltMax;
       const ry = (pos.current.x / 45) * tiltMax;
 
-      if (phiRef.current) {
+      if (phiRef.current && containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth * 0.9; // leave some padding
+        const textWidth = phiRef.current.scrollWidth;
         const baseSize = 1;
         const maxLengthBeforeShrink = 20;
         const len = Math.max(text.length, 1); // avoid divide-by-zero
-        const scaleFactor = Math.min(1, (maxLengthBeforeShrink / len) * baseSize);
+        const scaleFactor = Math.min(1, containerWidth / textWidth);
 
         phiRef.current.style.transform =
-          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
-          rotateX(${rx}deg) rotateY(${ry}deg)
-          scale(${scaleFactor})`;
+        `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
+         rotateX(${rx}deg) rotateY(${ry}deg)
+         scale(${scaleFactor})`;
 
         phiRef.current.style.opacity = isShrinking ? "0" : "1";
         phiRef.current.style.textShadow =
