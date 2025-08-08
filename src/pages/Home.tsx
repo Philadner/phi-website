@@ -1,61 +1,65 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import "../stylesheets/home.css";
 
 const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [crosses, setCrosses] = useState<{ x: number; y: number; key: number }[]>([]);
+  const phiRef = useRef<HTMLDivElement>(null);
 
-  // Create the grid when component mounts
+  // animation state (not React state => no re-renders)
+  const pos = useRef({ x: 0, y: 0 });
+  const target = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number | null>(null);
+
   useEffect(() => {
-    const cols = Math.floor(window.innerWidth / 30);
-    const rows = Math.floor(window.innerHeight / 30);
-    const newCrosses = [];
+    const container = containerRef.current!;
+    const handleMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
 
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        newCrosses.push({ x, y, key: y * cols + x });
-      }
-    }
+      // normalised -1..1 from centre
+      const nx = (e.clientX - cx) / (rect.width / 2);
+      const ny = (e.clientY - cy) / (rect.height / 2);
 
-    setCrosses(newCrosses);
-  }, []);
-
-  // Handle mouse move for repelling effect
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const children = container.children;
-
-      for (let i = 0; i < children.length; i++) {
-        const el = children[i] as HTMLDivElement;
-        const rect = el.getBoundingClientRect();
-        const dx = rect.left + rect.width / 2 - e.clientX;
-        const dy = rect.top + rect.height / 2 - e.clientY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
-
-        if (dist < 100) {
-          const repelX = (dx / dist) * 10;
-          const repelY = (dy / dist) * 10;
-          el.style.transform = `translate(${repelX}px, ${repelY}px)`;
-          
-        } else {
-          el.style.transform = `translate(0, 0)`;
-        }
-      }
+      // clamp and set target offset (px)
+      const maxOffset = 45; // adjust vibe here
+      target.current.x = Math.max(-1, Math.min(1, nx)) * maxOffset;
+      target.current.y = Math.max(-1, Math.min(1, ny)) * maxOffset;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    const animate = () => {
+      // ease toward target
+      const ease = 0.08; // smaller = slower, floatier
+      pos.current.x += (target.current.x - pos.current.x) * ease;
+      pos.current.y += (target.current.y - pos.current.y) * ease;
+
+      // a tiny tilt for CRT-ish depth
+      const tiltMax = 6; // degrees
+      const rx = (-pos.current.y / 45) * tiltMax;
+      const ry = ( pos.current.x / 45) * tiltMax;
+
+      if (phiRef.current) {
+        phiRef.current.style.transform =
+          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0) rotateX(${rx}deg) rotateY(${ry}deg)`;
+        // faint glow that tightens as you move
+        phiRef.current.style.textShadow =
+          `0 0 ${8 + Math.abs(pos.current.x) * 0.1 + Math.abs(pos.current.y) * 0.1}px rgba(255, 221, 51, .45)`;
+      }
+      rafId.current = requestAnimationFrame(animate);
+    };
+
+    container.addEventListener("mousemove", handleMove);
+    rafId.current = requestAnimationFrame(animate);
+
+    return () => {
+      container.removeEventListener("mousemove", handleMove);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
   }, []);
 
   return (
-    <div className="grid" ref={containerRef}>
-      {crosses.map((cross) => (
-        <div className="cross" key={cross.key}>✖</div>
-      ))}
+    <div ref={containerRef} className="home-stage">
+      <div ref={phiRef} className="phi-floating">phi</div>
     </div>
   );
 };
