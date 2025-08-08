@@ -71,24 +71,22 @@ const Home: React.FC = () => {
       const ry = (pos.current.x / 45) * tiltMax;
 
       if (phiRef.current) {
-        const baseSize = 1; // normal scale for short text
-        const maxLengthBeforeShrink = 20; // tweak for when to start shrinking
-        const scaleFactor = Math.min(
-          1,
-          (maxLengthBeforeShrink / text.length) * baseSize
-        );
-      
+        const baseSize = 1;
+        const maxLengthBeforeShrink = 20;
+        const len = Math.max(text.length, 1); // avoid divide-by-zero
+        const scaleFactor = Math.min(1, (maxLengthBeforeShrink / len) * baseSize);
+
         phiRef.current.style.transform =
           `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
-           rotateX(${rx}deg) rotateY(${ry}deg)
-           scale(${scaleFactor})`;
-      
+          rotateX(${rx}deg) rotateY(${ry}deg)
+          scale(${scaleFactor})`;
+
         phiRef.current.style.opacity = isShrinking ? "0" : "1";
         phiRef.current.style.textShadow =
           `0 0 ${8 + Math.abs(pos.current.x) * 0.1 + Math.abs(pos.current.y) * 0.1}px rgba(255, 221, 51, .45)`;
       }
       rafId.current = requestAnimationFrame(animate);
-      
+    }; // ← this was missing
 
     container.addEventListener("mousemove", handleMove);
     rafId.current = requestAnimationFrame(animate);
@@ -97,7 +95,8 @@ const Home: React.FC = () => {
       container.removeEventListener("mousemove", handleMove);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [isShrinking]);
+  }, [isShrinking, text.length]);
+
 
   // Typewriter with shrink + custom phi pause
   useEffect(() => {
