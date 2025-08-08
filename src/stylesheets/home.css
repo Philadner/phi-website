@@ -63,3 +63,12 @@ body {
     opacity: .35;                         /* dial this up/down */
   }
   
+  @keyframes letterPop {
+    0%   { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .phi-floating.pop {
+    animation: letterPop 0.08s ease;
+  }
+  
