@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css";
 
-// Full phrase set
 const middlePhrases = [
   "welcome",
   "epic website",
@@ -10,7 +9,6 @@ const middlePhrases = [
   "chillest site ever ever",
 ];
 
-// Helper: Fisher–Yates shuffle
 const shuffleArray = <T,>(array: T[]) => {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -24,23 +22,22 @@ const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const phiRef = useRef<HTMLDivElement>(null);
 
-  // Floating animation state
   const pos = useRef({ x: 0, y: 0 });
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
 
-  // Typewriter state
   const [text, setText] = useState("");
   const [phrases, setPhrases] = useState<string[]>([]);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isShrinking, setIsShrinking] = useState(false);
 
-  // Initialise shuffled list
+  // Start cycle with phi, then shuffle the middle phrases
   useEffect(() => {
-    setPhrases(["phi", ...shuffleArray(middlePhrases), "phi"]);
+    setPhrases(["phi", ...shuffleArray(middlePhrases)]);
   }, []);
 
-  // Floating animation setup
+  // Floating animation
   useEffect(() => {
     const container = containerRef.current!;
     const handleMove = (e: MouseEvent) => {
@@ -67,7 +64,8 @@ const Home: React.FC = () => {
 
       if (phiRef.current) {
         phiRef.current.style.transform =
-          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0) rotateX(${rx}deg) rotateY(${ry}deg)`;
+          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0) rotateX(${rx}deg) rotateY(${ry}deg) scale(${isShrinking ? 0.5 : 1})`;
+        phiRef.current.style.opacity = isShrinking ? "0" : "1";
         phiRef.current.style.textShadow =
           `0 0 ${8 + Math.abs(pos.current.x) * 0.1 + Math.abs(pos.current.y) * 0.1}px rgba(255, 221, 51, .45)`;
       }
@@ -81,12 +79,11 @@ const Home: React.FC = () => {
       container.removeEventListener("mousemove", handleMove);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, []);
+  }, [isShrinking]);
 
-  // Typewriter loop
+  // Typewriter with shrink transition
   useEffect(() => {
     if (phrases.length === 0) return;
-
     const currentPhrase = phrases[phraseIndex];
     const typingSpeed = isDeleting ? 50 : 100;
     const pauseTime = 1500;
@@ -99,15 +96,19 @@ const Home: React.FC = () => {
       } else if (!isDeleting && text.length === currentPhrase.length) {
         setTimeout(() => setIsDeleting(true), pauseTime);
       } else if (isDeleting && text.length === 0) {
-        setIsDeleting(false);
+        setIsShrinking(true);
+        setTimeout(() => {
+          setIsShrinking(false);
+          setIsDeleting(false);
 
-        // Move to next phrase or reset cycle
-        if (phraseIndex + 1 >= phrases.length) {
-          setPhrases(["phi", ...shuffleArray(middlePhrases), "phi"]);
-          setPhraseIndex(0);
-        } else {
-          setPhraseIndex(phraseIndex + 1);
-        }
+          if (phraseIndex + 1 >= phrases.length) {
+            // Restart with phi at start again, reshuffled middle
+            setPhrases(["phi", ...shuffleArray(middlePhrases)]);
+            setPhraseIndex(0);
+          } else {
+            setPhraseIndex(phraseIndex + 1);
+          }
+        }, 300);
       }
     }, typingSpeed);
 
