@@ -4,11 +4,13 @@ import "../stylesheets/home.css";
 const middlePhrases = [
   "welcome",
   "epic website",
-  "webdev is hell",
-  "i love the summer holidays",
-  "chillest site ever ever",
+  "we hate trump",
+  "enjoy your summer",
+  "chillest website ever ever",
+  "we love south park",
 ];
 
+// Fisher–Yates shuffle
 const shuffleArray = <T,>(array: T[]) => {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -16,6 +18,11 @@ const shuffleArray = <T,>(array: T[]) => {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+};
+
+// Get one full cycle: phi + 3 random phrases
+const getCyclePhrases = () => {
+  return ["phi", ...shuffleArray(middlePhrases).slice(0, 3)];
 };
 
 const Home: React.FC = () => {
@@ -32,9 +39,9 @@ const Home: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isShrinking, setIsShrinking] = useState(false);
 
-  // Start cycle with phi, then shuffle the middle phrases
+  // Initialise with phi + 3 random phrases
   useEffect(() => {
-    setPhrases(["phi", ...shuffleArray(middlePhrases)]);
+    setPhrases(getCyclePhrases());
   }, []);
 
   // Floating animation
@@ -81,12 +88,12 @@ const Home: React.FC = () => {
     };
   }, [isShrinking]);
 
-  // Typewriter with shrink transition
+  // Typewriter with shrink + custom phi pause
   useEffect(() => {
     if (phrases.length === 0) return;
     const currentPhrase = phrases[phraseIndex];
-    const typingSpeed = isDeleting ? 50 : 100;
-    const pauseTime = 1500;
+    const typingSpeed = isDeleting ? 50 : 80;
+    const pauseTime = currentPhrase === "phi" ? 2500 : 1200;
 
     const timeout = setTimeout(() => {
       if (!isDeleting && text.length < currentPhrase.length) {
@@ -102,13 +109,13 @@ const Home: React.FC = () => {
           setIsDeleting(false);
 
           if (phraseIndex + 1 >= phrases.length) {
-            // Restart with phi at start again, reshuffled middle
-            setPhrases(["phi", ...shuffleArray(middlePhrases)]);
+            // restart cycle
+            setPhrases(getCyclePhrases());
             setPhraseIndex(0);
           } else {
             setPhraseIndex(phraseIndex + 1);
           }
-        }, 300);
+        }, 300); // shrink duration
       }
     }, typingSpeed);
 
