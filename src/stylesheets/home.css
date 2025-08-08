@@ -46,6 +46,8 @@ body {
     will-change: transform, text-shadow;
     pointer-events: none;
     user-select: none;
+    white-space: nowrap;      /* never wrap */
+    display: inline-block;    /* keep width accurate */
   }
   
   /* Optional: ultra-subtle scanline overlay (tasteful) */
