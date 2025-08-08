@@ -45,6 +45,19 @@ const middlePhrases = [
   "is 6 inches alright?",
   "xbox > playstation",
   "on sight",
+  "phi.me.uk",
+  "TopGear",
+  "Jeremy clarkson is an idiot",
+  "I have found... an website!",
+  "some say he has the world's largest collection of pornography...",
+  "...and that he likes men",
+  "all we know is he's called the stig.",
+  "chloe, world's 2763rd greatest artist.",
+  "HONEY!!! WHERE'S MY SUPERSUIT?",
+  "jorkin it rn",
+  "NOT jorkin IT rn",
+  "that, and my knob.",
+  "that right there, that's the best noun.",
 ];
 
 function shuffle<T>(arr: T[]) {
