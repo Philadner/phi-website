@@ -57,15 +57,17 @@ function shuffle<T>(arr: T[]) {
 }
 
 function buildCycle() {
-  return shuffle(middlePhrases);
+  return ["phi", ...shuffle(middlePhrases).slice(0, 3)];
 }
 
 const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const phiRef = useRef<HTMLDivElement>(null);
+
   const pos = useRef({ x: 0, y: 0 });
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
+
   const popScale = useRef(1);
 
   const [phrases, setPhrases] = useState<string[]>(() => buildCycle());
@@ -73,6 +75,7 @@ const Home: React.FC = () => {
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  // Mouse movement animation
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -101,18 +104,28 @@ const Home: React.FC = () => {
       const ry = (pos.current.x / 45) * tiltMax;
       const rz = (pos.current.x / 45) * twistMax;
 
+      const maxDrift = 45;
+      const distance = Math.sqrt(
+        Math.pow(pos.current.x / maxDrift, 2) + Math.pow(pos.current.y / maxDrift, 2)
+      );
+      const baseScale = 1 + distance * 0.05;
+
+      // ease popScale back to 1
       popScale.current += (1 - popScale.current) * 0.2;
 
       const el = phiRef.current;
       if (el && containerRef.current) {
         const available = containerRef.current.offsetWidth * 0.9;
         const textWidth = Math.max(el.scrollWidth, 1);
-        const scale = Math.min(1, available / textWidth) * popScale.current;
+        const scale = Math.min(1, available / textWidth) * baseScale * popScale.current;
 
         el.style.transform =
           `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
            rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)
            scale(${scale})`;
+
+        el.style.textShadow =
+          `0 0 ${8 + Math.abs(pos.current.x) * 0.1 + Math.abs(pos.current.y) * 0.1}px rgba(255,221,51,.45)`;
       }
 
       rafId.current = requestAnimationFrame(animate);
@@ -127,17 +140,22 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  // Typing effect with acceleration + pop effect
   useEffect(() => {
     const current = phrases[phraseIndex];
     if (!current) return;
-    const baseSpeed = deleting ? 20 : 80;
+
+    const baseSpeed = deleting ? 50 : 80; // start speed
+    const accelFactor = 0.85; // faster each char
+    const typingSpeed = Math.max(20, baseSpeed * Math.pow(accelFactor, text.length));
+    const pauseTime = current === "phi" ? 2500 : 1200;
 
     const timer = setTimeout(() => {
       if (!deleting && text.length < current.length) {
         setText(current.slice(0, text.length + 1));
-        popScale.current = 1.15;
+        popScale.current = 1.15; // pop bump
       } else if (!deleting && text.length === current.length) {
-        setTimeout(() => setDeleting(true), 1200);
+        setTimeout(() => setDeleting(true), pauseTime);
       } else if (deleting && text.length > 0) {
         setText(current.slice(0, text.length - 1));
       } else if (deleting && text.length === 0) {
@@ -149,16 +167,14 @@ const Home: React.FC = () => {
           setPhraseIndex(phraseIndex + 1);
         }
       }
-    }, baseSpeed);
+    }, typingSpeed);
 
     return () => clearTimeout(timer);
   }, [text, deleting, phraseIndex, phrases]);
 
   return (
     <div ref={containerRef} className="home-stage">
-      <div ref={phiRef} className="phi-floating">
-        {text}
-      </div>
+      <div ref={phiRef} className="phi-floating">{text}</div>
     </div>
   );
 };
