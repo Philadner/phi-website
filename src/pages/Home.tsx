@@ -107,7 +107,7 @@ const Home: React.FC = () => {
     const current = phrases[phraseIndex];
     if (!current) return;
 
-    const typingSpeed = deleting ? 50 : 80;
+    const typingSpeed = deleting ? 20 : 80;
     const pauseTime = current === "phi" ? 2500 : 1200;
 
     const timer = setTimeout(() => {
@@ -115,7 +115,7 @@ const Home: React.FC = () => {
         setText(current.slice(0, text.length + 1));
 
         // bump pop scale
-        popScale.current = 1.25;
+        popScale.current = 1.15;
       } else if (!deleting && text.length === current.length) {
         setTimeout(() => setDeleting(true), pauseTime);
       } else if (deleting && text.length > 0) {
