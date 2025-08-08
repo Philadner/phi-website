@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css";
 
-// --- your pool of phrases (add as many as you like) ---
 const middlePhrases = [
   "welcome",
   "epic website",
@@ -12,7 +11,6 @@ const middlePhrases = [
   "do people actually read these?",
 ];
 
-// Fisher–Yates shuffle
 function shuffle<T>(arr: T[]) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -22,7 +20,6 @@ function shuffle<T>(arr: T[]) {
   return a;
 }
 
-// Build one cycle: phi + 3 random phrases
 function buildCycle() {
   return ["phi", ...shuffle(middlePhrases).slice(0, 3)];
 }
@@ -31,18 +28,17 @@ const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const phiRef = useRef<HTMLDivElement>(null);
 
-  // floating position (not React state to avoid re-renders)
   const pos = useRef({ x: 0, y: 0 });
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
 
-  // typewriter
+  const popScale = useRef(1); // new: for letter pop
+
   const [phrases, setPhrases] = useState<string[]>(() => buildCycle());
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  // ---------- Floating + width-based auto-shrink ----------
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -55,37 +51,36 @@ const Home: React.FC = () => {
       const nx = (e.clientX - cx) / (rect.width / 2);
       const ny = (e.clientY - cy) / (rect.height / 2);
 
-      const max = 45; // px drift
-      target.current.x = Math.max(-1, Math.min(1, nx)) * max;
-      target.current.y = Math.max(-1, Math.min(1, ny)) * max;
+      const maxDrift = 45;
+      target.current.x = Math.max(-1, Math.min(1, nx)) * maxDrift;
+      target.current.y = Math.max(-1, Math.min(1, ny)) * maxDrift;
     };
 
     const animate = () => {
-      // ease toward target
       const k = 0.08;
       pos.current.x += (target.current.x - pos.current.x) * k;
       pos.current.y += (target.current.y - pos.current.y) * k;
 
-      // tilt and twist
-      const tiltMax = 6; // X/Y tilt in degrees
-      const twistMax = 2; // Z rotation in degrees
+      const tiltMax = 6;
+      const twistMax = 2;
       const rx = (-pos.current.y / 45) * tiltMax;
       const ry = (pos.current.x / 45) * tiltMax;
       const rz = (pos.current.x / 45) * twistMax;
 
-      // distance from center affects scale
-      const max = 45; // px drift
+      const maxDrift = 45;
       const distance = Math.sqrt(
-        Math.pow(pos.current.x / max, 2) + Math.pow(pos.current.y / max, 2)
+        Math.pow(pos.current.x / maxDrift, 2) + Math.pow(pos.current.y / maxDrift, 2)
       );
       const baseScale = 1 + distance * 0.05;
 
-      // width-based scaling so it never wraps
+      // ease popScale back to 1
+      popScale.current += (1 - popScale.current) * 0.2;
+
       const el = phiRef.current;
       if (el && containerRef.current) {
         const available = containerRef.current.offsetWidth * 0.9;
         const textWidth = Math.max(el.scrollWidth, 1);
-        const scale = Math.min(1, available / textWidth) * baseScale;
+        const scale = Math.min(1, available / textWidth) * baseScale * popScale.current;
 
         el.style.transform =
           `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
@@ -102,15 +97,12 @@ const Home: React.FC = () => {
     container.addEventListener("mousemove", onMove);
     rafId.current = requestAnimationFrame(animate);
 
-    window.addEventListener("resize", () => {});
-
     return () => {
       container.removeEventListener("mousemove", onMove);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
   }, []);
 
-  // ---------- Typewriter loop + letter pop ----------
   useEffect(() => {
     const current = phrases[phraseIndex];
     if (!current) return;
@@ -120,16 +112,10 @@ const Home: React.FC = () => {
 
     const timer = setTimeout(() => {
       if (!deleting && text.length < current.length) {
-        // typing forward
         setText(current.slice(0, text.length + 1));
 
-        // add pop effect
-        if (phiRef.current) {
-          phiRef.current.classList.add("pop");
-          setTimeout(() => {
-            phiRef.current?.classList.remove("pop");
-          }, 80);
-        }
+        // bump pop scale
+        popScale.current = 1.25;
       } else if (!deleting && text.length === current.length) {
         setTimeout(() => setDeleting(true), pauseTime);
       } else if (deleting && text.length > 0) {
