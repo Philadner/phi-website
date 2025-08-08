@@ -9,6 +9,27 @@ const middlePhrases = [
   "chillest website ever ever",
   "we love south park",
   "do people actually read these?",
+  "NO mind control",
+  "does not collect data. - we promise. seriously.",
+  "with much effort",
+  "finding the meaning of life since 2025",
+  "failing to understand the meaning of life since 2025",
+  "we love kanye",
+  "we hate taylor swift",
+  "32.5% homosexual",
+  "did i really say that?",
+  "these ARE pregenerated, right?",
+  "we love you",
+  "twitch.tv/fieryvipers",
+  "shitass code. theres a reason the repo is private",
+  "we hate you",
+  "was this £1 domain really worth it?",
+  "homophobes shunned but welcome",
+  "everyone knows why you're here",
+  "we CAN see your dumbass, you know.",
+  "#1 onlyfans alternative",
+  "we all dont appreciate nail clippers enough",
+  "do NOT go to zain barber 4 men. they fucked my hair up bad.",
 ];
 
 function shuffle<T>(arr: T[]) {
@@ -32,13 +53,14 @@ const Home: React.FC = () => {
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
 
-  const popScale = useRef(1); // new: for letter pop
+  const popScale = useRef(1);
 
   const [phrases, setPhrases] = useState<string[]>(() => buildCycle());
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  // Mouse movement animation
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -103,19 +125,20 @@ const Home: React.FC = () => {
     };
   }, []);
 
+  // Typing effect with acceleration + pop effect
   useEffect(() => {
     const current = phrases[phraseIndex];
     if (!current) return;
 
-    const typingSpeed = deleting ? 20 : 80;
+    const baseSpeed = deleting ? 50 : 80; // start speed
+    const accelFactor = 0.85; // faster each char
+    const typingSpeed = Math.max(20, baseSpeed * Math.pow(accelFactor, text.length));
     const pauseTime = current === "phi" ? 2500 : 1200;
 
     const timer = setTimeout(() => {
       if (!deleting && text.length < current.length) {
         setText(current.slice(0, text.length + 1));
-
-        // bump pop scale
-        popScale.current = 1.15;
+        popScale.current = 1.15; // pop bump
       } else if (!deleting && text.length === current.length) {
         setTimeout(() => setDeleting(true), pauseTime);
       } else if (deleting && text.length > 0) {
