@@ -49,7 +49,18 @@ body {
     white-space: nowrap;      /* never wrap */
     display: inline-block;    /* keep width accurate */
   }
+
   
+  .long-phrase {
+    max-height: 200px;       /* how tall before it scrolls */
+    overflow-y: auto;        /* vertical scroll only */
+    white-space: pre-wrap;   /* wrap instead of one long line */
+    word-break: break-word;  /* break long words if needed */
+  }
+  
+
+
+
   /* Optional: ultra-subtle scanline overlay (tasteful) */
   .home-stage::after {
     content: "";
