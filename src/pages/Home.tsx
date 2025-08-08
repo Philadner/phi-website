@@ -73,9 +73,6 @@ const Home: React.FC = () => {
       if (phiRef.current && containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth * 0.9; // leave some padding
         const textWidth = phiRef.current.scrollWidth;
-        const baseSize = 1;
-        const maxLengthBeforeShrink = 20;
-        const len = Math.max(text.length, 1); // avoid divide-by-zero
         const scaleFactor = Math.min(1, containerWidth / textWidth);
 
         phiRef.current.style.transform =
