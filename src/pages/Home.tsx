@@ -126,6 +126,12 @@ const middlePhrases = [
   "me when the spold",
   "me when the logaend",
   "dlops. dlops. dlops. dlops.",
+  "Dibledi doodoo show me your poo poo always works",
+  "#1st website to have sex with jacob",
+  "have you ever take nyquil with coffee?",
+  "now thats rizz.",
+  "Miss can i have a sentence starter",
+  "im not gonna do that to your face btw. you know who you are.",
 ];
 
 
