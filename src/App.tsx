@@ -9,6 +9,7 @@ import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
 import YTRedirect from './pages/YTRedirect';
 import Floop from './pages/Floop';
+import Append from './pages/append';
 import './App.css';
 
 
@@ -66,6 +67,7 @@ function App() {
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
           <Route path="/yt" element={<YTRedirect />} />
+          <Route path="/append" element={<Append />} />
         </Routes>
       )}
     </div>

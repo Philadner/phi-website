@@ -52,7 +52,7 @@ const middlePhrases = [
   "some say he has the world's largest collection of pornography...",
   "...and that he likes men",
   "all we know is he's called the stig.",
-  "chloe, world's 2763rd greatest artist.",
+  "chloe, world's 2763rd greatest artist. behind keanu. and jacob. and oscar. and dylan. and me.",
   "HONEY!!! WHERE'S MY SUPERSUIT?",
   "jorkin it rn",
   "NOT jorkin IT rn",
@@ -132,6 +132,8 @@ const middlePhrases = [
   "now thats rizz.",
   "Miss can i have a sentence starter",
   "im not gonna do that to your face btw. you know who you are.",
+  "ben dover",
+  "i love underlime slopper",
 ];
 
 
