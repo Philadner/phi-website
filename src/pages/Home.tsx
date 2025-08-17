@@ -14,7 +14,7 @@ const Home: React.FC = () => {
   const [middlePhrases, setMiddlePhrases] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("https://api.phi.me.uk/phrases")
+    fetch("https://api.phi.me.uk/kv/phrases")
       .then((r) => r.json())
       .then((data) => {
         // API returns an array (e.g. ["a","b",...]); fallback if someone wraps it

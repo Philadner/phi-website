@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       }
   
       // Forward the request to your Cloudflare Worker
-      const workerRes = await fetch("https://api.phi.me.uk/phrases", {
+      const workerRes = await fetch("https://api.phi.me.uk/kv/phrases", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
