@@ -1,33 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css";
 
-const [middlePhrases, setMiddlePhrases] = useState<string[]>([]);
-
-useEffect(() => {
-  fetch("https://api.phi.me.uk/phrases")
-    .then((res) => res.json())
-    .then((data) => {
-      // if your API returns { phrases: [...] }
-      setMiddlePhrases(data.phrases ?? []);
-    })
-    .catch((err) => {
-      console.error("Failed to load phrases:", err);
-    });
-}, []);
-
-function shuffle<T>(arr: T[]) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function buildCycle() {
-  return ["phi", ...shuffle(middlePhrases).slice(0, 3)];
-}
-
 const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const phiRef = useRef<HTMLDivElement>(null);
@@ -35,13 +8,48 @@ const Home: React.FC = () => {
   const pos = useRef({ x: 0, y: 0 });
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
-
   const popScale = useRef(1);
 
-  const [phrases, setPhrases] = useState<string[]>(() => buildCycle());
+  // ---- NEW: load phrases from your API
+  const [middlePhrases, setMiddlePhrases] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("https://api.phi.me.uk/phrases")
+      .then((r) => r.json())
+      .then((data) => {
+        // API returns an array (e.g. ["a","b",...]); fallback if someone wraps it
+        const arr = Array.isArray(data) ? data : (data?.phrases ?? []);
+        setMiddlePhrases(arr.filter((x: unknown): x is string => typeof x === "string"));
+      })
+      .catch((err) => console.error("Failed to load phrases:", err));
+  }, []);
+
+  const shuffle = <T,>(arr: T[]) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  const buildCycle = () => ["phi", ...shuffle(middlePhrases).slice(0, 3)];
+
+  // ---- driving text state
+  const [phrases, setPhrases] = useState<string[]>([]);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  // when middlePhrases loads/changes, (re)seed the cycle
+  useEffect(() => {
+    if (middlePhrases.length) {
+      setPhrases(buildCycle());
+      setPhraseIndex(0);
+      setText("");
+      setDeleting(false);
+    }
+  }, [middlePhrases]);
 
   // Mouse movement animation
   useEffect(() => {
@@ -78,7 +86,6 @@ const Home: React.FC = () => {
       );
       const baseScale = 1 + distance * 0.05;
 
-      // ease popScale back to 1
       popScale.current += (1 - popScale.current) * 0.2;
 
       const el = phiRef.current;
@@ -113,15 +120,15 @@ const Home: React.FC = () => {
     const current = phrases[phraseIndex];
     if (!current) return;
 
-    const baseSpeed = deleting ? 50 : 80; // start speed
-    const accelFactor = 0.85; // faster each char
+    const baseSpeed = deleting ? 50 : 80;
+    const accelFactor = 0.85;
     const typingSpeed = Math.max(20, baseSpeed * Math.pow(accelFactor, text.length));
     const pauseTime = current === "phi" ? 2500 : 1200;
 
     const timer = setTimeout(() => {
       if (!deleting && text.length < current.length) {
         setText(current.slice(0, text.length + 1));
-        popScale.current = 1.15; // pop bump
+        popScale.current = 1.15;
       } else if (!deleting && text.length === current.length) {
         setTimeout(() => setDeleting(true), pauseTime);
       } else if (deleting && text.length > 0) {
@@ -142,7 +149,9 @@ const Home: React.FC = () => {
 
   return (
     <div ref={containerRef} className="home-stage">
-      <div ref={phiRef} className="phi-floating">{text}</div>
+      <div ref={phiRef} className="phi-floating">
+        {text || "…"}
+      </div>
     </div>
   );
 };
