@@ -11,11 +11,11 @@ export default async function handler(req, res) {
       }
   
       // Forward the request to your Cloudflare Worker
-      const workerRes = await fetch("https://api.phi.me.uk/append", {
+      const workerRes = await fetch("https://api.phi.me.uk/phrases", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.WORKER_TOKEN}`,
+          "Authorization": `Bearer ${process.env.SITE_TOKEN}`,
         },
         body: JSON.stringify({ phrase }),
       });
