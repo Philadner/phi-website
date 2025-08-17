@@ -53,7 +53,7 @@ function App() {
           <Link to="/quickl">Quick links</Link>
           <Link to="/musicpl">Music</Link>
           <Link to="/chatroom">Chatroom</Link>
-          <Link to="/floop">Floop</Link>
+          <Link to="/add">Add</Link>
         </nav>
       </header>
 
@@ -67,7 +67,7 @@ function App() {
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
           <Route path="/yt" element={<YTRedirect />} />
-          <Route path="/append" element={<Append />} />
+          <Route path="/add" element={<Append />} />
         </Routes>
       )}
     </div>
