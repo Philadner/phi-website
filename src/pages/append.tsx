@@ -8,20 +8,43 @@ const Append: React.FC = () => {
   const phiRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // motion state (same vibe as Home.tsx)
+  // motion state
   const pos = useRef({ x: 0, y: 0 });
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
   const pop = useRef(1);
 
-  const [value, setValue] = useState("");          // user text
-  const [status, setStatus] = useState<string>(""); // tiny status label
+  const [value, setValue] = useState("");
+  const [status, setStatus] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
-  // focus hidden input on click/tap so mobile shows keyboard
+  // timeout ref for clearing status
+  const statusTimeoutRef = useRef<number | null>(null);
+
+  // helper: show status temporarily
+  const setStatusTemp = (msg: string, ms = 500) => {
+    setStatus(msg);
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current);
+    }
+    statusTimeoutRef.current = window.setTimeout(() => {
+      setStatus("");
+      statusTimeoutRef.current = null;
+    }, ms);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // focus hidden input
   const focusInput = () => inputRef.current?.focus();
 
-  // background motion (trimmed copy from Home.tsx)
+  // background motion
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -50,6 +73,7 @@ const Append: React.FC = () => {
       const dist = Math.hypot(pos.current.x / max, pos.current.y / max);
       const baseScale = 1 + dist * 0.05;
 
+      // ease pop back to 1
       pop.current += (1 - pop.current) * 0.2;
 
       const t = phiRef.current;
@@ -77,12 +101,13 @@ const Append: React.FC = () => {
     };
   }, []);
 
-  // submit to Vercel API (which forwards to Worker with secret)
+  // submit to Vercel API
   const submit = async () => {
     const phrase = value.trim();
     if (!phrase || loading) return;
+
     setLoading(true);
-    setStatus("");
+    setStatus("Posting…");
 
     try {
       const resp = await fetch(API_URL, {
@@ -91,15 +116,41 @@ const Append: React.FC = () => {
         body: JSON.stringify({ phrase }),
       });
 
-      const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+      // ✅ treat empty body as OK; only gate on resp.ok
+      if (!resp.ok) {
+        // try to read error message if available
+        let errMsg = `HTTP ${resp.status}`;
+        try {
+          const text = await resp.text();
+          if (text) {
+            try {
+              const j = JSON.parse(text);
+              errMsg = j?.error || errMsg;
+            } catch {
+              errMsg = text || errMsg;
+            }
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
 
-      pop.current = 1.2;         // little success pop
-      setStatus("✅ added");
-      setValue("");              // clear after submit
-      inputRef.current?.focus(); // keep keyboard up
+      // ---- SUCCESS PATH ----
+      // clear input (controlled state)
+      setValue("");
+
+      // force a visible pop: reset then bump next frame
+      pop.current = 1;
+      requestAnimationFrame(() => {
+        pop.current = 1.35; // bigger bounce so it's obvious
+      });
+
+      // keep keyboard up on mobile
+      inputRef.current?.focus?.();
+
+      // show success briefly
+      setStatusTemp("✅ success", 500);
     } catch (err: any) {
-      setStatus("❌ " + (err.message || "failed"));
+      setStatusTemp("❌ " + (err?.message || "failed"), 2000);
     } finally {
       setLoading(false);
     }
@@ -121,14 +172,21 @@ const Append: React.FC = () => {
     >
       {/* Big yellow text mirrors input live */}
       <div ref={phiRef} className="phi-floating">
-        {value || "type something..."}
+        {loading ? "Posting…" : (value || "type something...")}
       </div>
 
-      {/* Hidden-but-focusable input -> triggers mobile keyboard */}
+      {/* Slot under the yellow text (optional) */}
+      {/* <div className="phi-subtext">helper / status text here</div> */}
+
+      {/* Hidden-but-focusable input */}
       <input
         ref={inputRef}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          // optional: clear status while typing if not loading
+          if (status && !loading) setStatus("");
+        }}
         onKeyDown={onKeyDown}
         inputMode="text"
         autoCapitalize="sentences"
@@ -157,9 +215,14 @@ const Append: React.FC = () => {
           left: 8,
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
           fontSize: 14,
-          color: status.startsWith("✅") ? "#8fff8f" : "#ff8a8a",
+          color: status.startsWith("✅")
+            ? "#8fff8f"
+            : status.startsWith("❌")
+            ? "#ff8a8a"
+            : "#aaaaaa",
           userSelect: "none",
         }}
+        aria-live="polite"
       >
         {status}
       </div>
