@@ -1,5 +1,5 @@
 /* Show overflow */
 
-body {
+html, body {
     overflow-y: auto;
   }
