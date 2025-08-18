@@ -107,6 +107,10 @@ const Append: React.FC = () => {
     if (!phrase || loading) return;
 
     setLoading(true);
+    pop.current = 1;
+    requestAnimationFrame(() => {
+      pop.current = 1.35; // bigger bounce so it's obvious
+    });
     setStatus("Posting…");
 
     try {
@@ -183,6 +187,10 @@ const Append: React.FC = () => {
         ref={inputRef}
         value={value}
         onChange={(e) => {
+          pop.current = 1;
+          requestAnimationFrame(() => {
+            pop.current = 1.05;
+          });
           setValue(e.target.value);
           // optional: clear status while typing if not loading
           if (status && !loading) setStatus("");
