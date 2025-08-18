@@ -10,6 +10,7 @@ import Chatroom from './pages/Chatroom';
 import YTRedirect from './pages/YTRedirect';
 import Floop from './pages/Floop';
 import Append from './pages/append';
+import Changelog from './pages/Changelog';
 import './App.css';
 
 
@@ -47,11 +48,10 @@ function App() {
 
       <header>
         <Link to="/" className="logo">phi(l)</Link>
-        <p className='HeadingLeft'>labs</p>
         <nav>
           <Link to="/about">About</Link>
           <Link to="/quickl">Quick links</Link>
-          <Link to="/musicpl">Music</Link>
+          <Link to="/changelog">Changelog</Link>
           <Link to="/chatroom">Chatroom</Link>
           <Link to="/add">Add</Link>
         </nav>
@@ -68,6 +68,7 @@ function App() {
           <Route path="/floop" element={<Floop />} />
           <Route path="/yt" element={<YTRedirect />} />
           <Route path="/add" element={<Append />} />
+          <Route path="/changelog" element={<Changelog />} />
         </Routes>
       )}
     </div>

@@ -42,7 +42,14 @@ body.loaded {
 .CenterTitle {
   text-align: center;
   font-family: "Helvetica", sans-serif;
-  padding-bottom: 5rem;
+}
+
+.HeadingBigLeft {
+  text-align: left;
+  font-family: "Helvetica", sans-serif;
+  font-size: 35px;
+  color: gold;
+  text-shadow: 0 0 5px gold;
 }
 
 .HeadingLeft {
@@ -63,8 +70,27 @@ body.loaded {
   overflow-x: hidden;
 }
 
+/* Spacing divs */
+.SpaceDiv {
+  height: 2rem;
+}
+
+.BigSpaceDiv {
+  height: 5rem;
+}
+
+.MegaSpaceDiv {
+  height: 10rem;
+}
+
 .BodyTextLeft {
   text-align: left;
+  font-family: "Helvetica", sans-serif;
+  font-size: 20px;
+}
+
+.BodyTextCentre {
+  text-align: center;
   font-family: "Helvetica", sans-serif;
   font-size: 20px;
 }
