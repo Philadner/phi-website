@@ -8,6 +8,9 @@ import Games from './pages/Games';
 import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
 import YTRedirect from './pages/YTRedirect';
+import Floop from './pages/Floop';
+import Append from './pages/append';
+import Changelog from './pages/Changelog';
 import './App.css';
 
 
@@ -48,8 +51,9 @@ function App() {
         <nav>
           <Link to="/about">About</Link>
           <Link to="/quickl">Quick links</Link>
-          <Link to="/musicpl">Music</Link>
+          <Link to="/changelog">Changelog</Link>
           <Link to="/chatroom">Chatroom</Link>
+          <Link to="/add">Add</Link>
         </nav>
       </header>
 
@@ -61,7 +65,10 @@ function App() {
           <Route path="/games" element={<Games />} />
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
+          <Route path="/floop" element={<Floop />} />
           <Route path="/yt" element={<YTRedirect />} />
+          <Route path="/add" element={<Append />} />
+          <Route path="/changelog" element={<Changelog />} />
         </Routes>
       )}
     </div>

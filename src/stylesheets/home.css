@@ -1,0 +1,85 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    margin: 0;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 25px);
+    justify-content: center;
+    gap: 5px;
+    padding: 20px;
+  }
+  
+  .cross {
+    font-size: 16px;
+    color: rgb(59, 59, 59);
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    line-height: 25px;
+    transition: transform 0.15s ease;
+    will-change: transform;
+    user-select: none;
+  }
+  
+  .home-stage {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    background: #0b0b0c; /* your dark base */
+    overflow: hidden;
+  }
+  
+  .phi-floating {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: system-ui, Inter, Segoe UI, Roboto, sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    font-size: clamp(48px, 10vw, 160px);
+    color: #ffdd33;            /* your yellow accent */
+    filter: saturate(1.05);
+    will-change: transform, text-shadow;
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;      /* never wrap */
+    display: inline-block;    /* keep width accurate */
+  }
+
+  
+  .long-phrase {
+    max-height: 200px;       /* how tall before it scrolls */
+    overflow-y: auto;        /* vertical scroll only */
+    white-space: pre-wrap;   /* wrap instead of one long line */
+    word-break: break-word;  /* break long words if needed */
+  }
+  
+
+
+
+  /* Optional: ultra-subtle scanline overlay (tasteful) */
+  .home-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 100% 3px;           /* scanline spacing */
+    mix-blend-mode: overlay;
+    opacity: .35;                         /* dial this up/down */
+  }
+  
+  @keyframes letterPop {
+    0%   { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .phi-floating.pop {
+    animation: letterPop 0.08s ease;
+  }
+  

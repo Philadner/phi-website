@@ -3,6 +3,7 @@ function About() {
     return (
       <main id="main-site">
         <h1 className="CenterTitle">About</h1>
+        <div className="SpaceDiv"></div>
         <h2 className="HeadingLeft">What can you do here?</h2>
         <p className="BodyTextLeft">Theres some good websites for school here, but there is more to come!</p>
         <p className="BodyTextLeft">Sadly no games because schools will block it</p> 
