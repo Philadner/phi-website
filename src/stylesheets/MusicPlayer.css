@@ -1,0 +1,82 @@
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+  }
+  
+  .search-input {
+    width: 60%;
+    max-width: 600px;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 9999px; /* full pill shape */
+    font-size: 1.25rem;
+    outline: none;
+    background: #181818; /* dark Spotify bg */
+    color: white;
+    box-shadow: 0 0 0 2px transparent;
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+  }
+  
+  .search-input:focus {
+    background: #222;
+    box-shadow: 0 0 0 2px gold; /* Gold glow */
+  }
+  
+  .search-button {
+    margin-left: -80px; /* overlap end of pill */
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 9999px;
+    background: gold;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .search-button:hover {
+    background: goldenrod;
+  }
+  
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .result-card {
+    background: #181818;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  
+  .result-card:hover {
+    background: #222;
+    transform: scale(1.05);
+  }
+  
+  .result-cover {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* perfect square */
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .result-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+  }
+  
+  .result-artist {
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+  

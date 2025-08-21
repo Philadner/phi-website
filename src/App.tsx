@@ -11,6 +11,7 @@ import YTRedirect from './pages/YTRedirect';
 import Floop from './pages/Floop';
 import Append from './pages/append';
 import Changelog from './pages/Changelog';
+import AlbumDetail from './pages/AlbumDetail';
 import './App.css';
 
 
@@ -49,7 +50,7 @@ function App() {
       <header>
         <Link to="/" className="logo">phi(l)</Link>
         <nav>
-          <Link to="/about">About</Link>
+          <Link to="/musicpl">Music Player</Link>
           <Link to="/quickl">Quick links</Link>
           <Link to="/changelog">Changelog</Link>
           <Link to="/chatroom">Chatroom</Link>
@@ -69,6 +70,8 @@ function App() {
           <Route path="/yt" element={<YTRedirect />} />
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
+          <Route path="/musicpl/:id" element={<AlbumDetail />} />
+
         </Routes>
       )}
     </div>
