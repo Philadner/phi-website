@@ -9,27 +9,28 @@ function About() {
     let y = pos.y;
     let vx = vel.vx;
     let vy = vel.vy;
-
+  
     const interval = setInterval(() => {
-      const img = document.getElementById("bouncyImg");
+      const img = document.getElementById("bouncyImg") as HTMLImageElement | null;
       if (!img) return;
-
+  
       const maxX = window.innerWidth - img.width;
       const maxY = window.innerHeight - img.height;
-
+  
       x += vx;
       y += vy;
-
+  
       if (x <= 0 || x >= maxX) vx *= -1;
       if (y <= 0 || y >= maxY) vy *= -1;
-
+  
       setPos({ x, y });
       setVel({ vx, vy });
     }, 16); // ~60fps
-
+  
     // Stop after 10 seconds
     setTimeout(() => clearInterval(interval), 10000);
   };
+  
 
   return (
     <main id="main-site" style={{ textAlign: "center" }}>
