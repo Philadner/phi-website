@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import '../stylesheets/QuickLinks.css';
 
 interface QuickLinksProps {
   initialShowGame?: boolean;

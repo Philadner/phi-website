@@ -12,6 +12,7 @@ import Floop from './pages/Floop';
 import Append from './pages/append';
 import Changelog from './pages/Changelog';
 import AlbumDetail from './pages/AlbumDetail';
+import Sex from './pages/jacobpage';
 import './App.css';
 
 
@@ -71,6 +72,7 @@ function App() {
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/musicpl/:id" element={<AlbumDetail />} />
+          <Route path="/jacob" element={<Sex />} />
 
         </Routes>
       )}
