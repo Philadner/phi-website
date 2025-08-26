@@ -11,6 +11,14 @@ function About() {
 
         {/* Add more changelog entries here */}
         
+        <h2 className="HeadingBigLeft">The New hamburger menu</h2>
+
+        <p>The top navbar was getting a bit cluttered so i made a new hamburger menu</p>
+        <p>This website is now 10% epicer</p>
+        <p>ok bye pookies</p>
+
+        <div className='BigSpaceDiv'></div>
+
         <h2 className="HeadingBigLeft">The revamped music player!</h2>
         <p>The music player has gotten a massive facelift.</p>
         <p>Made it look better with seperate pages for each item</p>
