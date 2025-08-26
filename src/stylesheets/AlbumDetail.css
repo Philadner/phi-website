@@ -1,0 +1,100 @@
+
+.AlbumTitle {
+    font-size: 3rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.25rem;
+    text-align: center;
+
+}
+
+.AlbumCover {
+    display: block;                 
+    margin: 0 auto 1rem auto;       
+    border-radius: 10px;            
+    width: 250px;                   
+    height: 250px;                  
+    object-fit: cover;              
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); /* default glow */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+  
+.AlbumCover:hover {
+    transform: scale(1.05); /* pop out a bit */
+    box-shadow: 0 0 35px rgba(255, 215, 0, 1); /* stronger golden glow */
+}
+
+.AlbumPage {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    color: white;
+}
+  
+.BackLink {
+    color: #ffd700; /* gold */
+    text-decoration: none;
+}
+
+.BackLink:hover {
+    text-decoration: underline;
+}
+
+.AlbumHeader {
+    margin: 1.5rem 0 2rem;
+    text-align: center;
+}
+
+.TrackInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+}
+
+.AlbumArtist {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 1rem;
+}
+
+.Tracklist {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.TrackRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #181818;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.TrackRow:hover {
+    background: #222;
+}
+
+.TrackIndex {
+    color: #ffd700; /* gold index */
+    margin-right: 0.5rem;
+    font-weight: bold;
+    width: 2rem;
+}
+
+.TrackName {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+}
+
+.TrackAudio {
+    width: 150px;
+}

@@ -3,3 +3,10 @@
 html, body {
     overflow-y: auto;
   }
+
+  p {
+    text-align: left;
+    font-family: "Helvetica", sans-serif;
+    font-size: 20px;
+  }
+  
