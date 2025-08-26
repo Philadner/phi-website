@@ -200,20 +200,17 @@ body.loaded {
 }
 
 /* Header + Nav */
-header {
+header.site-header {
   display: flex;
-  width: 100%;
-  max-width: none;
-  justify-content: space-between;
   align-items: center;
-  
-  padding: 1rem 2rem; /* ✅ top/bottom = 1rem, left/right = 2rem */
-  background-color: #0d0d0d;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1rem;
+  background: #0d0d0d;
+  border-bottom: 1px solid rgba(255,255,255,.1);
   position: sticky;
   top: 0;
   z-index: 100;
 }
+
 
 .logo {
   font-size: 1.8rem;
@@ -270,4 +267,148 @@ nav a:hover::after {
   display:flex;
   flex-direction: column;
   flex-grow: 1;
+}
+
+/* Right-side drawer */
+/* Desktop sidebar width */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(280px, 85vw);
+  height: 100vh;
+  background: rgba(20,20,24,0.95);
+  backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(255,255,255,.1);
+  transform: translateX(100%);
+  transition: transform 220ms ease;
+  z-index: 1200;
+  padding: 14px;
+}
+
+.sidebar.open { transform: translateX(0); }
+
+/* Mobile: take whole screen */
+@media (max-width: 900px) {
+  .sidebar { width: 100vw; }
+}
+
+/* Let the inner <a> become direct flex children so GAP works */
+.sidebar-nav .sidebar-mobile-only {
+  display: contents;
+}
+
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: gold;
+  font-weight: bold;
+}
+.close-btn {
+  background: none;
+  border: none;
+  color: gold;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;  /* stack vertically */
+  gap: 14px;               /* spacing between items */
+}
+
+.sidebar-nav a {
+  display: block;          /* make each link full-width block */
+  color: gold;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sidebar-nav a:hover {
+  color: darkgoldenrod;
+}
+
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1100;
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/* Top nav for desktop */
+.topnav {
+  display: flex;
+  gap: 18px;
+  margin-left: auto;
+}
+.topnav a { white-space: nowrap; }
+
+
+/* Hamburger hidden by default */
+/* Always show ☰ */
+.menu-btn {
+  display: inline-flex;
+  margin-left: auto;
+  font-size: 22px;
+  background: none;
+  border: none;
+  color: gold;
+  cursor: pointer;
+}
+
+/* REPLACE your existing .menu-btn rule with this */
+.menu-btn {
+  position: static;     /* was absolute → caused overlap */
+  margin-left: 12px;
+  font-size: 20px;
+  background: none;
+  border: none;
+  color: gold;
+  cursor: pointer;
+}
+
+@media (min-width: 901px) {
+  .topnav { display: flex; gap: 18px; }
+  .sidebar-mobile-only { display: none; }  /* don’t duplicate links */
+}
+
+/* --- MOBILE RULES --- */
+@media (max-width: 900px) {
+  .topnav { display: none; } /* hide the row of links */
+  .sidebar-mobile-only { 
+    display: block;
+  }    
+  .menu-btn {
+    display: inline-flex;        /* show ☰ */
+    margin-left: auto;           /* push to right side */
+    font-size: 22px;
+    background: none;
+    border: none;
+    color: gold;
+    cursor: pointer;
+  }
+}
+
+.body--lock { overflow: hidden !important; }
+
+/* Mobile-only links visibility */
+@media (min-width: 901px) {
+  .sidebar-mobile-only { display: none !important; }  /* hide on desktop */
+}
+
+@media (max-width: 900px) {
+  .sidebar-mobile-only { display: contents; }
 }
