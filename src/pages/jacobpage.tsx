@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function About() {
+function jACOB() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [vel, setVel] = useState({ vx: 5, vy: 7 });
 
@@ -54,4 +54,4 @@ function About() {
   );
 }
 
-export default About;
+export default jACOB;

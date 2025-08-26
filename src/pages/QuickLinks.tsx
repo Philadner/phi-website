@@ -65,7 +65,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
 
   if (showGame) {
     return (
-      <main id="main-site" className="GamePage">
+      <main id="main-site" className="GamePage quicklinks">
         <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }} key={currentGame}>
           <object
             key={currentGame}
@@ -154,7 +154,7 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
   }
 
   return (
-    <main id="main-site">
+    <main id="main-site" className="quicklinks">
       <h1 className="CenterTitle">Quick links</h1>
 
       <h2 className="HeadingLeft">Research & Homework Help</h2>
