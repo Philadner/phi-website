@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -7,7 +7,6 @@ import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
 import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
-import YTRedirect from './pages/YTRedirect';
 import Floop from './pages/Floop';
 import Append from './pages/append';
 import Changelog from './pages/Changelog';
@@ -100,7 +99,7 @@ function App() {
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
-          <Route path="/yt" element={<YTRedirect />} />
+          <Route path="/yt" element={<Navigate to="https://www.youtube.com/@phil82." replace />} />
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/musicpl/:id" element={<AlbumDetail />} />
