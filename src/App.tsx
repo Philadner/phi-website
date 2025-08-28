@@ -38,6 +38,10 @@ function App() {
     return () => document.body.classList.remove('body--lock');
   }, [sideOpen]);
 
+const ExternalRedirect = ({ url }: { url: string }) => {
+  window.location.href = url;
+  return null;
+};
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
@@ -99,7 +103,7 @@ function App() {
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
-          <Route path="/yt" element={<Navigate to="https://www.youtube.com/@phil82." replace />} />
+          <Route path="/yt" element={<ExternalRedirect url="https://www.youtube.com/@phil82" />} />
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/musicpl/:id" element={<AlbumDetail />} />
