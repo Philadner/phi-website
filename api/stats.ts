@@ -49,32 +49,37 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     // --- GitHub: latest commit on labs (optional, must be labs)
     let lastCommitMessage: string | null = null;
     let lastCommitAt: string | null = null;
-    const branch = "labs";
+    const branch = process.env.GITHUB_BRANCH || "labs";
+    let githubError: string | null = null;
 
     if (GITHUB_REPO) {
-      // Hit the branches endpoint directly to guarantee we read from 'labs'
-      const gRes = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`,
-        { headers: githubHeaders(GITHUB_TOKEN) }
-      );
-      if (!gRes.ok) {
+      // Try branches endpoint first
+      const branchUrl = `https://api.github.com/repos/${GITHUB_REPO}/branches/${encodeURIComponent(branch)}`;
+      let gRes = await fetch(branchUrl, { headers: githubHeaders(GITHUB_TOKEN) });
+      if (gRes.ok) {
+        const gh = await gRes.json();
+        const commit = gh?.commit?.commit;
+        if (commit) {
+          lastCommitMessage = commit.message ?? null;
+          lastCommitAt = commit?.committer?.date ?? commit?.author?.date ?? null;
+        }
+      } else {
         const txt = await gRes.text();
-        // Still return JSON, just include the error
-        return res.status(200).json({
-          deploymentsToday,
-          lastDeploymentAt: lastReady ? new Date(lastReady.createdAt).toISOString() : null,
-          lastDeploymentUrl: lastReady?.url ?? null,
-          lastCommitMessage, lastCommitAt, branch,
-          now: new Date().toISOString(),
-          githubError: `GitHub API ${gRes.status}: ${txt.slice(0,200)}`
-        });
-      }
-      const gh = await gRes.json();
-      // Branch payload includes latest commit details under gh.commit.commit
-      const commit = gh?.commit?.commit;
-      if (commit) {
-        lastCommitMessage = commit.message ?? null;
-        lastCommitAt = commit?.committer?.date ?? commit?.author?.date ?? null;
+        githubError = `Branches API ${gRes.status}: ${txt.slice(0,200)}`;
+        // Fallback: commits endpoint filtered to this branch (still 'labs', not main)
+        const commitsUrl = `https://api.github.com/repos/${GITHUB_REPO}/commits?sha=${encodeURIComponent(branch)}&per_page=1`;
+        gRes = await fetch(commitsUrl, { headers: githubHeaders(GITHUB_TOKEN) });
+        if (gRes.ok) {
+          const gh = await gRes.json();
+          if (Array.isArray(gh) && gh[0]) {
+            lastCommitMessage = gh[0].commit?.message ?? null;
+            lastCommitAt = gh[0].commit?.committer?.date ?? gh[0].commit?.author?.date ?? null;
+            // Keep previous githubError for visibility but still return data
+          }
+        } else {
+          const txt2 = await gRes.text();
+          githubError += ` | Commits API ${gRes.status}: ${txt2.slice(0,200)}`;
+        }
       }
     }
 
@@ -84,6 +89,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       lastDeploymentUrl: lastReady?.url ?? null,
       lastCommitMessage, lastCommitAt, branch,
       now: new Date().toISOString(),
+      githubError: githubError ?? undefined,
     });
   } catch (e:any) {
     console.error("stats error:", e);
