@@ -11,6 +11,13 @@ function About() {
 
         {/* Add more changelog entries here */}
 
+        <h2 className="HeadingBigLeft">fIXED eVERYTHIMG</h2>
+        <p>Yeah i hadn't been looking at the actual main website much </p>
+        <p>Almost everything that you cant see was broken</p>
+        <p>so check it all phi.me.uk/workinhardorhardlyworkin</p>
+
+        <div className='BigSpaceDiv'></div>
+
         <h2 className="HeadingBigLeft">Workin hard or hardly workin?</h2>
         <p>A sidebar has been added because the top menu was getting hella cramped on mobile</p>
         <p>Good news! there is a new flashy thing in the sidebar (i had much fun making it)</p>
