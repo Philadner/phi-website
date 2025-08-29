@@ -23,6 +23,27 @@ function timeAgo(iso?: string | null) {
   return `${days}d ago`;
 }
 
+// Normalize API response to the old Stats shape
+function adapt(raw: any): Stats {
+  const vercel = raw?.vercel ?? {};
+  const github = raw?.github ?? {};
+  return {
+    deploymentsToday:
+      raw?.deploymentsToday ?? vercel?.deploymentsToday ?? 0,
+    lastDeploymentAt:
+      raw?.lastDeploymentAt ?? vercel?.lastDeploymentAt ?? null,
+    lastDeploymentUrl:
+      raw?.lastDeploymentUrl ?? vercel?.lastDeploymentUrl ?? null,
+    lastCommitMessage:
+      raw?.lastCommitMessage ?? github?.lastCommitMessage ?? null,
+    lastCommitAt:
+      raw?.lastCommitAt ?? github?.lastCommitAt ?? null,
+    branch:
+      raw?.branch ?? github?.branch ?? "labs",
+    now: raw?.now ?? new Date().toISOString(),
+  };
+}
+
 export default function Stats() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -31,43 +52,62 @@ export default function Stats() {
     let alive = true;
     fetch("/api/stats")
       .then(r => r.json())
-      .then(j => { if (alive) setStats(j); })
+      .then(j => { if (alive) setStats(adapt(j)); })
       .catch(e => setErr(String(e)));
     return () => { alive = false; };
   }, []);
 
-  const workMode = typeof window !== 'undefined' && localStorage.getItem("workMode") === "1";
+  const workMode =
+    typeof window !== "undefined" && localStorage.getItem("workMode") === "1";
 
   const verdict = useMemo(() => {
     if (!stats) return "…";
-    const recentCommit = stats.lastCommitAt ? (Date.now() - new Date(stats.lastCommitAt).getTime()) < 24*60*60*1000 : false;
-    const active = (stats.deploymentsToday ?? 0) > 0 || recentCommit || workMode;
+    const recentCommit = stats.lastCommitAt
+      ? Date.now() - new Date(stats.lastCommitAt).getTime() < 24 * 60 * 60 * 1000
+      : false;
+    const active =
+      (stats.deploymentsToday ?? 0) > 0 || recentCommit || workMode;
     return active ? "WORKIN' HARD" : "HARDLY WORKIN'?";
   }, [stats, workMode]);
 
+  const vercelUrlText =
+    stats?.lastDeploymentUrl
+      ? (stats.lastDeploymentUrl.startsWith("http")
+          ? stats.lastDeploymentUrl
+          : `https://${stats.lastDeploymentUrl}`)
+      : "";
+
   return (
-    <main id="main-site" style={{display:"grid", gap:"12px"}}>
+    <main id="main-site" style={{ display: "grid", gap: "12px" }}>
       <div className="gameshow-banner">
         <span className="gameshow-text">PHIL IS IN FACT</span>
         <span className="gameshow-divider">(drumroll please)</span>
         <span className="gameshow-text">{verdict}</span>
-        <small style={{opacity:.8}}>
+        <small style={{ opacity: 0.8 }}>
           {workMode ? "Work Mode override is ON" : "Based on deploys + commits in last 24h"}
         </small>
       </div>
 
-      {err && <p style={{color:"tomato"}}>Failed to load stats: {err}</p>}
+      {err && <p style={{ color: "tomato" }}>Failed to load stats: {err}</p>}
 
-      <section style={{display:"grid", gap:"8px"}}>
+      <section style={{ display: "grid", gap: "8px" }}>
         <StatCard label="Deploys today" value={stats?.deploymentsToday ?? "—"} />
-        <StatCard label="Last deploy" value={timeAgo(stats?.lastDeploymentAt)} sub={stats?.lastDeploymentUrl ? `vercel.app/${stats.lastDeploymentUrl}` : ""} />
-        <StatCard label={`Last commit (${stats?.branch ?? "labs"})`} value={stats?.lastCommitMessage ?? "—"} sub={timeAgo(stats?.lastCommitAt)} />
+        <StatCard
+          label="Last deploy"
+          value={timeAgo(stats?.lastDeploymentAt)}
+          sub={vercelUrlText}
+        />
+        <StatCard
+          label={`Last commit (${stats?.branch ?? "labs"})`}
+          value={stats?.lastCommitMessage ?? "—"}
+          sub={timeAgo(stats?.lastCommitAt)}
+        />
       </section>
     </main>
   );
 }
 
-function StatCard({label, value, sub}:{label:string; value:any; sub?:string}) {
+function StatCard({ label, value, sub }: { label: string; value: any; sub?: string }) {
   return (
     <div className="statcard">
       <div className="statlabel">{label}</div>
