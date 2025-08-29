@@ -48,8 +48,8 @@ export default function Stats() {
   return (
     <main id="main-site" style={{display:"grid", gap:"12px"}}>
       <div className="gameshow-banner">
-        <span className="gameshow-text">WORKIN' HARD</span>
-        <span className="gameshow-divider">or</span>
+        <span className="gameshow-text">PHIL IS IN FACT</span>
+        <span className="gameshow-divider">(drumroll please)</span>
         <span className="gameshow-text">{verdict}</span>
         <small style={{opacity:.8}}>
           {workMode ? "Work Mode override is ON" : "Based on deploys + commits in last 24h"}

@@ -4,6 +4,14 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 const authHeader = (bearer?: string): Record<string, string> =>
   bearer ? { Authorization: `Bearer ${bearer}` } : {};
 
+// GitHub prefers PATs sent as `token <PAT>`; also include modern headers
+const githubHeaders = (token?: string): Record<string, string> => ({
+  ...(token ? { Authorization: `token ${token}` } : {}),
+  "User-Agent": "phi-stats",
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+});
+
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
     const VERCEL_TOKEN  = process.env.VERCEL_TOKEN;
@@ -38,15 +46,16 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     ).length;
     const lastReady = deployments.find((d:any) => d.state === "READY");
 
-    // --- GitHub: latest commit on labs (optional)
+    // --- GitHub: latest commit on labs (optional, must be labs)
     let lastCommitMessage: string | null = null;
     let lastCommitAt: string | null = null;
     const branch = "labs";
 
     if (GITHUB_REPO) {
+      // Hit the branches endpoint directly to guarantee we read from 'labs'
       const gRes = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/commits?sha=${branch}&per_page=1`,
-        { headers: { ...authHeader(GITHUB_TOKEN), "User-Agent": "phi-stats" } }
+        `https://api.github.com/repos/${GITHUB_REPO}/branches/${branch}`,
+        { headers: githubHeaders(GITHUB_TOKEN) }
       );
       if (!gRes.ok) {
         const txt = await gRes.text();
@@ -61,9 +70,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         });
       }
       const gh = await gRes.json();
-      if (Array.isArray(gh) && gh[0]) {
-        lastCommitMessage = gh[0].commit?.message ?? null;
-        lastCommitAt = gh[0].commit?.committer?.date ?? gh[0].commit?.author?.date ?? null;
+      // Branch payload includes latest commit details under gh.commit.commit
+      const commit = gh?.commit?.commit;
+      if (commit) {
+        lastCommitMessage = commit.message ?? null;
+        lastCommitAt = commit?.committer?.date ?? commit?.author?.date ?? null;
       }
     }
 
