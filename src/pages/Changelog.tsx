@@ -12,7 +12,7 @@ function About() {
         {/* Add more changelog entries here */}
 
         <h2 className="HeadingBigLeft">Workin hard or hardly workin?</h2>
-
+        <p>A sidebar has been added because the top menu was getting hella cramped on mobile</p>
         <p>Good news! there is a new flashy thing in the sidebar (i had much fun making it)</p>
         <p>when you click it you're taken to a page where you can see how feverishly im updating the labs.phi.me.uk site</p>
         <p>by the way i made the youtube redirect quicker. i was bored.</p>
