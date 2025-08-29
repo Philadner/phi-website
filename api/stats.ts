@@ -21,7 +21,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
 
     // --- Vercel: deployments
     const vRes = await fetch(
-      `https://api.vercel.com/v13/deployments?app=${encodeURIComponent(VERCEL_PROJECT!)}&limit=20`,
+      `https://api.vercel.com/v6/deployments?app=${encodeURIComponent(VERCEL_PROJECT!)}&limit=20`,
       { headers: authHeader(VERCEL_TOKEN!) }
     );
     if (!vRes.ok) {
