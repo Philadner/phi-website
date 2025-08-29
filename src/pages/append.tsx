@@ -140,7 +140,7 @@ const Append: React.FC = () => {
 
       // ---- SUCCESS PATH ----
       // clear input (controlled state)
-      setValue("");
+      setValue(""); 
 
       // force a visible pop: reset then bump next frame
       pop.current = 1;
