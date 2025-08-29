@@ -83,7 +83,10 @@ const navigate = useNavigate();
             className="gameshow-banner"
             role="button"
             tabIndex={0}
-            onClick={() => navigate("/workinhardorhardlyworkin")}
+            onClick={() => {
+              navigate("/workinhardorhardlyworkin");
+              }
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 navigate("/workinhardorhardlyworkin");
@@ -114,6 +117,7 @@ const navigate = useNavigate();
       />
 
       {loaded && (
+        
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -122,7 +126,6 @@ const navigate = useNavigate();
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
-          <Route path="/yt" element={<ExternalRedirect url="https://www.youtube.com/@phil82." />} />
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/musicpl/:id" element={<AlbumDetail />} />
