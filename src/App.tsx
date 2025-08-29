@@ -38,12 +38,6 @@ function App() {
     document.body.classList.toggle('body--lock', sideOpen);
     return () => document.body.classList.remove('body--lock');
   }, [sideOpen]);
-
-const ExternalRedirect = ({ url }: { url: string }) => {
-  window.location.href = url;
-  return null;
-};
-
 const navigate = useNavigate();
   
   return (
