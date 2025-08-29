@@ -94,7 +94,7 @@ const navigate = useNavigate();
           
           
 
-          {/* only visible on mobile */}
+          {/* only visible on mobile test change */}
           <div className="sidebar-mobile-only">
             <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music Player</Link>
             <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
