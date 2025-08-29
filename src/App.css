@@ -284,6 +284,8 @@ nav a:hover::after {
   transition: transform 220ms ease;
   z-index: 1200;
   padding: 14px;
+  overflow: hidden; /* hides the glow outside */
+  
 }
 
 .sidebar.open { transform: translateX(0); }
@@ -412,3 +414,79 @@ nav a:hover::after {
 @media (max-width: 900px) {
   .sidebar-mobile-only { display: contents; }
 }
+
+/* WORKIN HARD OR HARDLY WORKIN? */
+.gameshow-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #ff0080, #ff8c00, #40e0d0);
+  background-size: 300% 300%;
+  animation: gradientShift 6s ease infinite;
+  animation: gradientShift 6s ease infinite, glowPulse 2s ease-in-out infinite;
+
+  padding: 16px;
+  border-radius: 16px;
+  position: relative;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.gameshow-banner:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+  transition: all 0.15s ease;
+}
+
+.gameshow-text,
+.gameshow-divider {
+  flex: 0 0 auto;   /* don't let flex shrink them */
+  width: 100%;
+}
+
+.gameshow-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.7rem;
+  color: white;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000;
+}
+
+.gameshow-divider {
+  font-family: 'Comic Neue';
+  font-weight: 400;
+  font-style: normal;
+  font-size:1.5rem;
+  color: yellow;
+  text-shadow: 
+  0 0 2px #000,
+  2px 2px 0 #000,
+ -2px -2px 0 #000;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 128, 0.7); }
+  50% { box-shadow: 0 0 40px rgba(255, 255, 0, 0.9); }
+}
+
+
+/*stats */
+
+.statcard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 12px;
+  backdrop-filter: blur(6px);
+}
+.statlabel { opacity: .8; font-size: .85rem; }
+.statvalue { font-weight: 700; margin-top: 2px; }
+.statsub { opacity: .7; font-size: .85rem; margin-top: 2px; }
+

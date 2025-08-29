@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link,} from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -7,12 +8,12 @@ import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
 import MusicPlayer from './pages/MusicPlayer';
 import Chatroom from './pages/Chatroom';
-import YTRedirect from './pages/YTRedirect';
 import Floop from './pages/Floop';
 import Append from './pages/append';
 import Changelog from './pages/Changelog';
 import AlbumDetail from './pages/AlbumDetail';
 import Sex from './pages/jacobpage';
+import Stats from './pages/stats';
 import './App.css';
 
 function Loader() {
@@ -24,7 +25,6 @@ function Loader() {
     </div>
   );
 }
-
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
@@ -38,7 +38,7 @@ function App() {
     document.body.classList.toggle('body--lock', sideOpen);
     return () => document.body.classList.remove('body--lock');
   }, [sideOpen]);
-
+const navigate = useNavigate();
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
@@ -52,6 +52,7 @@ function App() {
           <Link to="/quickl">Quick links</Link>
           <Link to="/chatroom">Chatroom</Link>
           <Link to="/add">Add</Link>
+
         </nav>
 
         {/* sits at the far right, no overlap */}
@@ -72,6 +73,24 @@ function App() {
           <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
           <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
+          <div
+            className="gameshow-banner"
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              navigate("/workinhardorhardlyworkin");
+              }
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                navigate("/workinhardorhardlyworkin");
+              }
+            }}
+          >
+            <span className="gameshow-text">Workin' hard</span>
+            <span className="gameshow-divider">or</span>
+            <span className="gameshow-text">Hardly workin'?</span>
+          </div>
           
           
 
@@ -92,6 +111,7 @@ function App() {
       />
 
       {loaded && (
+        
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -100,11 +120,13 @@ function App() {
           <Route path="/musicpl" element={<MusicPlayer />} />
           <Route path="/chatroom" element={<Chatroom />} />
           <Route path="/floop" element={<Floop />} />
-          <Route path="/yt" element={<YTRedirect />} />
           <Route path="/add" element={<Append />} />
           <Route path="/changelog" element={<Changelog />} />
           <Route path="/musicpl/:id" element={<AlbumDetail />} />
           <Route path="/jacob" element={<Sex />} />
+          <Route path="/stats" element={<Stats />} />
+          <Route path="/workinhardorhardlyworkin" element={<Stats />} />
+
         </Routes>
       )}
     </div>
