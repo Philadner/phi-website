@@ -80,8 +80,8 @@ function QuickLinks({ initialShowGame = false, forcegame = false }: QuickLinksPr
           </div>
         </div>
         <div className="SpaceDiv"></div>
-        <div className="pp-card">
-          <h3 className="pp-card__headernomargin" onClick={() => setShowGameMenu(!showGameMenu)}>
+        <div className="pp-card" onClick={() => setShowGameMenu(!showGameMenu)}>
+          <h3 className="pp-card__headernomargin">
             {showGameMenu ? "HIDE" : "SHOW"} GAME MENU AND PANIC SITES
             <span className="DropdownArrow">{showGameMenu ? "▲" : "▼"}</span>
           </h3>
