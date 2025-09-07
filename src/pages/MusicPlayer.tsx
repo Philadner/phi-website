@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "../stylesheets/MusicPlayer.css";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 // --- Types ---
 interface ArchiveItem {
@@ -56,7 +57,10 @@ function isAudioFile(f: FileEntry) {
   return [".mp3", ".ogg", ".oga", ".flac", ".wav", ".aif", ".aiff", ".m4a"].some((ext) =>
     name.endsWith(ext)
   );
+
 }
+
+
 
 // concurrency limiter
 async function pMap<T, R>(
@@ -78,15 +82,23 @@ async function pMap<T, R>(
   return ret;
 }
 
+// Simple in-memory cache for search results keyed by q|p
+type Cached = { results: ArchiveItem[]; numFound: number; ts: number };
+const searchCache = new Map<string, Cached>();
+const CACHE_TTL_MS = 60_000; // 1 minute is plenty; bump if you like
+
 // --- Component ---
 export default function ArchiveMusicSearch() {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const location = useLocation(); // place near top of your component
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ArchiveItem[]>([]);
   const [numFound, setNumFound] = useState(0);
-
+  const urlQ = (searchParams.get("q") || "").trim();
+  const urlP = Math.max(1, Number(searchParams.get("p") || 1));
+  const [query, setQuery] = useState(urlQ);
+  const [page, setPage] = useState(urlP);
   const [fileMap, setFileMap] = useState<
     Record<string, FileEntry[] | "loading" | "error" | undefined>
   >({});
@@ -95,47 +107,100 @@ export default function ArchiveMusicSearch() {
 
   const canPrev = page > 1;
   const canNext = page * PAGE_SIZE < numFound;
+  const [hasFetched, setHasFetched] = useState(false);
+
+  // Run search and update cache
+  const runSearch = useCallback(
+  async (q: string, p: number, { skipCacheWrite = false }: { skipCacheWrite?: boolean } = {}) => {
+    setLoading(true);
+    setError(null);
+    controllerRef.current?.abort();
+    const ac = new AbortController();
+    controllerRef.current = ac;
+    try {
+      const url = buildQuery(q) + String(p) + "&output=json";
+      const res = await fetch(url, { signal: ac.signal });
+      if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+      const data = await res.json();
+      const docs: ArchiveItem[] = data?.response?.docs || [];
+      const found = data?.response?.numFound || 0;
+
+      // update UI
+      setResults(docs);
+      setNumFound(found);
+
+      // write-through cache (unless asked not to)
+      if (!skipCacheWrite) {
+        const key = `${q}|${p}`;
+        searchCache.set(key, { results: docs, numFound: found, ts: Date.now() });
+      }
+    } catch (e: any) {
+      if (e.name !== "AbortError") setError(e?.message || "Search failed");
+    } finally {
+      setLoading(false);
+      setHasFetched(true);
+    }
+  },
+  []
+);
+
 
   const search = useCallback(
-    async (resetPage = false) => {
-      if (resetPage) setPage(1);
-      const searchPage = resetPage ? 1 : page;
-      setLoading(true);
-      setError(null);
-      controllerRef.current?.abort();
-      const ac = new AbortController();
-      controllerRef.current = ac;
-      try {
-        const url = buildQuery(query) + String(searchPage) + "&output=json";
-        const res = await fetch(url, { signal: ac.signal });
-        if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-        const data = await res.json();
-        const docs: ArchiveItem[] = data?.response?.docs || [];
-        setResults(docs);
-        setNumFound(data?.response?.numFound || 0);
-      } catch (e: any) {
-        if (e.name !== "AbortError") setError(e?.message || "Search failed");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [page, query]
-  );
+  async (resetPage = false) => {
+    const effectivePage = resetPage ? 1 : page;
+    const nextQ = query.trim();
+    const currQ = (searchParams.get("q") || "").trim();
+    const currP = Math.max(1, Number(searchParams.get("p") || 1));
 
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setNumFound(0);
-      return;
+    // Only push to URL if something actually changed (prevents loops)
+    if (currQ !== nextQ || currP !== effectivePage) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("q", nextQ);
+      nextParams.set("p", String(effectivePage));
+      setSearchParams(nextParams, { replace: true });
     }
-    search(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+
+    // Fetch using the explicit values
+    await runSearch(nextQ, effectivePage);
+  },
+  [page, query, searchParams, setSearchParams, runSearch]
+);
 
   const onSubmit = useCallback(() => {
     if (!query.trim()) return;
+    // reset page to 1 and perform search
+    setPage(1);
+    // search(true) will also push ?q=&p=1 to the URL
     search(true);
   }, [query, search]);
+
+useEffect(() => {
+  setQuery(urlQ);
+  setPage(urlP);
+
+  if (!urlQ) {
+    // No query — don't flash "no results"
+    setHasFetched(false);
+    return;
+  }
+
+  const key = `${urlQ}|${urlP}`;
+  const cached = searchCache.get(key);
+  const fresh = cached && Date.now() - cached.ts < CACHE_TTL_MS;
+
+  if (fresh) {
+    // Instant paint from cache (no flicker)
+    setResults(cached.results);
+    setNumFound(cached.numFound);
+    setHasFetched(true);
+    // Optionally refresh quietly in background (keeps UX snappy)
+    runSearch(urlQ, urlP, { skipCacheWrite: false });
+  } else {
+    // No fresh cache — do a normal fetch
+    runSearch(urlQ, urlP);
+  }
+}, [urlQ, urlP, runSearch]);
+
 
   //const fetchFiles = useCallback(
   //  async (id: string) => {
@@ -170,6 +235,13 @@ export default function ArchiveMusicSearch() {
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(numFound / PAGE_SIZE)), [numFound]);
 
+  useEffect(() => {
+  if (typeof location.state?.restoreScroll === "number") {
+    const y = location.state.restoreScroll;
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
+}, [location.state?.restoreScroll]);
+
   return (
     <div className="max-w-5xl mx-auto p-4">
       <div className="SpaceDiv"></div>
@@ -191,18 +263,17 @@ export default function ArchiveMusicSearch() {
           Search
         </button>
       </div>
-
+      
+      {/* Info + controls */}
       {/* Info + controls */}
       {query && (
         <div className="flex items-center justify-between mb-2 text-sm">
           <div>
             {loading ? "Searching…" : error ? (
               <span className="text-red-600">{error}</span>
-            ) : (
-              <>
-                Found {numFound.toLocaleString()} results • Page {page} / {totalPages}
-              </>
-            )}
+            ) : hasFetched ? (
+              <>Found {numFound.toLocaleString()} results • Page {page} / {totalPages}</>
+            ) : null}
           </div>
           <div className="flex gap-2">
             <button
@@ -234,7 +305,15 @@ export default function ArchiveMusicSearch() {
       <div className="results-grid">
         {results.map((item) => (
           <div key={item.identifier} className="result-card">
-            <Link to={`/musicpl/${item.identifier}`}>
+            
+          <Link
+            to={`/musicpl/${item.identifier}`}
+            state={{
+              backgroundLocation: location,
+              savedScrollY: window.scrollY,
+              savedDocH: document.documentElement.scrollHeight, // NEW
+            }}
+          >
               <img
                 src={serviceThumb(item.identifier)}
                 alt={item.title}
@@ -245,13 +324,12 @@ export default function ArchiveMusicSearch() {
             </Link>
           </div>
         ))}
-      </div>
-
-      {!loading && !results.length && query && !error && (
+        {hasFetched && !loading && !results.length && query && !error && (
         <div className="opacity-70 text-sm mt-4">
           No results. Try a broader search or different keywords.
         </div>
       )}
+      </div>
     </div>
   );
 }

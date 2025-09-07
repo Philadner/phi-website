@@ -11,6 +11,14 @@ function About() {
 
         {/* Add more changelog entries here */}
 
+        <h2 className="HeadingBigLeft">aura music player</h2>
+        <p>The music player now has many fancy effects.</p>
+        <p>Stuff blurs, stuff, slides in, </p>
+        <p>and stuff also kinda jumps around glitchily sometimes :(</p>
+
+
+        <div className='BigSpaceDiv'></div>
+
         <h2 className="HeadingBigLeft">fIXED eVERYTHIMG</h2>
         <p>Yeah i hadn't been looking at the actual main website much </p>
         <p>Almost everything that you cant see was broken</p>

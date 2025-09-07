@@ -14,6 +14,7 @@ import Changelog from './pages/Changelog';
 import AlbumDetail from './pages/AlbumDetail';
 import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
+import MusicPLRouter from './pages/MusicPLRouter';
 import './App.css';
 
 function Loader() {
@@ -111,23 +112,23 @@ const navigate = useNavigate();
       />
 
       {loaded && (
-        
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/quickl" element={<QuickLinks />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/musicpl" element={<MusicPlayer />} />
-          <Route path="/chatroom" element={<Chatroom />} />
-          <Route path="/floop" element={<Floop />} />
-          <Route path="/add" element={<Append />} />
-          <Route path="/changelog" element={<Changelog />} />
-          <Route path="/musicpl/:id" element={<AlbumDetail />} />
-          <Route path="/jacob" element={<Sex />} />
-          <Route path="/stats" element={<Stats />} />
-          <Route path="/workinhardorhardlyworkin" element={<Stats />} />
+        <>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/quickl" element={<QuickLinks />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/chatroom" element={<Chatroom />} />
+            <Route path="/floop" element={<Floop />} />
+            <Route path="/add" element={<Append />} />
+            <Route path="/changelog" element={<Changelog />} />
+            <Route path="/jacob" element={<Sex />} />
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/workinhardorhardlyworkin" element={<Stats />} />
 
-        </Routes>
+          </Routes>
+          <MusicPLRouter />
+        </>
       )}
     </div>
   );
