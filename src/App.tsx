@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Link,} from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +27,7 @@ function Loader() {
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
@@ -37,26 +38,106 @@ function App() {
     document.body.classList.toggle('body--lock', sideOpen);
     return () => document.body.classList.remove('body--lock');
   }, [sideOpen]);
-const navigate = useNavigate();
+  
+    // --- Collapsing titlebar logic (0–50px) ---
+useEffect(() => {
+  const el = headerRef.current;
+  if (!el) return;
+
+  let raf = 0;
+  const hovering = { current: false };
+  const lastYRef = { current: window.scrollY || 0 };
+  const revealUntilRef = { current: 0 }; // timestamp (ms) we remain revealed until
+
+  const clamp = (n: number, a = 0, b = 1) => Math.max(a, Math.min(b, n));
+
+  const applyVars = (y: number) => {
+    const now = performance.now();
+    const revealing = hovering.current || now < revealUntilRef.current;
+
+    // collapse progress
+    const p = revealing ? 0 : clamp(y / 50);           // 0->1 over 0..50px
+    const squish = revealing ? 0 : clamp(y / 30);       // 0->1 over 0..30px
+    const fade = revealing ? 0 : clamp((y - 40) / 10);  // 0->1 over 40..50px
+
+    el.style.setProperty('--p', String(p));
+    el.style.setProperty('--squish', String(squish));
+    el.style.setProperty('--fade', String(fade));
+
+    // explicit class for CSS overrides
+    if (revealing) el.classList.add('is-revealed');
+    else el.classList.remove('is-revealed');
+  };
+
+  const onScroll = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const y = window.scrollY || 0;
+      const lastY = lastYRef.current;
+      const delta = y - lastY;
+
+      // If user scrolls UP more than ~6px, reveal for 800ms
+      if (delta < -6) {
+        revealUntilRef.current = performance.now() + 800;
+      }
+      // If user scrolls DOWN > ~3px, cancel reveal immediately
+      if (delta > 3) {
+        revealUntilRef.current = 0;
+      }
+
+      lastYRef.current = y;
+      applyVars(y);
+    });
+  };
+
+  // hover handlers keep it open while hovered
+  const onEnter = () => { hovering.current = true; applyVars(window.scrollY || 0); };
+  const onLeave = () => { hovering.current = false; applyVars(window.scrollY || 0); };
+
+  el.addEventListener('mouseenter', onEnter);
+  el.addEventListener('mouseleave', onLeave);
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // kick once
+  applyVars(window.scrollY || 0);
+
+  return () => {
+    if (raf) cancelAnimationFrame(raf);
+    el.removeEventListener('mouseenter', onEnter);
+    el.removeEventListener('mouseleave', onLeave);
+    window.removeEventListener('scroll', onScroll);
+  };
+}, []);
+
+  
+  const navigate = useNavigate();
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
       {!loaded && <Loader />}
 
-      <header className="site-header">
-        <Link to="/" className="logo">phi(l)</Link>
+      <header ref={headerRef} className="site-header">
+        <div className="site-header__inner">
+          <Link to="/" className="logo titlebar-content">phi(l)</Link>
 
-        <nav className="topnav">
-          <Link to="/musicpl">Music Player</Link>
-          <Link to="/quickl">Quick links</Link>
-          <Link to="/chatroom">Chatroom</Link>
-          <Link to="/add">Add</Link>
+          <nav className="topnav titlebar-content">
+            <Link to="/musicpl">Music Player</Link>
+            <Link to="/quickl">Quick links</Link>
+            <Link to="/chatroom">Chatroom</Link>
+            <Link to="/add">Add</Link>
+          </nav>
 
-        </nav>
-
-        {/* sits at the far right, no overlap */}
-        <button className="menu-btn" onClick={() => setSideOpen(true)} aria-label="Open menu">☰</button>
+          <button
+            className="menu-btn titlebar-content"
+            onClick={() => setSideOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+        </div>
       </header>
+      <div className="header-spacer" />
 
 
       {/* Sidebar */}

@@ -43,6 +43,7 @@ export default function MusicPLRouter() {
 
 return (
   <div style={{ position: "relative", minHeight: "100%", overflow: "visible" }}>
+    <div className="header-spacer" />
     <AnimatePresence mode="wait" initial={false}>
       {isOverlay ? (
         // ---------- OVERLAY BRANCH ----------

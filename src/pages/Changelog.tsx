@@ -11,6 +11,15 @@ function About() {
 
         {/* Add more changelog entries here */}
 
+        <h2 className="HeadingBigLeft">The new Titlebar</h2>
+        <p>It's the titlebar's turn to get a massive facelift</p>
+        <p>It gets big it gets small it is lovely to all</p>
+        <p>For my computer people you can hover on it while it's small to enlarge</p>
+
+
+
+        <div className='BigSpaceDiv'></div>
+
         <h2 className="HeadingBigLeft">aura music player</h2>
         <p>The music player now has many fancy effects.</p>
         <p>Stuff blurs, stuff, slides in, </p>
