@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Link,} from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +13,7 @@ import Changelog from './pages/Changelog';
 import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
+const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import './App.css';
 
 function Loader() {
@@ -152,6 +153,7 @@ useEffect(() => {
           <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
           <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
           <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
+          <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
           <div
             className="gameshow-banner"
@@ -202,6 +204,7 @@ useEffect(() => {
             <Route path="/add" element={<Append />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/jacob" element={<Sex />} />
+            <Route path="/realchangelog" element={<ChangelogCommits />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/workinhardorhardlyworkin" element={<Stats />} />
 
