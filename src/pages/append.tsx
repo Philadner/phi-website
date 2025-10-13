@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css"; // uses .home-stage and .phi-floating from Home
+import "../stylesheets/append.css";
 
 const API_URL = "/api/append"; // your Vercel function
 

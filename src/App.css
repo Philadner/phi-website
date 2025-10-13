@@ -199,16 +199,119 @@ body.loaded {
   flex-grow: 1;
 }
 
-/* Header + Nav */
-header.site-header {
-  display: flex;
+/* ===== Collapsing Titlebar Variables & Base ===== */
+/* Full height 80px → 20px (¼) over 0–50px */
+.site-header {
+  /* dynamic inputs set via JS */
+  --p: 0;           /* collapse progress 0..1 over 0–50px */
+  --squish: 0;      /* 0..1 over 0–30px (scaleY) */
+  --fade: 0;        /* 0..1 over 40–50px (opacity) */
+
+  /* tunables */
+  --header-full: 80px;
+  --header-min: calc(var(--header-full) / 4);          /* 20px */
+  --header-h: calc(var(--header-full) - (var(--header-full) - var(--header-min)) * var(--p));
+
+  --bg-o: calc(0.2);                        /* 0 → 0.8 */
+  --blur: calc(12px);                       /* 0 → 12px */
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: var(--header-h);
+    background: rgba(
+    calc(0 + (255 - 0) * var(--p)),   /* red goes 0 → 255 */
+    calc(0 + (215 - 0) * var(--p)),   /* green goes 0 → 215 */
+    calc(0 + (0   - 0) * var(--p)),   /* blue stays 0 */
+    var(--bg-o)
+  );
+  /* Backdrop blur for glassy look while scrolling */
+  backdrop-filter: saturate(120%) blur(var(--blur));
+  -webkit-backdrop-filter: saturate(120%) blur(var(--blur));
+
+  /* Tiny smoothing for height/paint; content has its own transforms */
+  transition:
+    background 120ms ease-out,
+    height 120ms ease-out;
+}
+
+/* Lay out header content cleanly */
+.site-header__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto; /* logo | nav | menu */
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: #0d0d0d;
-  border-bottom: 1px solid rgba(255,255,255,.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  gap: 16px;
+  padding: 0 16px;
+}
+
+.header-spacer { height: var(--header-full, 80px); }
+
+.site-header.is-revealed {
+  --p: 0;
+  --squish: 0;
+  --fade: 0;
+}
+
+/* Your existing bits can stay styled as-is; these add the squish/fade behavior */
+.titlebar-content {
+  transform-origin: center;
+  /* scaleY from 1 → 0.75 over 0–30px (25% squish) */
+  transform: scaleY(calc(1 - 0.25 * var(--squish)));
+  /* opacity from 1 → 0 over 40–50px */
+  opacity: calc(1 - var(--fade));
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+}
+
+/* Tidy defaults (feel free to keep your current styles) */
+.site-header .logo {
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.2px;
+}
+
+.site-header .topnav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 16px;
+  opacity: 0.95;
+}
+
+.site-header .topnav a:hover {
+  opacity: 1;
+}
+
+.site-header .menu-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+/* Responsive: collapse nav to burger on small screens if you want */
+@media (max-width: 720px) {
+  .site-header__inner {
+    grid-template-columns: auto auto 1fr;
+  }
+  .site-header .topnav {
+    display: none; /* you already have a sidebar */
+  }
+}
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .site-header {
+    transition: none;
+  }
+  .titlebar-content {
+    transition: none;
+  }
 }
 
 
@@ -277,7 +380,7 @@ nav a:hover::after {
   right: 0;
   width: min(280px, 85vw);
   height: 100vh;
-  background: rgba(20,20,24,0.95);
+  background: rgba(20,20,24,0.205);
   backdrop-filter: blur(10px);
   border-left: 1px solid rgba(255,255,255,.1);
   transform: translateX(100%);
@@ -490,3 +593,64 @@ nav a:hover::after {
 .statvalue { font-weight: 700; margin-top: 2px; }
 .statsub { opacity: .7; font-size: .85rem; margin-top: 2px; }
 
+
+/* Ticker */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); } /* move by exactly one copy width */
+}
+
+.ticker-track {
+  display: inline-flex;
+  animation: ticker-scroll var(--ticker-duration, 0s) linear infinite;
+  height: fit-content;
+  width: fit-content;
+}
+
+.ticker-track,
+.ticker-track span {
+  white-space: nowrap !important;
+  overflow: hidden;
+  height: fit-content;
+  width: fit-content;
+}
+.ticker-track[data-paused="true"] {
+  animation-play-state: paused;
+  height: fit-content;
+  width: fit-content;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none !important;
+    transform: none !important;
+    height: fit-content;
+    width: fit-content;
+  }
+}
+
+.ticker-bg {
+  background: rgba(185, 34, 34, 0.6);
+  backdrop-filter: blur(10px);
+  height: fit-content;
+  border-top: 1px solid rgba(255,255,255,.1);
+  z-index: 500;
+  mask-image: linear-gradient(to bothsides,
+  transparent,
+  black 10%,
+  black 90%,
+  transparent);
+-webkit-mask-image: linear-gradient(to right,
+  transparent,
+  black 10%,
+  black 90%,
+  transparent);
+  transition: background 0.15s ease-in-out;
+}
+
+.ticker-bg:hover {
+  background: rgba(255, 215, 0, 0.6);
+  transition: filter 0.15s ease;
+  transition: background 0.15s ease-in-out;
+}

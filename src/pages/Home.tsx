@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css";
+import Ticker from "../components/Ticker";
+
 
 const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -9,6 +11,26 @@ const Home: React.FC = () => {
   const target = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
   const popScale = useRef(1);
+
+  //Ticker
+
+    
+
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/phrases");
+        const data = (await res.json()) as string[];
+        if (Array.isArray(data) && data.length) setPhrases(data);
+      } catch {
+        // keep fallback
+      }
+    })();
+  }, []);
+
+
+
 
   // ---- NEW: load phrases from your API
   const [middlePhrases, setMiddlePhrases] = useState<string[]>([]);
@@ -32,7 +54,7 @@ const Home: React.FC = () => {
     }
     return a;
   };
-
+  
   const buildCycle = () => ["phi", ...shuffle(middlePhrases).slice(0, 3)];
 
   // ---- driving text state
@@ -40,7 +62,22 @@ const Home: React.FC = () => {
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [text, setText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const fetchTickerPhrases = async () => {
+    try {
+      const resp = await fetch("https://api.phi.me.uk/kv/phrases");
+      const data = await resp.json();
+      const arr = Array.isArray(data) ? data : (data?.phrases ?? []);
+      return shuffle(arr).slice(0, 6);
+    } catch (err) {
+      console.error("Failed to load ticker phrases:", err);
+      return [];
+    }
+  };
 
+  const [tickerPhrases, setTickerPhrases] = useState<string[]>([]);
+  useEffect(() => {
+    fetchTickerPhrases().then(arr => setTickerPhrases(arr.filter((x: unknown): x is string => typeof x === "string")));
+  }, []);
   // when middlePhrases loads/changes, (re)seed the cycle
   useEffect(() => {
     if (middlePhrases.length) {
@@ -149,8 +186,11 @@ const Home: React.FC = () => {
 
   return (
     <div ref={containerRef} className="home-stage">
+      <div className="ticker-bg">
+        <Ticker items={tickerPhrases} separator="  ⬤  " speed={90} />
+      </div>
       <div ref={phiRef} className="phi-floating">
-        {text || "…"}
+        {text || ""}
       </div>
     </div>
   );
