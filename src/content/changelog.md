@@ -3,6 +3,13 @@ Most recent changes first
 
 ---
 
+## The real changelog  
+ever wanted to see raw development pain?  
+well now you can [here](labs.phi.me.uk/realchangelog)  
+by the way the repo is public now :) there's like one outdated entry in the phrases list
+
+---
+
 ## sync labs with main
 the main website has been looking hella boring because i've just been working on labs  
 so now i've synced both the websites up so you don't have to type an extra labs in the url bar  
