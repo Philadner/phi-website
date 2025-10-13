@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Link,} from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 
@@ -13,7 +13,7 @@ import Changelog from './pages/Changelog';
 import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
-import ChangelogCommits from "./pages/ChangelogCommits";
+const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import './App.css';
 
 function Loader() {

@@ -1,77 +1,74 @@
-import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import "../stylesheets/Changelog.css";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-type Commit = {
+type GitHubCommit = {
   sha: string;
-  title: string;
-  body: string;
-  url: string;
-  author: string;
-  date: string;
+  commit: {
+    message: string;
+    author: { name: string; date: string };
+  };
+  html_url: string;
+  author?: { login?: string };
 };
 
-export default function ChangelogCommits() {
-  const [commits, setCommits] = useState<Commit[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const token = process.env.GITHUB_TOKEN;
+  const repoFull = process.env.GITHUB_REPO; // e.g. "Philadner/phi-website"
+  if (!token || !repoFull || !repoFull.includes("/")) {
+    return res.status(500).json({ error: "Missing GITHUB_TOKEN or GITHUB_REPO" });
+  }
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/commits?sha=labs&per_page=50");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as Commit[];
-        setCommits(data);
-      } catch (e: any) {
-        setError(e.message);
-      }
-    })();
-  }, []);
+  const [owner, repo] = repoFull.split("/");
+  const branch = (req.query.sha as string) || "labs";
+  const includeMerges = req.query.include_merges === "true";
 
-  return (
-    <main id="main-site">
-      <h1 className="CenterTitle">The Changelogz</h1>
-      <p className="BodyTextCentre">Live from the <strong>labs</strong> branch commits</p>
-      <div className="SpaceDiv" />
+  const allCommits: any[] = [];
+  let page = 1;
+  const per_page = 100;
 
-      {error && <p className="BodyTextCentre">Error: {error}</p>}
-      {!commits && !error && <p className="BodyTextCentre">Loading…</p>}
-
-      {commits?.map((c) => (
-        <section key={c.sha}>
-          <h2 className="HeadingBigLeft">{c.title}</h2>
-
-          {c.body && (
-            <div className="BodyTextCentre">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {c.body}
-              </ReactMarkdown>
-            </div>
-          )}
-
-          <p className="BodyTextCentre">
-            <small>
-              {c.author} — {formatUK(c.date)} —{" "}
-              <a href={c.url} target="_blank" rel="noreferrer">View on GitHub</a>
-            </small>
-          </p>
-
-          <div className="BigSpaceDiv" />
-        </section>
-      ))}
-    </main>
-  );
-}
-
-function formatUK(iso: string) {
   try {
-    return new Date(iso).toLocaleString("en-GB", {
-      dateStyle: "medium",
-      timeStyle: "short",
-      timeZone: "Europe/London",
-    });
-  } catch {
-    return iso;
+    while (true) {
+      const url = new URL(`https://api.github.com/repos/${owner}/${repo}/commits`);
+      url.searchParams.set("sha", branch);
+      url.searchParams.set("per_page", String(per_page));
+      url.searchParams.set("page", String(page));
+
+      const gh = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "phi.me.uk",
+        },
+      });
+
+      if (!gh.ok) {
+        const text = await gh.text();
+        return res.status(gh.status).json({ error: "GitHub API error", details: text });
+      }
+
+      const data = (await gh.json()) as GitHubCommit[];
+      if (!data.length) break; // done when empty
+
+      allCommits.push(...data);
+      page++;
+    }
+
+    const mapped = allCommits
+      .filter((c) => (includeMerges ? true : !/^merge/i.test(c.commit.message)))
+      .map((c) => {
+        const [title, ...rest] = c.commit.message.split("\n");
+        return {
+          sha: c.sha,
+          title: title.trim(),
+          body: rest.join("\n").trim(),
+          url: c.html_url,
+          author: c.commit.author?.name ?? c.author?.login ?? "unknown",
+          date: c.commit.author?.date ?? "",
+        };
+      });
+
+    res.setHeader("Cache-Control", "s-maxage=600, stale-while-revalidate=86400");
+    res.status(200).json(mapped);
+  } catch (err: any) {
+    res.status(500).json({ error: "Unhandled server error", message: err?.message });
   }
 }
