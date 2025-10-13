@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 
 type TickerProps = {
-  separator?: string;  // default: ·
-  speed?: number;      // pixels per second, default 80
+  separator?: string;   // default ·
+  speed?: number;       // pixels/sec (affects duration calc)
   className?: string;
-  ariaLabel?: string;  // for screen readers
+  ariaLabel?: string;
 };
 
 export default function Ticker({
@@ -14,60 +14,51 @@ export default function Ticker({
   className,
   ariaLabel = "Site updates",
 }: TickerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [rowA, setRowA] = useState<string>("");
+  const [rowB, setRowB] = useState<string>("");
   const [duration, setDuration] = useState<number>(0);
   const [paused, setPaused] = useState(false);
-  const [items, setItems] = useState<string[]>([]);
 
-  // 🔥 Fetch the phrases directly from your KV API
+  // --- phrase helpers ---
+  async function getBatch(limit = 40) {
+    const res = await fetch("https://api.phi.me.uk/kv/phrases");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const arr: string[] = await res.json();
+    // shuffle + trim + join
+    const batch = [...arr].sort(() => Math.random() - 0.5).slice(0, limit);
+    return batch.filter(Boolean).join(`  ${separator}  `);
+  }
+
+  // Initial load: two independent batches
   useEffect(() => {
-    async function fetchPhrases() {
-      try {
-        const res = await fetch("https://api.phi.me.uk/kv/phrases");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          // Shuffle them so they loop differently each time
-          const shuffled = data.sort(() => Math.random() - 0.5);
-          setItems(shuffled.slice(0, 40)); // Limit to ~40 to keep it performant
-        }
-      } catch (err) {
-        console.error("Failed to fetch ticker items:", err);
-      }
-    }
-
-    fetchPhrases();
+    (async () => {
+      const [a, b] = await Promise.all([getBatch(), getBatch()]);
+      setRowA(a);
+      setRowB(b);
+    })().catch(console.error);
   }, []);
 
-  // Duplicate items for seamless loop
-  const display = useMemo(() => {
-    const joined = items.filter(Boolean).join(`  ${separator}  `);
-    return `${joined} ${separator} ${joined}${separator}`;
-  }, [items, separator]);
-
-  // Compute animation duration
+  // Recompute duration based on the width of A (one copy)
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    const inner = el.querySelector<HTMLSpanElement>("[data-inner]");
+    const inner = trackRef.current?.querySelector<HTMLSpanElement>("[data-a]");
     if (!inner) return;
-
-    const reduceMotion =
+    const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return setDuration(0);
 
-    if (reduceMotion) {
-      setDuration(0);
-      return;
-    }
+    const oneCopyWidth = inner.offsetWidth || 1;
+    setDuration(oneCopyWidth / Math.max(10, speed));
+  }, [rowA, speed]);
 
-    const halfWidth = inner.offsetWidth;
-    const nextDuration = halfWidth / Math.max(10, speed);
-    setDuration(nextDuration);
-  }, [display, speed]);
+  // On each half-loop, refresh B and rotate
+  const handleIter = () => {
+    // B is now fully visible on the left. Rotate:
+    setRowA(prev => rowB || prev);
+    getBatch().then(setRowB).catch(console.error);
+  };
 
-  // Pause on hover
   const pauseHandlers = {
     onMouseEnter: () => setPaused(true),
     onMouseLeave: () => setPaused(false),
@@ -77,12 +68,8 @@ export default function Ticker({
 
   return (
     <div
-      ref={containerRef}
       className={clsx(
-        "relative w-full overflow-hidden select-none",
-        "bg-[#6e0000]/90 text-white",
-        "px-3 py-2",
-        "[mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]",
+        "relative w-full overflow-hidden select-none ticker-bg",
         className
       )}
       aria-label={ariaLabel}
@@ -90,22 +77,21 @@ export default function Ticker({
     >
       <div
         ref={trackRef}
+        className="ticker-track"
         data-paused={paused || !duration}
-        style={duration ? { ["--ticker-duration" as any]: `${duration}s` } : undefined}
-        className={clsx(
-          "ticker-track whitespace-nowrap",
-          "flex gap-3 items-center",
-          "will-change-transform"
-        )}
+        style={duration ? ({ ["--ticker-duration" as any]: `${duration}s` }) : undefined}
+        onAnimationIteration={handleIter}
         {...pauseHandlers}
         tabIndex={0}
         aria-live="off"
       >
-        <span data-inner className="shrink-0">
-          <Row text={display} />
+        {/* Copy A */}
+        <span data-a className="shrink-0">
+          <Row text={rowA} />
         </span>
-        <span aria-hidden="true" className="shrink-0">
-          <Row text={display} />
+        {/* Copy B */}
+        <span data-b className="shrink-0" aria-hidden="true">
+          <Row text={rowB} />
         </span>
       </div>
     </div>
@@ -114,7 +100,7 @@ export default function Ticker({
 
 function Row({ text }: { text: string }) {
   return (
-    <span className="inline-flex items-center text-sm md:text-base text-white">
+    <span className="inline-flex items-center whitespace-nowrap">
       {text}
     </span>
   );
