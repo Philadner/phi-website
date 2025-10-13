@@ -14,10 +14,10 @@ type GitHubCommit = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const token = process.env.GITHUB_KEY;
+  const token = process.env.GITHUB_TOKEN;
   const repoFull = process.env.GITHUB_REPO; // "owner/repo"
   if (!token || !repoFull || !repoFull.includes("/")) {
-    res.status(500).json({ error: "Missing or invalid GITHUB_KEY / GITHUB_REPO (expected owner/repo)" });
+    res.status(500).json({ error: "Missing or invalid GITHUB_TOKEN / GITHUB_REPO (expected owner/repo)" });
     return;
   }
   const [owner, repo] = repoFull.split("/");
