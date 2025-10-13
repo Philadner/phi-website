@@ -28,6 +28,7 @@ function App() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);

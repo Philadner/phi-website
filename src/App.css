@@ -593,3 +593,64 @@ nav a:hover::after {
 .statvalue { font-weight: 700; margin-top: 2px; }
 .statsub { opacity: .7; font-size: .85rem; margin-top: 2px; }
 
+
+/* Ticker */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); } /* move by exactly one copy width */
+}
+
+.ticker-track {
+  display: inline-flex;
+  animation: ticker-scroll var(--ticker-duration, 0s) linear infinite;
+  height: fit-content;
+  width: fit-content;
+}
+
+.ticker-track,
+.ticker-track span {
+  white-space: nowrap !important;
+  overflow: hidden;
+  height: fit-content;
+  width: fit-content;
+}
+.ticker-track[data-paused="true"] {
+  animation-play-state: paused;
+  height: fit-content;
+  width: fit-content;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none !important;
+    transform: none !important;
+    height: fit-content;
+    width: fit-content;
+  }
+}
+
+.ticker-bg {
+  background: rgba(185, 34, 34, 0.6);
+  backdrop-filter: blur(10px);
+  height: fit-content;
+  border-top: 1px solid rgba(255,255,255,.1);
+  z-index: 500;
+  mask-image: linear-gradient(to bothsides,
+  transparent,
+  black 10%,
+  black 90%,
+  transparent);
+-webkit-mask-image: linear-gradient(to right,
+  transparent,
+  black 10%,
+  black 90%,
+  transparent);
+  transition: background 0.15s ease-in-out;
+}
+
+.ticker-bg:hover {
+  background: rgba(255, 215, 0, 0.6);
+  transition: filter 0.15s ease;
+  transition: background 0.15s ease-in-out;
+}
