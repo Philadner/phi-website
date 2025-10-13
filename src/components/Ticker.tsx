@@ -1,58 +1,64 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 type TickerProps = {
-  items: string[];
-  separator?: string;          // default: ·
-  speed?: number;              // pixels per second, default 80
+  separator?: string;   // default ·
+  speed?: number;       // pixels/sec (affects duration calc)
   className?: string;
-  ariaLabel?: string;          // for screen readers
+  ariaLabel?: string;
 };
 
 export default function Ticker({
-  items,
   separator = "·",
   speed = 80,
   className,
   ariaLabel = "Site updates",
 }: TickerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [rowA, setRowA] = useState<string>("");
+  const [rowB, setRowB] = useState<string>("");
   const [duration, setDuration] = useState<number>(0);
   const [paused, setPaused] = useState(false);
 
-  // Duplicate items so the loop is seamless
-  const display = useMemo(() => {
-    const joined = items.filter(Boolean).join(`  ${separator}  `);
-    // render two copies side-by-side
-    return `${joined} ${separator} ${joined}${separator}`;
-  }, [items, separator]);
+  // --- phrase helpers ---
+  async function getBatch(limit = 40) {
+    const res = await fetch("https://api.phi.me.uk/kv/phrases");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const arr: string[] = await res.json();
+    // shuffle + trim + join
+    const batch = [...arr].sort(() => Math.random() - 0.5).slice(0, limit);
+    return batch.filter(Boolean).join(`  ${separator}  `);
+  }
 
-  // Compute duration based on content width and desired speed
+  // Initial load: two independent batches
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
+    (async () => {
+      const [a, b] = await Promise.all([getBatch(), getBatch()]);
+      setRowA(a);
+      setRowB(b);
+    })().catch(console.error);
+  }, []);
 
-    const reduceMotion =
+  // Recompute duration based on the width of A (one copy)
+  useEffect(() => {
+    const inner = trackRef.current?.querySelector<HTMLSpanElement>("[data-a]");
+    if (!inner) return;
+    const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return setDuration(0);
 
-    if (reduceMotion) {
-      setDuration(0);
-      return;
-    }
+    const oneCopyWidth = inner.offsetWidth || 1;
+    setDuration(oneCopyWidth / Math.max(10, speed));
+  }, [rowA, speed]);
 
-    // width of one half of the loop (first copy)
-    // We measure the text span inside the track
-    const inner = el.querySelector<HTMLSpanElement>("[data-inner]");
-    if (!inner) return;
+  // On each half-loop, refresh B and rotate
+  const handleIter = () => {
+    // B is now fully visible on the left. Rotate:
+    setRowA(prev => rowB || prev);
+    getBatch().then(setRowB).catch(console.error);
+  };
 
-    const halfWidth = inner.offsetWidth; // width of one copy
-    const nextDuration = halfWidth / Math.max(10, speed); // seconds
-    setDuration(nextDuration);
-  }, [display, speed]);
-
-  // Pause on hover/focus (also useful for accessibility)
   const pauseHandlers = {
     onMouseEnter: () => setPaused(true),
     onMouseLeave: () => setPaused(false),
@@ -62,14 +68,8 @@ export default function Ticker({
 
   return (
     <div
-      ref={containerRef}
       className={clsx(
-        "relative w-full overflow-hidden select-none",
-        "border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl",
-        "bg-white/40 dark:bg-neutral-900/30 backdrop-blur",
-        "px-3 py-2",
-        // soft edge fade with mask
-        "[mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)]",
+        "relative w-full overflow-hidden select-none ticker-bg",
         className
       )}
       aria-label={ariaLabel}
@@ -77,28 +77,21 @@ export default function Ticker({
     >
       <div
         ref={trackRef}
+        className="ticker-track"
         data-paused={paused || !duration}
-        style={
-          duration
-            ? { ["--ticker-duration" as any]: `${duration}s` }
-            : undefined
-        }
-        className={clsx(
-          "ticker-track whitespace-nowrap",
-          "flex gap-3 items-center",
-          "will-change-transform"
-        )}
+        style={duration ? ({ ["--ticker-duration" as any]: `${duration}s` }) : undefined}
+        onAnimationIteration={handleIter}
         {...pauseHandlers}
         tabIndex={0}
         aria-live="off"
       >
-        {/* First copy */}
-        <span data-inner className="shrink-0">
-          <Row text={display} />
+        {/* Copy A */}
+        <span data-a className="shrink-0">
+          <Row text={rowA} />
         </span>
-        {/* Second copy (keeps the loop seamless) */}
-        <span aria-hidden="true" className="shrink-0">
-          <Row text={display} />
+        {/* Copy B */}
+        <span data-b className="shrink-0" aria-hidden="true">
+          <Row text={rowB} />
         </span>
       </div>
     </div>
@@ -107,7 +100,7 @@ export default function Ticker({
 
 function Row({ text }: { text: string }) {
   return (
-    <span className="inline-flex items-center text-sm md:text-base text-neutral-800 dark:text-neutral-200">
+    <span className="inline-flex items-center whitespace-nowrap">
       {text}
     </span>
   );
