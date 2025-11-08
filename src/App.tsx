@@ -13,6 +13,7 @@ import Changelog from './pages/Changelog';
 import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
+import Revise from './pages/revise'
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import './App.css';
 
@@ -207,6 +208,7 @@ useEffect(() => {
             <Route path="/realchangelog" element={<ChangelogCommits />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/workinhardorhardlyworkin" element={<Stats />} />
+            <Route path="/revise" element={<Revise />} />
 
           </Routes>
           <MusicPLRouter />
