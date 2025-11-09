@@ -1,13 +1,73 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import "../stylesheets/revise.css";
-import questions from "../data/questions.json";
+import liveQuestions from "../data/questions.json";
+import legacyQuestions from "../data/questions.old.json";
 
-const DEFAULT_BANK = questions;
-/**
- * PhiQuiz - RS Unit 1: Card Stack Quiz with Seneca-style instant feedback
- */
+type QuestionType = "short" | "text" | "mcq" | "multi" | "tf" | "boolean";
 
-const KEYWORD_THRESHOLD = 0.8;
+type SubjectMeta = {
+  id: string;
+  label: string;
+  icon?: string;
+};
+
+type Question = {
+  id: string;
+  subject?: SubjectMeta | string;
+  topic?: string;
+  type: QuestionType;
+  prompt: string;
+  answer?: string | string[] | boolean;
+  choices?: string[];
+  keywords?: string[];
+  matchRequired?: number;
+  requiredKeywords?: number;
+  keywordThreshold?: number;
+  explanation?: string;
+  scripture?: string;
+};
+
+type AnswerValue = string | string[] | boolean | undefined;
+type AnswerMap = Record<string, AnswerValue>;
+type PraiseMap = Record<string, string>;
+type RevealMap = Record<string, boolean>;
+type CardLayerState = "active" | "ghost" | "incoming" | "leaving";
+type TransitionPayload =
+  | { direction: "next" | "prev"; leaving: Question; incoming: Question }
+  | null;
+
+const LIVE_BANK: Question[] = Array.isArray(liveQuestions) ? (liveQuestions as Question[]) : [];
+const LEGACY_BANK: Question[] = Array.isArray(legacyQuestions) ? (legacyQuestions as Question[]) : [];
+const DEFAULT_BANK: Question[] = LIVE_BANK.length ? LIVE_BANK : LEGACY_BANK;
+
+const KEYWORD_THRESHOLD = 0.7;
+const CARD_TRANSITION_MS = 440;
+
+const PRAISE_PHRASES = [
+  "Abolutely tekkers",
+  "Great Work, Hoe.",
+  "You will NOT be failing.",
+  "Goon mate!",
+  "Wowzers! Adequate!",
+  "Get Crackin!", 
+  "Bitchin'! (the fuck does that even mean😭)",
+]; 
+
+const FALLBACK_SUBJECT: SubjectMeta = { id: "general", label: "General", icon: "?" };
+
+function normalizeSubjectMeta(subject?: Question["subject"]): SubjectMeta {
+  if (!subject) return FALLBACK_SUBJECT;
+  if (typeof subject === "string") {
+    return { id: subject, label: subject, icon: "?" };
+  }
+  const id = subject.id || subject.label || FALLBACK_SUBJECT.id;
+  return {
+    id,
+    label: subject.label || id || FALLBACK_SUBJECT.label,
+    icon: subject.icon || FALLBACK_SUBJECT.icon,
+  };
+}
 
 function normalizeText(str = "") {
   return String(str)
@@ -47,17 +107,7 @@ function similarity(a = "", b = "") {
   return 1 - distance / Math.max(a.length, b.length);
 }
 
-function extractKeywords(answer) {
-  if (Array.isArray(answer)) {
-    return answer.map((part) => String(part));
-  }
-  return String(answer)
-    .split(/(?:,|;|\/|&| and | or )/gi)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-function keywordMatches(input, keyword) {
+function keywordMatches(input: string | undefined, keyword: string, threshold = KEYWORD_THRESHOLD): boolean {
   const normalizedInput = normalizeText(input);
   const normalizedKeyword = normalizeText(keyword);
   if (!normalizedKeyword) return true;
@@ -70,307 +120,606 @@ function keywordMatches(input, keyword) {
   if (keywordWords.length > 1) {
     for (let i = 0; i <= inputWords.length - keywordWords.length; i += 1) {
       const segment = inputWords.slice(i, i + keywordWords.length).join(" ");
-      if (similarity(segment, normalizedKeyword) >= KEYWORD_THRESHOLD) {
+      if (similarity(segment, normalizedKeyword) >= threshold) {
         return true;
       }
     }
   }
 
-  return inputWords.some((word) => similarity(word, normalizedKeyword) >= KEYWORD_THRESHOLD);
+  return inputWords.some((word) => similarity(word, normalizedKeyword) >= threshold);
 }
 
-function normalizeSubjectMeta(subject) {
-  if (subject && typeof subject === "object") {
-    const id = subject.id || subject.label || "general";
-    return {
-      id,
-      label: subject.label || subject.id || "General",
-      icon: subject.icon || "📘",
-    };
+function extractKeywords(answer: unknown): string[] {
+  if (Array.isArray(answer)) {
+    return answer.map((part) => String(part));
   }
-  if (typeof subject === "string") {
-    return { id: subject, label: subject, icon: "📘" };
-  }
-  return { id: "general", label: "General", icon: "📘" };
+  return String(answer || "")
+    .split(/(?:,|;|\/|&|\band\b|\bor\b)/gi)
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
-function shuffleQuestions(list) {
-  const array = [...list];
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+function getQuestionKeywords(question?: Question): string[] {
+  if (!question) return [];
+  if (Array.isArray(question.keywords) && question.keywords.length) {
+    return question.keywords.map((kw) => String(kw));
   }
-  return array;
+  return extractKeywords(question.answer);
 }
 
-export default function PhiQuiz({ title = "Unit 1 - Christianity Quiz", questions = [] }) {
-  const rawBank = useMemo(() => (questions.length ? questions : DEFAULT_BANK), [questions]);
-  const subjects = useMemo(() => {
-    const map = new Map();
-    rawBank.forEach((q) => {
-      const meta = normalizeSubjectMeta(q.subject);
-      map.set(meta.id, meta);
+function getKeywordRequirement(question: Question | undefined, keywords: string[]): number {
+  const configured = question && (question.matchRequired ?? question.requiredKeywords);
+  if (typeof configured === "number" && configured > 0) {
+    return Math.min(configured, keywords.length || configured);
+  }
+  return keywords.length ? 1 : 0;
+}
+
+function isShortAnswerCorrect(value: string, question?: Question): boolean {
+  if (!value) return false;
+  const keywords = getQuestionKeywords(question);
+  if (!keywords.length) {
+    return normalizeText(value) === normalizeText(formatAnswer(question?.answer));
+  }
+  const required = getKeywordRequirement(question, keywords);
+  if (!required) return false;
+  const threshold = typeof question?.keywordThreshold === "number" ? question.keywordThreshold : KEYWORD_THRESHOLD;
+  const matches = keywords.reduce(
+    (count, keyword) => count + (keywordMatches(value, keyword, threshold) ? 1 : 0),
+    0
+  );
+  return matches >= required;
+}
+
+function areMultiAnswersCorrect(selected: string[], expected: string[]): boolean {
+  if (selected.length !== expected.length) return false;
+  const normalizedExpected = [...expected].map((choice) => String(choice)).sort();
+  const normalizedSelected = [...selected].map((choice) => String(choice)).sort();
+  return normalizedExpected.every((choice, index) => choice === normalizedSelected[index]);
+}
+
+function isAnswerCorrect(question: Question, value: AnswerValue): boolean {
+  if (!question) return false;
+  const type = String(question.type || "").toLowerCase();
+  if (type === "short" || type === "text") {
+    return isShortAnswerCorrect(typeof value === "string" ? value : "", question);
+  }
+  if (type === "mcq") {
+    if (value === undefined || value === null) return false;
+    return String(value) === String(question.answer);
+  }
+  if (type === "multi") {
+    const expected = Array.isArray(question.answer) ? question.answer.map((choice) => String(choice)) : [];
+    const selection = Array.isArray(value) ? (value as string[]) : [];
+    return areMultiAnswersCorrect(selection, expected);
+  }
+  if (type === "tf" || type === "boolean") {
+    const expected = typeof question.answer === "boolean" ? question.answer : String(question.answer).toLowerCase() === "true";
+    return value === expected;
+  }
+  return false;
+}
+
+function pickPraise(): string {
+  const index = Math.floor(Math.random() * PRAISE_PHRASES.length);
+  return PRAISE_PHRASES[index];
+}
+
+function interleaveQuestions(list: Question[], rotation: string[]): Question[] {
+  if (!rotation.length) return list;
+  const buckets = new Map<string, Question[]>();
+  rotation.forEach((subjectId) => {
+    if (!buckets.has(subjectId)) buckets.set(subjectId, []);
+  });
+  list.forEach((question) => {
+    const subjectId = normalizeSubjectMeta(question.subject).id;
+    const bucket = buckets.get(subjectId);
+    if (bucket) {
+      bucket.push(question);
+    }
+  });
+  const queues: Question[][] = rotation.map((subjectId) => [...(buckets.get(subjectId) || [])]);
+  const output: Question[] = [];
+  let exhausted = false;
+  while (!exhausted) {
+    exhausted = true;
+    queues.forEach((queue) => {
+      if (queue.length) {
+        const nextCard = queue.shift();
+        if (nextCard) {
+          output.push(nextCard);
+          exhausted = false;
+        }
+      }
+    });
+  }
+  return output.length ? output : list;
+}
+
+function formatAnswer(answer: Question["answer"] | undefined): string {
+  if (Array.isArray(answer)) {
+    return answer.join(", ");
+  }
+  if (typeof answer === "boolean") {
+    return answer ? "True" : "False";
+  }
+  return String(answer || "");
+}
+
+function CardLayer({ state, children }: { state: CardLayerState; children: ReactNode }) {
+  return <div className={`card-layer card-layer--${state}`}>{children}</div>;
+}
+
+type QuestionCardProps = {
+  question: Question;
+  value: AnswerValue;
+  disabled?: boolean;
+  praise?: string | null;
+  revealed?: boolean;
+  onRevealToggle?: () => void;
+  onAnswerChange?: (value: AnswerValue) => void;
+  ghost?: boolean;
+};
+
+function QuestionCard({
+  question,
+  value,
+  disabled = false,
+  praise,
+  revealed,
+  onRevealToggle,
+  onAnswerChange,
+  ghost = false,
+}: QuestionCardProps) {
+  if (!question) return null;
+  const subject = normalizeSubjectMeta(question.subject);
+  const keywords = getQuestionKeywords(question);
+  const required = getKeywordRequirement(question, keywords);
+  const type = String(question.type || "").toLowerCase();
+  const canReveal = typeof onRevealToggle === "function";
+  const cardId = question.id || question.prompt;
+
+  const handleAnswerChange = (nextValue: AnswerValue) => {
+    if (typeof onAnswerChange === "function" && !disabled) {
+      onAnswerChange(nextValue);
+    }
+  };
+
+  const renderChoices = () => {
+    const choices: string[] = Array.isArray(question.choices) ? question.choices : [];
+    if (type === "mcq") {
+      const mcqValue = typeof value === "string" ? value : "";
+      return (
+        <div className="choice-list">
+          {choices.map((choice) => {
+            const checked = mcqValue === choice;
+            return (
+              <label key={choice} className={`choice-row ${checked ? "is-selected" : ""}`}>
+                <input
+                  type="radio"
+                  name={cardId}
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => handleAnswerChange(choice)}
+                />
+                <span className="choice-mark" />
+                <span className="choice-text">{choice}</span>
+              </label>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (type === "multi") {
+      const selection = Array.isArray(value) ? (value as string[]) : [];
+      const toggleChoice = (choice: string) => {
+        if (disabled) return;
+        let next: string[] = [];
+        if (selection.includes(choice)) {
+          next = selection.filter((item) => item !== choice);
+        } else {
+          next = [...selection, choice];
+        }
+        handleAnswerChange(next);
+      };
+
+      return (
+        <div className="choice-list choice-list--grid">
+          {choices.map((choice) => {
+            const checked = selection.includes(choice);
+            return (
+              <label key={choice} className={`choice-row choice-row--checkbox ${checked ? "is-selected" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => toggleChoice(choice)}
+                />
+                <span className="choice-mark" />
+                <span className="choice-text">{choice}</span>
+              </label>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (type === "tf" || type === "boolean") {
+      const active = typeof value === "boolean" ? value : null;
+      return (
+        <div className="tf-switch">
+          {[true, false].map((option) => (
+            <button
+              type="button"
+              key={String(option)}
+              className={`tf-option ${active === option ? "is-active" : ""}`}
+              onClick={() => handleAnswerChange(option)}
+              disabled={disabled}
+            >
+              {option ? "True" : "False"}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    const textValue = typeof value === "string" ? value : "";
+    return (
+      <input
+        type="text"
+        className="revise-input"
+        placeholder="Type your answer"
+        value={textValue}
+        disabled={disabled}
+        onChange={(event) => handleAnswerChange(event.target.value)}
+      />
+    );
+  };
+
+  if (ghost) {
+    return (
+      <article className="revise-card revise-card--ghost" aria-hidden="true">
+        <div className="card-meta">
+          <span className="card-subject">
+            <span className="card-icon" aria-hidden="true">
+              {subject.icon}
+            </span>
+            <span>{subject.label}</span>
+          </span>
+          <span className="card-topic">{question.topic || subject.label}</span>
+        </div>
+        <p className="card-prompt card-prompt--ghost">{question.prompt}</p>
+        <p className="card-ghost-copy">Coming up next...</p>
+      </article>
+    );
+  }
+
+  return (
+    <article className={`revise-card ${disabled ? "is-disabled" : ""}`}>
+      <div className="card-meta">
+        <span className="card-subject">
+          <span className="card-icon" aria-hidden="true">
+            {subject.icon}
+          </span>
+          <span>{subject.label}</span>
+        </span>
+        <span className="card-topic">{question.topic || subject.label}</span>
+      </div>
+
+      <h2 className="card-prompt">{question.prompt}</h2>
+
+      <div className="card-body">
+        {renderChoices()}
+        {(type === "short" || type === "text") && keywords.length > 0 && (
+          <p className="keyword-hint">
+            Hit {required} of {keywords.length} keywords. Spelling can be rough as long as you are close.
+          </p>
+        )}
+      </div>
+
+      {praise && <div className="card-praise">{praise}</div>}
+
+      {canReveal && (
+        <div className="card-actions">
+          <button type="button" className="ghost-button" onClick={onRevealToggle}>
+            {revealed ? "Hide answer" : "Reveal model answer"}
+          </button>
+        </div>
+      )}
+
+      {revealed && (
+        <div className="card-reveal">
+          <p className="card-reveal__heading">Model answer</p>
+          <p className="card-reveal__body">{formatAnswer(question.answer)}</p>
+          {question.explanation && <p className="card-reveal__note">{question.explanation}</p>}
+          {question.scripture && (
+            <p className="card-reveal__note">
+              <em>{question.scripture}</em>
+            </p>
+          )}
+          {keywords.length > 0 && (
+            <p className="card-reveal__keywords">
+              Keywords:{" "}
+              <span>
+                {keywords.map((kw, index) => (
+                  <span key={kw}>
+                    {kw}
+                    {index < keywords.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+type ReviseProps = {
+  title?: string;
+  questions?: Question[];
+};
+
+export default function Revise({ title = "Revise", questions = DEFAULT_BANK }: ReviseProps) {
+  const rawBank = useMemo<Question[]>(
+    () => (Array.isArray(questions) && questions.length ? questions : DEFAULT_BANK),
+    [questions]
+  );
+  const subjects = useMemo<SubjectMeta[]>(() => {
+    const map = new Map<string, SubjectMeta>();
+    rawBank.forEach((question) => {
+      const meta = normalizeSubjectMeta(question.subject);
+      if (!map.has(meta.id)) map.set(meta.id, meta);
     });
     return Array.from(map.values());
   }, [rawBank]);
-  const [selectedSubjects, setSelectedSubjects] = useState([]);
-  const [quizBank, setQuizBank] = useState(rawBank);
+
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [feedback, setFeedback] = useState({});
-  const [revealed, setRevealed] = useState(false);
+  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [praiseMap, setPraiseMap] = useState<PraiseMap>({});
+  const [revealedMap, setRevealedMap] = useState<RevealMap>({});
+  const [transition, setTransition] = useState<TransitionPayload>(null);
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!subjects.length) return;
     setSelectedSubjects((prev) => {
+      if (!subjects.length) return [];
       if (!prev.length) return subjects.map((subject) => subject.id);
-      const next = subjects.filter((subject) => prev.includes(subject.id)).map((subject) => subject.id);
+      const next = prev.filter((id) => subjects.some((subject) => subject.id === id));
       return next.length ? next : subjects.map((subject) => subject.id);
     });
   }, [subjects]);
 
-  useEffect(() => {
-    if (!rawBank.length) {
-      setQuizBank([]);
-      return;
-    }
-    const ids = new Set(selectedSubjects);
-    const filtered = rawBank.filter((q) => {
-      if (!ids.size) return true;
-      const meta = normalizeSubjectMeta(q.subject);
-      return ids.has(meta.id);
-    });
-    const pool = filtered.length ? filtered : rawBank;
-    setQuizBank(shuffleQuestions(pool));
-    setIndex(0);
-    setAnswers({});
-    setFeedback({});
-    setRevealed(false);
+  const filteredBank = useMemo<Question[]>(() => {
+    if (!selectedSubjects.length) return [];
+    const allowed = new Set<string>(selectedSubjects);
+    return rawBank.filter((question) => allowed.has(normalizeSubjectMeta(question.subject).id));
   }, [rawBank, selectedSubjects]);
 
-  const current = quizBank[index];
-  const total = quizBank.length;
+  const quizBank = useMemo<Question[]>(
+    () => interleaveQuestions(filteredBank, selectedSubjects),
+    [filteredBank, selectedSubjects]
+  );
 
   useEffect(() => {
-    document.title = title;
-  }, [title]);
+    setIndex(0);
+    setTransition(null);
+  }, [quizBank.length]);
 
-  function toggleSubject(subjectId) {
-    setSelectedSubjects((prev) => {
-      const next = new Set(prev);
-      if (next.has(subjectId)) next.delete(subjectId);
-      else next.add(subjectId);
-      return Array.from(next);
-    });
-  }
-
-  function handleNext() {
-    if (index < total - 1) {
-      setIndex((i) => i + 1);
-      setRevealed(false);
-    }
-  }
-
-  function handlePrev() {
-    if (index > 0) {
-      setIndex((i) => i - 1);
-      setRevealed(false);
-    }
-  }
-
-  function updateFeedback(q, status) {
-    setFeedback((prev) => {
-      const next = { ...prev };
-      if (!status) {
-        delete next[q.id];
-      } else {
-        next[q.id] = status;
+  useEffect(
+    () => () => {
+      if (animationRef.current !== null) {
+        window.clearTimeout(animationRef.current);
       }
+    },
+    []
+  );
+
+  const currentQuestion = quizBank[index] || null;
+  const nextQuestion = quizBank[index + 1] || null;
+  const total = quizBank.length;
+  const progress = total ? ((index + 1) / total) * 100 : 0;
+
+  const handleAnswerChange = (question: Question, value: AnswerValue) => {
+    if (!question) return;
+    setAnswers((prev) => ({ ...prev, [question.id]: value }));
+    const satisfied = isAnswerCorrect(question, value);
+    setPraiseMap((prev) => {
+      if (satisfied) {
+        if (prev[question.id]) return prev;
+        return { ...prev, [question.id]: pickPraise() };
+      }
+      if (!prev[question.id]) return prev;
+      const next = { ...prev };
+      delete next[question.id];
       return next;
     });
-  }
+  };
 
-  function checkAnswer(value, q) {
-    if (q.type === "mcq") {
-      const correct =
-        String(value).trim().toLowerCase() === String(q.answer).trim().toLowerCase();
-      updateFeedback(q, correct ? "correct" : "wrong");
+  const handleRevealToggle = (questionId: string) => {
+    setRevealedMap((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
+  };
+
+  const beginTransition = (direction: "next" | "prev") => {
+    if (!currentQuestion || transition) return;
+    const delta = direction === "next" ? 1 : -1;
+    const targetIndex = index + delta;
+    if (targetIndex < 0 || targetIndex >= quizBank.length) return;
+    const payload = {
+      direction,
+      leaving: currentQuestion,
+      incoming: quizBank[targetIndex],
+    };
+    setTransition(payload);
+    const finishTransition = () => {
+      setIndex(targetIndex);
+      setTransition(null);
+      animationRef.current = null;
+    };
+    if (typeof window === "undefined") {
+      finishTransition();
       return;
     }
+    animationRef.current = window.setTimeout(finishTransition, CARD_TRANSITION_MS);
+  };
 
-    if (q.type === "tf") {
-      updateFeedback(q, value === q.answer ? "correct" : "wrong");
-      return;
-    }
+  const toggleSubject = (subjectId: string) => {
+    setSelectedSubjects((prev) => {
+      if (prev.includes(subjectId)) {
+        return prev.filter((id) => id !== subjectId);
+      }
+      return [...prev, subjectId];
+    });
+  };
 
-    if (q.type === "multi") {
-      const selections = Array.isArray(value) ? value : [];
-      if (!selections.length) {
-        updateFeedback(q, null);
-        return;
-      }
-      const userSet = new Set(selections);
-      const ansSet = new Set(q.answer);
-      const hasInvalid = selections.some((choice) => !ansSet.has(choice));
-      if (hasInvalid || selections.length > ansSet.size) {
-        updateFeedback(q, "wrong");
-        return;
-      }
-      if (selections.length === ansSet.size && [...userSet].every((choice) => ansSet.has(choice))) {
-        updateFeedback(q, "correct");
-      } else {
-        updateFeedback(q, null);
-      }
-      return;
-    }
+  const selectAllSubjects = () => {
+    setSelectedSubjects(subjects.map((subject) => subject.id));
+  };
 
-    if (q.type === "short") {
-      const userText = String(value);
-      const normalizedInput = normalizeText(userText);
-      if (!normalizedInput) {
-        updateFeedback(q, null);
-        return;
-      }
-      const keywords = extractKeywords(q.answer);
-      const meetsKeywords = keywords.length
-        ? keywords.every((keyword) => keywordMatches(userText, keyword))
-        : similarity(normalizedInput, normalizeText(String(q.answer))) >= KEYWORD_THRESHOLD;
-      updateFeedback(q, meetsKeywords ? "correct" : null);
-    }
-  }
+  const clearSubjects = () => {
+    setSelectedSubjects([]);
+  };
+
+  const isAnimating = Boolean(transition);
 
   return (
     <div className="revise-container">
-      {subjects.length > 0 && (
-        <div className="subject-scroller">
-          {subjects.map((subject) => {
-            const isSelected = selectedSubjects.includes(subject.id);
-            return (
-              <button
-                key={subject.id}
-                type="button"
-                className={`subject-pill ${isSelected ? "active" : ""}`}
-                onClick={() => toggleSubject(subject.id)}
-                aria-pressed={isSelected}
-              >
-                <span className="subject-icon" aria-hidden="true">
-                  {subject.icon}
-                </span>
-                <span className="subject-label">{subject.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <h1 className="revise-title">{title}</h1>
-      <div className="revise-progress">
-        <div
-          className="revise-progress-bar"
-          style={{ width: total ? `${((index + 1) / total) * 100}%` : "0%" }}
-        ></div>
-      </div>
+      <div className="revise-shell">
+        <header className="revise-header">
+          <p className="revise-eyebrow">Flash stack</p>
+          <h1 className="revise-title">{title}</h1>
+          <p className="revise-subtitle">Pick any subjects. Cards automatically interleave in the order you toggle.</p>
+        </header>
 
-      {current && (
-        <div className={`revise-card ${feedback[current.id]}`}> 
-          <h2 className="revise-topic">{current.topic}</h2>
-          <p className="revise-prompt">{current.prompt}</p>
-
-          {current.type === "mcq" && (
-            <div className="revise-choices">
-              {current.choices.map((choice) => (
-                <label key={choice} className="revise-choice">
-                  <input
-                    type="radio"
-                    name={current.id}
-                    value={choice}
-                    checked={answers[current.id] === choice}
-                    onChange={(e) => {
-                      setAnswers({ ...answers, [current.id]: choice });
-                      checkAnswer(choice, current);
-                    }}
-                  />
-                  {choice}
-                </label>
-              ))}
+        {subjects.length > 0 && (
+          <section className="subject-panel">
+            <div className="subject-panel__row">
+              <span className="subject-panel__label">Subjects</span>
+              <div className="subject-panel__controls">
+                <button type="button" className="chip-control" onClick={selectAllSubjects}>
+                  All
+                </button>
+                <button
+                  type="button"
+                  className="chip-control"
+                  onClick={clearSubjects}
+                  disabled={!selectedSubjects.length}
+                >
+                  Clear
+                </button>
+              </div>
             </div>
-          )}
-
-          {current.type === "multi" && (
-            <div className="revise-choices">
-              {current.choices.map((choice) => {
-                const selected = Array.isArray(answers[current.id]) && answers[current.id].includes(choice);
+            <div className="subject-chip-row">
+              {subjects.map((subject) => {
+                const active = selectedSubjects.includes(subject.id);
                 return (
-                  <label key={choice} className="revise-choice">
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      onChange={(e) => {
-                        let newAns = Array.isArray(answers[current.id]) ? [...answers[current.id]] : [];
-                        if (e.target.checked) newAns.push(choice);
-                        else newAns = newAns.filter((c) => c !== choice);
-                        setAnswers({ ...answers, [current.id]: newAns });
-                        checkAnswer(newAns, current);
-                      }}
-                    />
-                    {choice}
-                  </label>
+                  <button
+                    type="button"
+                    key={subject.id}
+                    className={`subject-pill ${active ? "active" : ""}`}
+                    onClick={() => toggleSubject(subject.id)}
+                    aria-pressed={active}
+                  >
+                    <span className="subject-icon" aria-hidden="true">
+                      {subject.icon}
+                    </span>
+                    <span className="subject-label">{subject.label}</span>
+                  </button>
                 );
               })}
             </div>
-          )}
+            <p className="subject-panel__hint">
+              Keep multiple pills lit to mix topics. The stack cycles through them in pill order for spaced retrieval.
+            </p>
+          </section>
+        )}
 
-          {current.type === "short" && (
-            <input
-              className="revise-input"
-              type="text"
-              placeholder="Type your answer"
-              value={answers[current.id] || ""}
-              onChange={(e) => {
-                setAnswers({ ...answers, [current.id]: e.target.value });
-                checkAnswer(e.target.value, current);
-              }}
-            />
-          )}
-
-          {current.type === "tf" && (
-            <div className="revise-choices">
-              {[true, false].map((val) => (
-                <label key={String(val)} className="revise-choice">
-                  <input
-                    type="radio"
-                    name={current.id}
-                    checked={answers[current.id] === val}
-                    onChange={() => {
-                      setAnswers({ ...answers, [current.id]: val });
-                      checkAnswer(val, current);
-                    }}
-                  />
-                  {val ? "True" : "False"}
-                </label>
-              ))}
-            </div>
-          )}
-
-          <div className="revise-controls">
-            <button onClick={handlePrev} disabled={index === 0}>Previous</button>
-            <button onClick={() => setRevealed(!revealed)}>Reveal</button>
-            <button onClick={handleNext} disabled={index === total - 1}>Next</button>
+        <div className="revise-progress">
+          <div className="revise-progress__text">
+            {total ? `Card ${index + 1} / ${total}` : "No cards yet"}
           </div>
+          <div className="revise-progress__track" aria-hidden="true">
+            <div className="revise-progress__fill" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
 
-          {(revealed || feedback[current.id]) && (
-            <div className="revise-answer">
-              <p><strong>Answer:</strong> {Array.isArray(current.answer) ? current.answer.join(", ") : String(current.answer)}</p>
-              {feedback[current.id] === "correct" && <p className="feedback-correct">✅ Correct!</p>}
-              {feedback[current.id] === "wrong" && <p className="feedback-wrong">❌ Wrong, try again.</p>}
-              {current.explanation && <p>{current.explanation}</p>}
-              {current.scripture && <p><em>{current.scripture}</em></p>}
+        <div className="card-stage">
+          {transition ? (
+            <>
+              {transition.leaving && (
+                <CardLayer state="leaving" key={`leaving-${transition.leaving.id}`}>
+                  <QuestionCard
+                    question={transition.leaving}
+                    value={answers[transition.leaving.id]}
+                    disabled
+                    praise={null}
+                    revealed={!!revealedMap[transition.leaving.id]}
+                  />
+                </CardLayer>
+              )}
+              {transition.incoming && (
+                <CardLayer state="incoming" key={`incoming-${transition.incoming.id}`}>
+                  <QuestionCard
+                    question={transition.incoming}
+                    value={answers[transition.incoming.id]}
+                    disabled
+                    praise={praiseMap[transition.incoming.id]}
+                    revealed={!!revealedMap[transition.incoming.id]}
+                  />
+                </CardLayer>
+              )}
+            </>
+          ) : (
+            <>
+              {nextQuestion && (
+                <CardLayer state="ghost" key={`ghost-${nextQuestion.id}`}>
+                  <QuestionCard question={nextQuestion} value={answers[nextQuestion.id]} ghost />
+                </CardLayer>
+              )}
+              {currentQuestion && (
+                <CardLayer state="active" key={currentQuestion.id}>
+                  <QuestionCard
+                    question={currentQuestion}
+                    value={answers[currentQuestion.id]}
+                    praise={praiseMap[currentQuestion.id]}
+                    revealed={!!revealedMap[currentQuestion.id]}
+                    onRevealToggle={() => handleRevealToggle(currentQuestion.id)}
+                    onAnswerChange={(value) => handleAnswerChange(currentQuestion, value)}
+                  />
+                </CardLayer>
+              )}
+            </>
+          )}
+
+          {!currentQuestion && !transition && (
+            <div className="revise-empty">
+              <p>Select at least one subject to start interleaving cards.</p>
             </div>
           )}
         </div>
-      )}
 
-      <p className="revise-footer">Card {total ? index + 1 : 0} / {total}</p>
+        <div className="revise-nav">
+          <button
+            type="button"
+            className="nav-button"
+            onClick={() => beginTransition("prev")}
+            disabled={isAnimating || index === 0}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="nav-button nav-button--primary"
+            onClick={() => beginTransition("next")}
+            disabled={isAnimating || index >= total - 1}
+          >
+            Next card
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
-

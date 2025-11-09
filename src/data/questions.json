@@ -1,1058 +1,296 @@
-
 [
   {
-    "id": "re-1",
+    "id": "re-101",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.1 Nature of God",
     "type": "short",
     "prompt": "Give two qualities of God.",
-    "answer": "Omnipotent; Omnibenevolent"
+    "keywords": ["omnipotent", "omnibenevolent", "omniscient", "just"],
+    "matchRequired": 2,
+    "answer": ["Omnipotent", "Omnibenevolent"],
+    "explanation": "Christians describe God as all-powerful, all-loving, all-knowing, and just.",
+    "scripture": "John 3:16"
   },
   {
-    "id": "re-2",
+    "id": "re-102",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.1 Nature of God",
-    "type": "short",
-    "prompt": "Name the attribute of God that means 'all-knowing'.",
-    "answer": "Omniscient"
-  },
-  {
-    "id": "re-3",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.1 Nature of God",
+    "topic": "1.2 God as Omnipotent, Loving and Just",
     "type": "mcq",
-    "prompt": "Which verse is used to support God's omnibenevolence?",
-    "choices": [
-      "John 3:16",
-      "Genesis 1:1",
-      "Exodus 20:3",
-      "Revelation 22:13"
-    ],
-    "answer": "John 3:16"
+    "prompt": "Which term means all-powerful?",
+    "choices": ["Omnipresent", "Omnipotent", "Omniscient", "Omnibenevolent"],
+    "answer": "Omnipotent",
+    "explanation": "Omnipotent means unlimited power; God can do anything consistent with his nature.",
+    "scripture": "Genesis 1:3"
   },
   {
-    "id": "re-4",
+    "id": "re-103",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.1 Nature of God",
+    "topic": "1.2 God as Omnipotent, Loving and Just",
+    "type": "short",
+    "prompt": "Explain one reason Christians believe God is loving.",
+    "keywords": ["Jesus", "forgiveness", "sacrifice", "love"],
+    "matchRequired": 1,
+    "answer": ["He sent Jesus to save humanity."],
+    "explanation": "Sending Jesus to die for sin is seen as the ultimate act of love.",
+    "scripture": "John 3:16"
+  },
+  {
+    "id": "re-104",
+    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
+    "topic": "1.2 Problem of Evil and Suffering",
     "type": "tf",
-    "prompt": "Christians believe God is one (monotheism).",
-    "answer": true
+    "prompt": "The problem of evil challenges God’s power, love, and justice.",
+    "answer": true,
+    "explanation": "If God is loving, powerful, and just, the existence of suffering raises questions.",
+    "scripture": "Job 1–2"
   },
   {
-    "id": "re-5",
+    "id": "re-105",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.1 Nature of God",
-    "type": "mcq",
-    "prompt": "Which commandment supports God's oneness?",
-    "choices": [
-      "You shall have no other gods before me (Exodus 20)",
-      "Blessed are the peacemakers",
-      "Love your enemies",
-      "Do not judge"
-    ],
-    "answer": "You shall have no other gods before me (Exodus 20)"
-  },
-  {
-    "id": "re-6",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.1 Nature of God",
+    "topic": "1.3 The Trinity",
     "type": "short",
-    "prompt": "Which attribute means God is perfectly fair?",
-    "answer": "Just"
+    "prompt": "Name the three persons of the Trinity.",
+    "keywords": ["Father", "Son", "Holy Spirit"],
+    "matchRequired": 3,
+    "answer": ["Father", "Son", "Holy Spirit"],
+    "explanation": "One God in three persons: the Father, Son, and Holy Spirit.",
+    "scripture": "Matthew 28:19"
   },
-
-
   {
-    "id": "re-7",
+    "id": "re-106",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Problem of Evil",
+    "topic": "1.3 The Trinity",
     "type": "tf",
-    "prompt": "The existence of evil challenges God's power, love, and justice.",
-    "answer": true
+    "prompt": "Each person of the Trinity is fully God but not the same person.",
+    "answer": true,
+    "explanation": "The Father, Son, and Holy Spirit are distinct yet one in essence.",
+    "scripture": "Nicene Creed"
   },
   {
-    "id": "re-8",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Problem of Evil",
-    "type": "short",
-    "prompt": "Name the philosopher associated with the 'Inconsistent Triad'.",
-    "answer": "J.L. Mackie"
-  },
-  {
-    "id": "re-9",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Omnipotent, Loving, Just",
-    "type": "multi",
-    "prompt": "Select the three attributes in the inconsistent triad debate.",
-    "choices": ["Omnipotent", "Omnibenevolent", "Just", "Immutable"],
-    "answer": ["Omnipotent", "Omnibenevolent", "Just"]
-  },
-  {
-    "id": "re-10",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Problem of Evil",
-    "type": "mcq",
-    "prompt": "Which is a typical Christian response to moral evil?",
-    "choices": [
-      "Humans have free will",
-      "God is not real",
-      "Suffering is meaningless",
-      "Only the devil causes evil"
-    ],
-    "answer": "Humans have free will"
-  },
-  {
-    "id": "re-11",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Omnipotent, Loving, Just",
-    "type": "short",
-    "prompt": "Complete: God is all-powerful = ____.",
-    "answer": "Omnipotent"
-  },
-  {
-    "id": "re-12",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.2 Problem of Evil",
-    "type": "tf",
-    "prompt":
-      "Some Christians say suffering can develop compassion and bring people closer to God.",
-    "answer": true
-  },
-
-
-  {
-    "id": "re-13",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "multi",
-    "prompt": "Select the persons of the Trinity.",
-    "choices": ["Father", "Son", "Holy Spirit", "Angel Gabriel"],
-    "answer": ["Father", "Son", "Holy Spirit"]
-  },
-  {
-    "id": "re-14",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "short",
-    "prompt": "Which creed affirms 'We believe in one God'?",
-    "answer": "Nicene Creed"
-  },
-  {
-    "id": "re-15",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "mcq",
-    "prompt": "God the Father is typically described as:",
-    "choices": [
-      "Creator and transcendent",
-      "Only immanent",
-      "Only visible",
-      "A prophet"
-    ],
-    "answer": "Creator and transcendent"
-  },
-  {
-    "id": "re-16",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "mcq",
-    "prompt": "God the Holy Spirit is typically described as:",
-    "choices": [
-      "Ever-present and unseen presence of God",
-      "A human teacher",
-      "A Roman governor",
-      "An archangel"
-    ],
-    "answer": "Ever-present and unseen presence of God"
-  },
-  {
-    "id": "re-17",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "tf",
-    "prompt":
-      "Each person of the Trinity is fully God, yet there is only one God.",
-    "answer": true
-  },
-  {
-    "id": "re-18",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.3 Trinity",
-    "type": "short",
-    "prompt": "Which person of the Trinity is the 'incarnation'?",
-    "answer": "The Son"
-  },
-
-
-  {
-    "id": "re-19",
+    "id": "re-107",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.4 Creation",
     "type": "mcq",
-    "prompt": "Which book contains the creation story?",
-    "choices": ["Exodus", "Genesis", "John", "Luke"],
-    "answer": "Genesis"
+    "prompt": "In which book of the Bible is the creation story found?",
+    "choices": ["Exodus", "Genesis", "Matthew", "Revelation"],
+    "answer": "Genesis",
+    "explanation": "Genesis describes God creating the world in six days.",
+    "scripture": "Genesis 1:1–3"
   },
   {
-    "id": "re-20",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.4 Creation",
-    "type": "short",
-    "prompt": "Which Gospel opens by calling Jesus 'the Word'?",
-    "answer": "John"
-  },
-  {
-    "id": "re-21",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.4 Creation",
-    "type": "tf",
-    "prompt":
-      "Some Christians see Genesis as symbolic or mythical rather than a literal timetable.",
-    "answer": true
-  },
-  {
-    "id": "re-22",
+    "id": "re-108",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.4 Creation",
     "type": "multi",
-    "prompt": "Select interpretations Christians hold about Genesis.",
-    "choices": [
-      "Literal (Creationism)",
-      "Symbolic",
-      "Mythical",
-      "Scientific atheism only"
-    ],
-    "answer": ["Literal (Creationism)", "Symbolic", "Mythical"]
+    "prompt": "Which persons of the Trinity were involved in creation?",
+    "choices": ["Father", "Son", "Holy Spirit", "Mary"],
+    "answer": ["Father", "Son", "Holy Spirit"],
+    "explanation": "All three persons of the Trinity were present at creation.",
+    "scripture": "John 1:1–3, Genesis 1:1–3"
   },
   {
-    "id": "re-23",
+    "id": "re-109",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.4 Creation",
-    "type": "short",
-    "prompt":
-      "In Genesis 1:1–3, who is 'hovering over the waters' at creation (title only)?",
-    "answer": "Spirit"
-  },
-  {
-    "id": "re-24",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.4 Creation",
-    "type": "tf",
-    "prompt":
-      "Many Christians believe the Trinity was active in creation (Father, Word/Son, Spirit).",
-    "answer": true
-  },
-
-
-  {
-    "id": "re-25",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
+    "topic": "1.5 The Incarnation",
     "type": "mcq",
     "prompt": "What does 'incarnation' mean?",
-    "choices": [
-      "God becoming human",
-      "God becoming an angel",
-      "A human becoming God",
-      "A prophet receiving a vision"
-    ],
-    "answer": "God becoming human"
+    "choices": ["God in human form", "God in nature", "God in heaven", "The Spirit made visible"],
+    "answer": "God in human form",
+    "explanation": "Incarnation means God taking human flesh in the person of Jesus.",
+    "scripture": "John 1:14"
   },
   {
-    "id": "re-26",
+    "id": "re-110",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
+    "topic": "1.5 The Incarnation",
     "type": "short",
-    "prompt": "Complete: Jesus is fully ____ and fully divine.",
-    "answer": "human"
+    "prompt": "Give one reason why the incarnation is important to Christians.",
+    "keywords": ["salvation", "understanding", "forgiveness", "human"],
+    "matchRequired": 1,
+    "answer": ["It shows God understands human suffering."],
+    "explanation": "Through Jesus’ humanity, God experiences human life and offers salvation.",
+    "scripture": "John 1:14"
   },
   {
-    "id": "re-27",
+    "id": "re-111",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
+    "topic": "1.6 The Crucifixion",
+    "type": "short",
+    "prompt": "Give two reasons why the crucifixion is important to Christians.",
+    "keywords": ["sacrifice", "forgiveness", "salvation", "suffering"],
+    "matchRequired": 2,
+    "answer": ["Jesus’ death paid for sin", "It shows God forgives humanity"],
+    "explanation": "Jesus’ sacrifice brings forgiveness and restores humanity’s relationship with God.",
+    "scripture": "Luke 23:34"
+  },
+  {
+    "id": "re-112",
+    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
+    "topic": "1.6 The Crucifixion",
     "type": "tf",
-    "prompt":
-      "Christians believe Jesus is the Messiah and 'the Word made flesh'.",
-    "answer": true
+    "prompt": "Jesus was crucified under Pontius Pilate.",
+    "answer": true,
+    "explanation": "Pontius Pilate sentenced Jesus to death by crucifixion.",
+    "scripture": "Mark 15:15"
   },
   {
-    "id": "re-28",
+    "id": "re-113",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
+    "topic": "1.7 The Resurrection",
     "type": "short",
-    "prompt": "Which title describes Jesus as God's Son?",
-    "answer": "Son of God"
+    "prompt": "Give two reasons why the resurrection is important to Christians.",
+    "keywords": ["life", "afterlife", "sin", "power", "hope"],
+    "matchRequired": 2,
+    "answer": ["It proves life after death", "It shows victory over sin and evil"],
+    "explanation": "The resurrection demonstrates that death is not the end and God’s power is supreme.",
+    "scripture": "John 11:25"
   },
   {
-    "id": "re-29",
+    "id": "re-114",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
-    "type": "mcq",
-    "prompt":
-      "Why is Jesus' humanity important for Christians, according to the spec?",
-    "choices": [
-      "He knows suffering and can empathise",
-      "He could overrule Rome",
-      "He was only symbolic",
-      "He replaced the Spirit"
-    ],
-    "answer": "He knows suffering and can empathise"
-  },
-  {
-    "id": "re-30",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.5 Incarnation",
-    "type": "short",
-    "prompt": "Give the Gospel reference phrase: 'The Word became ____.'",
-    "answer": "flesh"
-  },
-
-
-  {
-    "id": "re-31",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
-    "type": "short",
-    "prompt": "Who sentenced Jesus to death?",
-    "answer": "Pontius Pilate"
-  },
-  {
-    "id": "re-32",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
+    "topic": "1.7 The Ascension",
     "type": "tf",
-    "prompt":
-      "Christians believe Jesus' sacrifice enables forgiveness for the repentant.",
-    "answer": true
+    "prompt": "The ascension happened forty days after the resurrection.",
+    "answer": true,
+    "explanation": "Jesus ascended to heaven forty days after rising from the dead.",
+    "scripture": "Acts 1:3–9"
   },
   {
-    "id": "re-33",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
-    "type": "mcq",
-    "prompt": "Which cry from the cross shows Jesus' suffering?",
-    "choices": [
-      "My God, my God, why have you forsaken me?",
-      "Peace be with you",
-      "It is finished, Peter",
-      "Blessed are the poor"
-    ],
-    "answer": "My God, my God, why have you forsaken me?"
-  },
-  {
-    "id": "re-34",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
-    "type": "short",
-    "prompt": "State one reason Christians give for why Jesus had to die.",
-    "answer": "Atonement"
-  },
-  {
-    "id": "re-35",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
-    "type": "tf",
-    "prompt":
-      "Good Friday is a UK public holiday remembering the crucifixion.",
-    "answer": true
-  },
-  {
-    "id": "re-36",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.6 Crucifixion",
-    "type": "mcq",
-    "prompt": "What was significant about Jesus' burial timing?",
-    "choices": [
-      "It was rushed due to the Sabbath",
-      "It was delayed for a festival",
-      "It happened at night",
-      "It took place in Rome"
-    ],
-    "answer": "It was rushed due to the Sabbath"
-  },
-
-
-  {
-    "id": "re-37",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Resurrection",
-    "type": "mcq",
-    "prompt": "When do Christians celebrate Jesus rising from the dead?",
-    "choices": ["Good Friday", "Easter Sunday", "Maundy Thursday", "Pentecost"],
-    "answer": "Easter Sunday"
-  },
-  {
-    "id": "re-38",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Resurrection",
-    "type": "short",
-    "prompt":
-      "Complete Jesus' saying: 'I am the resurrection and the ____.'",
-    "answer": "life"
-  },
-  {
-    "id": "re-39",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Resurrection",
-    "type": "tf",
-    "prompt":
-      "Christians teach the resurrection shows the power of good over evil.",
-    "answer": true
-  },
-  {
-    "id": "re-40",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Easter Week",
-    "type": "mcq",
-    "prompt":
-      "Which event remembers Jesus entering Jerusalem on a donkey?",
-    "choices": [
-      "Palm Sunday",
-      "Maundy Thursday",
-      "Good Friday",
-      "Ascension Day"
-    ],
-    "answer": "Palm Sunday"
-  },
-  {
-    "id": "re-41",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Ascension",
-    "type": "short",
-    "prompt": "How many days after the resurrection did the Ascension occur?",
-    "answer": "40"
-  },
-  {
-    "id": "re-42",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.7 Ascension",
-    "type": "tf",
-    "prompt":
-      "The Ascension comforts Christians by affirming Jesus is with the Father.",
-    "answer": true
-  },
-
-
-  {
-    "id": "re-43",
+    "id": "re-115",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.8 Life After Death",
     "type": "multi",
-    "prompt": "Select Christian views about resurrection timing/form.",
-    "choices": [
-      "Immediate after death",
-      "At Jesus' return",
-      "Spiritual only",
-      "Bodily transformation"
-    ],
-    "answer": [
-      "Immediate after death",
-      "At Jesus' return",
-      "Spiritual only",
-      "Bodily transformation"
-    ]
+    "prompt": "Which of the following are Christian beliefs about resurrection?",
+    "choices": ["Physical resurrection", "Spiritual resurrection", "Reincarnation", "No resurrection"],
+    "answer": ["Physical resurrection", "Spiritual resurrection"],
+    "explanation": "Christians differ on whether resurrection is bodily or spiritual, but all believe in life after death.",
+    "scripture": "1 Corinthians 15"
   },
   {
-    "id": "re-44",
+    "id": "re-116",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.8 Life After Death",
     "type": "short",
-    "prompt": "Belief in resurrection gives Christians ____ in facing death.",
-    "answer": "confidence"
+    "prompt": "Explain one way belief in the afterlife influences Christians today.",
+    "keywords": ["good", "moral", "heaven", "judgement"],
+    "matchRequired": 1,
+    "answer": ["Encourages moral living to reach heaven."],
+    "explanation": "Belief in heaven motivates Christians to follow Jesus’ teachings.",
+    "scripture": "Matthew 25:46"
   },
   {
-    "id": "re-45",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.8 Life After Death",
-    "type": "tf",
-    "prompt":
-      "Belief in life after death can motivate Christians to live as God instructs.",
-    "answer": true
-  },
-  {
-    "id": "re-46",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.8 Life After Death",
-    "type": "mcq",
-    "prompt": "Which phrase reflects the Christian hope beyond death?",
-    "choices": [
-      "Many rooms in my Father's house",
-      "Eat, drink, and be merry",
-      "An eye for an eye",
-      "Render to Caesar"
-    ],
-    "answer": "Many rooms in my Father's house"
-  },
-  {
-    "id": "re-47",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.8 Life After Death",
-    "type": "short",
-    "prompt": "Give one reason Christians don't fear death (one keyword).",
-    "answer": "resurrection"
-  },
-  {
-    "id": "re-48",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.8 Life After Death",
-    "type": "mcq",
-    "prompt":
-      "Which belief is affirmed by Jesus’ own resurrection, according to Christians?",
-    "choices": [
-      "Life after death is real",
-      "Only prophets rise",
-      "Rome controlled destiny",
-      "Angels judge all"
-    ],
-    "answer": "Life after death is real"
-  },
-
-
-  {
-    "id": "re-49",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.9 Judgement",
-    "type": "short",
-    "prompt":
-      "Complete: 'I am the way, the truth and the life; no one comes to the Father except through ____.'",
-    "answer": "me"
-  },
-  {
-    "id": "re-50",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.9 Judgement",
-    "type": "tf",
-    "prompt":
-      "The Parable of the Sheep and Goats teaches serving others is serving Jesus.",
-    "answer": true
-  },
-  {
-    "id": "re-51",
+    "id": "re-117",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
     "topic": "1.9 Judgement",
     "type": "mcq",
-    "prompt": "Who will Jesus judge, according to Christian belief?",
-    "choices": [
-      "The living and the dead",
-      "Only the saints",
-      "Only the baptized",
-      "Only the poor"
-    ],
-    "answer": "The living and the dead"
+    "prompt": "According to the Apostles’ Creed, who will Jesus judge?",
+    "choices": ["The living", "The dead", "The living and the dead", "Only sinners"],
+    "answer": "The living and the dead",
+    "explanation": "Jesus will judge everyone according to the Apostles’ Creed.",
+    "scripture": "2 Timothy 4:1"
   },
   {
-    "id": "re-52",
+    "id": "re-118",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.9 Afterlife",
+    "topic": "1.9 Judgement",
     "type": "short",
-    "prompt": "Name one view on when judgement happens (keyword).",
-    "answer": "Immediate"
+    "prompt": "Name one parable that teaches about judgement.",
+    "keywords": ["Sheep", "Goats", "Bridesmaids", "Lazarus"],
+    "matchRequired": 1,
+    "answer": ["The Parable of the Sheep and the Goats"],
+    "explanation": "It teaches that helping others is like serving Christ.",
+    "scripture": "Matthew 25:31–46"
   },
   {
-    "id": "re-53",
+    "id": "re-119",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.9 Afterlife",
-    "type": "short",
-    "prompt": "Name the other view on when judgement happens (keyword).",
-    "answer": "Day of Judgement"
-  },
-  {
-    "id": "re-54",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.9 Afterlife",
-    "type": "tf",
-    "prompt": "Christians believe death is not the end.",
-    "answer": true
-  },
-
-
-  {
-    "id": "re-55",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "mcq",
-    "prompt": "Heaven is generally understood as:",
-    "choices": [
-      "Eternal happiness in God's presence",
-      "Annihilation",
-      "Reincarnation",
-      "An earthly kingdom"
-    ],
-    "answer": "Eternal happiness in God's presence"
-  },
-  {
-    "id": "re-56",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "tf",
-    "prompt":
-      "Some Christians believe only baptized Christians go to heaven; others include sincere non-Christians.",
-    "answer": true
-  },
-  {
-    "id": "re-57",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "mcq",
-    "prompt": "In Catholic teaching, purgatory is:",
-    "choices": [
-      "A final destination",
-      "A temporary cleansing state before heaven",
-      "Hell by another name",
-      "Heaven's outer courts forever"
-    ],
-    "answer": "A temporary cleansing state before heaven"
-  },
-  {
-    "id": "re-58",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "short",
-    "prompt":
-      "Complete: 'Faith by itself, if not accompanied by ____ , is dead.'",
-    "answer": "action"
-  },
-  {
-    "id": "re-59",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "tf",
-    "prompt":
-      "Christians differ on who goes to hell (e.g., unrepentant grave sinners; those who turn from God).",
-    "answer": true
-  },
-  {
-    "id": "re-60",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.10 Heaven & Hell",
-    "type": "mcq",
-    "prompt":
-      "Which of these is a Christian motivation for heaven in the resources?",
-    "choices": [
-      "Serving others as serving Jesus",
-      "Military service",
-      "Pilgrimage only",
-      "Celibacy only"
-    ],
-    "answer": "Serving others as serving Jesus"
-  },
-
-
-  {
-    "id": "re-61",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
-    "type": "short",
-    "prompt": "Define the term that means an act against God.",
-    "answer": "Sin"
-  },
-  {
-    "id": "re-62",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
-    "type": "short",
-    "prompt": "Name the doctrine of an inbuilt desire to do wrong (Catholic).",
-    "answer": "Original Sin"
-  },
-  {
-    "id": "re-63",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
-    "type": "mcq",
-    "prompt":
-      "Which verse is cited to support salvation as God's unearned gift?",
-    "choices": [
-      "Ephesians 2:8–9",
-      "Genesis 1:1",
-      "Matthew 5:9",
-      "Luke 10:25"
-    ],
-    "answer": "Ephesians 2:8–9"
-  },
-  {
-    "id": "re-64",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
+    "topic": "1.10 Heaven and Hell",
     "type": "multi",
-    "prompt": "Select ways Christians believe salvation may be received.",
-    "choices": ["Law", "Grace", "Spirit", "Pilgrimage only"],
-    "answer": ["Law", "Grace", "Spirit"]
+    "prompt": "Which are Christian views of the afterlife?",
+    "choices": ["Heaven", "Hell", "Purgatory", "Reincarnation"],
+    "answer": ["Heaven", "Hell", "Purgatory"],
+    "explanation": "Many Christians believe in heaven and hell; Catholics add purgatory as a place of purification.",
+    "scripture": "John 14:2"
   },
   {
-    "id": "re-65",
+    "id": "re-120",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
+    "topic": "1.10 Heaven and Hell",
     "type": "tf",
-    "prompt":
-      "Christians believe free will means people will sometimes sin but can repent.",
-    "answer": true
+    "prompt": "Heaven is eternal separation from God.",
+    "answer": false,
+    "explanation": "Heaven is eternal unity with God; hell is separation from him.",
+    "scripture": "Revelation 21:4"
   },
   {
-    "id": "re-66",
+    "id": "re-121",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.11 Sin & Salvation",
-    "type": "short",
-    "prompt":
-      "Complete the keyword: Salvation through unearned divine favour is ____.",
-    "answer": "Grace"
-  },
-
-
-  {
-    "id": "re-67",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
-    "type": "tf",
-    "prompt":
-      "Christians believe Jesus' death restores the broken relationship between God and humanity.",
-    "answer": true
-  },
-  {
-    "id": "re-68",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
-    "type": "short",
-    "prompt":
-      "Which doctrine says Jesus 'removes' sin and reconciles humans to God?",
-    "answer": "Atonement"
-  },
-  {
-    "id": "re-69",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
+    "topic": "1.11 Sin and Salvation",
     "type": "mcq",
-    "prompt":
-      "According to the resources, Jesus' death especially addresses whose sin in a representative way?",
+    "prompt": "What is original sin?",
     "choices": [
-      "Adam and Eve",
-      "Moses and Aaron",
-      "Peter and Paul",
-      "Mary and Joseph"
+      "The first sin committed by Adam and Eve",
+      "A minor sin forgiven automatically",
+      "Disobeying the Ten Commandments",
+      "An unpardonable sin"
     ],
-    "answer": "Adam and Eve"
+    "answer": "The first sin committed by Adam and Eve",
+    "explanation": "Original sin refers to humanity’s inherited tendency to disobey God.",
+    "scripture": "Genesis 3"
   },
   {
-    "id": "re-70",
+    "id": "re-122",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
-    "type": "mcq",
-    "prompt":
-      "Jesus’ resurrection shows what about his sacrifice, per Christian belief?",
-    "choices": [
-      "God accepted it",
-      "Rome rejected it",
-      "Disciples doubted it",
-      "Angels annulled it"
-    ],
-    "answer": "God accepted it"
-  },
-  {
-    "id": "re-71",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
+    "topic": "1.11 Sin and Salvation",
     "type": "short",
-    "prompt":
-      "Complete the chain from the resources: Sin → Salvation → ____ → Atonement.",
-    "answer": "Grace"
+    "prompt": "Give one way Christians believe salvation can be achieved.",
+    "keywords": ["grace", "faith", "law", "spirit"],
+    "matchRequired": 1,
+    "answer": ["Through God’s grace and faith in Jesus."],
+    "explanation": "Christians believe salvation is a gift from God through faith, not earned by deeds.",
+    "scripture": "Ephesians 2:8"
   },
   {
-    "id": "re-72",
+    "id": "re-123",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "1.12 Christ & Salvation",
+    "topic": "1.11 Sin and Salvation",
     "type": "tf",
-    "prompt":
-      "Those who follow Jesus’ teachings gain eternal life, according to the resources.",
-    "answer": true
+    "prompt": "Christians believe they can earn salvation by good works alone.",
+    "answer": false,
+    "explanation": "Most Christians teach that faith and grace, not deeds alone, bring salvation.",
+    "scripture": "Romans 10:9"
   },
-
-
   {
-    "id": "re-73",
+    "id": "re-124",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
+    "topic": "1.12 Role of Christ in Salvation",
     "type": "short",
-    "prompt":
-      "Which parable teaches that God forgives those who repent (title only)?",
-    "answer": "Prodigal Son"
+    "prompt": "Explain one way Jesus’ death achieved salvation.",
+    "keywords": ["atonement", "forgiveness", "sin", "sacrifice"],
+    "matchRequired": 1,
+    "answer": ["His sacrifice atoned for human sin."],
+    "explanation": "Jesus’ death reconciled humanity with God and removed the barrier of sin.",
+    "scripture": "Romans 5:10"
   },
   {
-    "id": "re-74",
+    "id": "re-125",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
-    "type": "short",
-    "prompt":
-      "Which parable teaches about readiness for judgement (title keyword 'Bridesmaids')?",
-    "answer": "Ten Bridesmaids"
-  },
-  {
-    "id": "re-75",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
-    "type": "short",
-    "prompt":
-      "Which Gospel phrase affirms the Son pre-existed and was active in creation (one keyword)?",
-    "answer": "Word"
-  },
-  {
-    "id": "re-76",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
+    "topic": "1.12 Role of Christ in Salvation",
     "type": "tf",
-    "prompt":
-      "In the Sheep and Goats, serving 'the least' equals serving Christ.",
-    "answer": true
+    "prompt": "Atonement means restoring the relationship between God and humanity.",
+    "answer": true,
+    "explanation": "Through Jesus’ death, the broken relationship caused by sin is healed.",
+    "scripture": "1 John 2:2"
   },
   {
-    "id": "re-77",
+    "id": "re-126",
     "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
+    "topic": "1.12 Role of Christ in Salvation",
     "type": "mcq",
-    "prompt":
-      "Which set best matches Easter Week ordering (simplified)?",
-    "choices": [
-      "Palm Sunday → Last Supper → Crucifixion → Resurrection",
-      "Crucifixion → Palm Sunday → Last Supper → Resurrection",
-      "Last Supper → Palm Sunday → Resurrection → Crucifixion",
-      "Resurrection → Crucifixion → Palm Sunday → Last Supper"
-    ],
-    "answer": "Palm Sunday → Last Supper → Crucifixion → Resurrection"
-  },
-  {
-    "id": "re-78",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Parables & Scripture",
-    "type": "short",
-    "prompt": "Who discovered the empty tomb first (group title)?",
-    "answer": "Women"
-  },
-
-
-  {
-    "id": "re-79",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt": "Which is NOT a person of the Trinity?",
-    "choices": ["Father", "Son", "Holy Spirit", "St. Peter"],
-    "answer": "St. Peter"
-  },
-  {
-    "id": "re-80",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Complete the creed idea: 'We believe in ____ God' (number word).",
-    "answer": "one"
-  },
-  {
-    "id": "re-81",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "Some Christians think science (Big Bang/evolution) can be compatible with Genesis when read symbolically.",
-    "answer": true
-  },
-  {
-    "id": "re-82",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which best describes hell in many Christian teachings from the resources?",
-    "choices": [
-      "Eternal separation from God",
-      "Reincarnation loop",
-      "Temporary rest only",
-      "Neutral waiting room"
-    ],
-    "answer": "Eternal separation from God"
-  },
-  {
-    "id": "re-83",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt": "Salvation through doing what God commands is salvation through ____.",
-    "answer": "Law"
-  },
-  {
-    "id": "re-84",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Who empowers Christians to live God's way in 'salvation through ____'?",
-    "answer": "Spirit"
-  },
-  {
-    "id": "re-85",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "The Ascension prepares for the sending of the Holy Spirit to continue Jesus' work.",
-    "answer": true
-  },
-  {
-    "id": "re-86",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which best captures why the resurrection matters for Christians (from the resources)?",
-    "choices": [
-      "It validates Jesus' teachings and promises life after death",
-      "It ended Roman rule",
-      "It replaced the law entirely",
-      "It cancelled the Trinity"
-    ],
-    "answer": "It validates Jesus' teachings and promises life after death"
-  },
-  {
-    "id": "re-87",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Name the concept that 'restores the relationship' between God and humanity.",
-    "answer": "Atonement"
-  },
-  {
-    "id": "re-88",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "Some Christians believe non-Christians can be saved; others say salvation is only through Jesus.",
-    "answer": true
-  },
-  {
-    "id": "re-89",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which pairing correctly matches attribute & verse from the resources?",
-    "choices": [
-      "Omnipotence – 'Let there be light' (Genesis 1)",
-      "Justice – 'In the beginning was the Word' (John 1)",
-      "Oneness – 'I am the resurrection' (John 11)",
-      "Benevolence – 'You shall have no other gods' (Exodus 20)"
-    ],
-    "answer": "Omnipotence – 'Let there be light' (Genesis 1)"
-  },
-  {
-    "id": "re-90",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Which festival commemorates the Last Supper and Jesus washing feet (one word)?",
-    "answer": "Maundy"
-  },
-  {
-    "id": "re-91",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Finish the chain used in the resources: Sin → ____ → Grace → Atonement.",
-    "answer": "Salvation"
-  },
-  {
-    "id": "re-92",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "Jesus' death means those who follow his teachings gain eternal life, per the resources.",
-    "answer": true
-  },
-  {
-    "id": "re-93",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which event directly precedes the Resurrection in the Easter timeline?",
-    "choices": ["Crucifixion", "Palm Sunday", "Ascension", "Pentecost"],
-    "answer": "Crucifixion"
-  },
-  {
-    "id": "re-94",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "In John 1, 'the Word was with God' and 'the Word was ____' (one word).",
-    "answer": "God"
-  },
-  {
-    "id": "re-95",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "According to the resources, Jesus appeared to many people after the resurrection.",
-    "answer": true
-  },
-  {
-    "id": "re-96",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which best names the three classic attributes often listed together?",
-    "choices": [
-      "Omnipotence, Omnibenevolence, Justice",
-      "Power, Prophecy, Priesthood",
-      "Law, Grace, Spirit",
-      "Temple, Torah, Tithe"
-    ],
-    "answer": "Omnipotence, Omnibenevolence, Justice"
-  },
-  {
-    "id": "re-97",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt": "What term means 'God's undeserved gift' in salvation?",
-    "answer": "Grace"
-  },
-  {
-    "id": "re-98",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "short",
-    "prompt":
-      "Name the day commemorating Jesus' body being placed in the tomb (one word).",
-    "answer": "Friday"
-  },
-  {
-    "id": "re-99",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "tf",
-    "prompt":
-      "Christians believe heaven and hell are ultimate outcomes of judgement.",
-    "answer": true
-  },
-  {
-    "id": "re-100",
-    "subject": { "id": "rs_christianity", "label": "RE", "icon": "✝" },
-    "topic": "Mixed Checks",
-    "type": "mcq",
-    "prompt":
-      "Which line is linked to atonement language in the resources?",
-    "choices": [
-      "Restored the relationship between God and humanity",
-      "Render unto Caesar",
-      "An eye for an eye",
-      "Love your neighbour only"
-    ],
-    "answer": "Restored the relationship between God and humanity"
-  } 
-
+    "prompt": "Which event shows that God accepted Jesus’ sacrifice?",
+    "choices": ["The crucifixion", "The resurrection", "The ascension", "The baptism of Jesus"],
+    "answer": "The resurrection",
+    "explanation": "The resurrection confirms that God accepted Jesus’ death as atonement.",
+    "scripture": "1 Corinthians 15:17"
+  }
 ]
