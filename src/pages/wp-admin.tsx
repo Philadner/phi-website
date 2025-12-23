@@ -17,7 +17,24 @@ export default function Wpadmin() {
       window.location.href = `https://chatgpt.com/?q=${encodeURIComponent(msg)}`;
       return;
     }
+    // track failed attempts in sessionStorage
+    const key = "wp_admin_failed_count";
+    const prev = parseInt(sessionStorage.getItem(key) || "0", 10) || 0;
+    const next = prev + 1;
+    sessionStorage.setItem(key, String(next));
+
     setError(true);
+
+    // after render, update the error hint if they've failed 3 or more times
+    if (next >= 3) {
+      setTimeout(() => {
+        const err = document.querySelector<HTMLDivElement>(".wpadmin-error");
+        if (err) {
+          err.textContent =
+            'ERROR: Invalid username or password. HINT: have you even tried username and password "admin"?';
+        }
+      }, 0);
+    }
   }
 
   return (
