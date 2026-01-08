@@ -20,6 +20,18 @@ function News() {
           Oscar is a standout and why this news section is celebrating him.
         </p>
       </article>
+      <div className="SpaceDiv"/>
+      <article>
+        <h2 className="HeadingLeft">Jay killed my dog</h2>
+        <p className="BodyTextLeft">8th january, 2026</p>
+        <div className="SpaceDiv" />
+        <p className="BodyTextLeft">
+          Nah bro he just booted my dog.
+          like that is out of order
+          can we get him gone 
+          like we are not bringing him to the big '26
+        </p>
+      </article>
     </main>
   );
 }
