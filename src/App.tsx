@@ -14,6 +14,7 @@ import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
 import Wpadmin from './pages/wp-admin';
+import News from './pages/News';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import './App.css';
 
@@ -128,6 +129,7 @@ useEffect(() => {
             <Link to="/quickl">Quick links</Link>
             <Link to="/chatroom">Chatroom</Link>
             <Link to="/add">Add</Link>
+            <Link to="/news">News</Link>
           </nav>
 
           <button
@@ -156,6 +158,7 @@ useEffect(() => {
           <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
           <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
+          <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
           <div
             className="gameshow-banner"
             role="button"
@@ -209,6 +212,7 @@ useEffect(() => {
             <Route path="/stats" element={<Stats />} />
             <Route path="/workinhardorhardlyworkin" element={<Stats />} />
             <Route path="/wp-admin" element={<Wpadmin />} />
+            <Route path="/news" element={<News />} />
 
           </Routes>
           <MusicPLRouter />
