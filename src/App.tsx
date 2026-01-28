@@ -160,25 +160,33 @@ useEffect(() => {
           <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
           <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
-          <Link to="/jay" onClick={() => setSideOpen(false)}>Jay</Link>
           <div
             className="gameshow-banner"
             role="button"
             tabIndex={0}
             onClick={() => {
-              navigate("/workinhardorhardlyworkin");
+              setSideOpen(false);
+              navigate("/jay");
               }
             }
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                navigate("/workinhardorhardlyworkin");
+                setSideOpen(false);
+                navigate("/jay");
               }
             }}
           >
-            <span className="gameshow-text">Workin' hard</span>
-            <span className="gameshow-divider">or</span>
-            <span className="gameshow-text">Hardly workin'?</span>
+            <span className="gameshow-text">Jay Game</span>
+            <span className="gameshow-divider">Play in browser</span>
           </div>
+
+          <Link
+            to="/workinhardorhardlyworkin"
+            onClick={() => setSideOpen(false)}
+            className="sidebar-note"
+          >
+            is phil lazy
+          </Link>
           
           
 
