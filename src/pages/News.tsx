@@ -18,6 +18,7 @@ function News() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -113,99 +114,122 @@ function News() {
 
   return (
     <main id="main-site">
-      <h1 className="CenterTitle">News</h1>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <h1 className="CenterTitle" style={{ margin: 0 }}>
+          News
+        </h1>
+        <button
+          type="button"
+          onClick={() => setShowAdd((v) => !v)}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 12,
+            border: "1px solid gold",
+            background: showAdd ? "gold" : "transparent",
+            color: showAdd ? "black" : "gold",
+            cursor: "pointer",
+            fontWeight: 800,
+            whiteSpace: "nowrap",
+          }}
+          aria-expanded={showAdd}
+        >
+          {showAdd ? "Close" : "Add article"}
+        </button>
+      </div>
 
       <div className="SpaceDiv" />
 
-      <form
-        onSubmit={onSubmit}
-        style={{
-          maxWidth: 900,
-          margin: "0 auto",
-          padding: 16,
-          border: "1px solid gold",
-          borderRadius: 16,
-        }}
-      >
-        <h2 className="HeadingLeft" style={{ marginTop: 0 }}>
-          Add an article
-        </h2>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            style={{
-              flex: "1 1 280px",
-              padding: 10,
-              borderRadius: 12,
-              border: "1px solid rgba(255,215,0,0.6)",
-              background: "rgba(0,0,0,0.5)",
-              color: "gold",
-              outline: "none",
-            }}
-          />
-          <input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Author (optional)"
-            style={{
-              flex: "1 1 200px",
-              padding: 10,
-              borderRadius: 12,
-              border: "1px solid rgba(255,215,0,0.6)",
-              background: "rgba(0,0,0,0.5)",
-              color: "gold",
-              outline: "none",
-            }}
-          />
-        </div>
-
-        <div style={{ height: 10 }} />
-
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your news..."
-          rows={6}
+      {showAdd ? (
+        <form
+          onSubmit={onSubmit}
           style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 12,
-            border: "1px solid rgba(255,215,0,0.6)",
-            background: "rgba(0,0,0,0.5)",
-            color: "gold",
-            outline: "none",
-            resize: "vertical",
-            boxSizing: "border-box",
+            maxWidth: 900,
+            margin: "0 auto",
+            padding: 16,
+            border: "1px solid gold",
+            borderRadius: 16,
           }}
-        />
+        >
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
+              style={{
+                flex: "1 1 280px",
+                padding: 10,
+                borderRadius: 12,
+                border: "1px solid rgba(255,215,0,0.6)",
+                background: "rgba(0,0,0,0.5)",
+                color: "gold",
+                outline: "none",
+              }}
+            />
+            <input
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="Author (optional)"
+              style={{
+                flex: "1 1 200px",
+                padding: 10,
+                borderRadius: 12,
+                border: "1px solid rgba(255,215,0,0.6)",
+                background: "rgba(0,0,0,0.5)",
+                color: "gold",
+                outline: "none",
+              }}
+            />
+          </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
-          <button
-            type="submit"
-            disabled={!canSubmit}
+          <div style={{ height: 10 }} />
+
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Write your news..."
+            rows={6}
             style={{
-              padding: "10px 14px",
+              width: "100%",
+              padding: 10,
               borderRadius: 12,
-              border: "1px solid gold",
-              background: canSubmit ? "gold" : "rgba(255,215,0,0.2)",
-              color: canSubmit ? "black" : "rgba(255,215,0,0.8)",
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              fontWeight: 800,
+              border: "1px solid rgba(255,215,0,0.6)",
+              background: "rgba(0,0,0,0.5)",
+              color: "gold",
+              outline: "none",
+              resize: "vertical",
+              boxSizing: "border-box",
             }}
-          >
-            {submitting ? "Posting..." : "Post"}
-          </button>
+          />
 
-          {submitMsg ? <span style={{ color: "gold" }}>{submitMsg}</span> : null}
-        </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 12,
+                border: "1px solid gold",
+                background: canSubmit ? "gold" : "rgba(255,215,0,0.2)",
+                color: canSubmit ? "black" : "rgba(255,215,0,0.8)",
+                cursor: canSubmit ? "pointer" : "not-allowed",
+                fontWeight: 800,
+              }}
+            >
+              {submitting ? "Posting..." : "Post"}
+            </button>
 
-        <p style={{ margin: "10px 0 0", color: "rgba(255,215,0,0.8)", fontSize: 13 }}>
-          Rate limit: 1 post / 5 seconds (and a 60s timeout if you spam 3 posts in 30s).
-        </p>
-      </form>
+            {submitMsg ? <span style={{ color: "gold" }}>{submitMsg}</span> : null}
+          </div>
+        </form>
+      ) : null}
 
       <div className="SpaceDiv" />
 
