@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import QuickLinks from './pages/QuickLinks';
 import Games from './pages/Games';
-import Chatroom from './pages/Chatroom';
 import Floop from './pages/Floop';
 import Append from './pages/append';
 import Changelog from './pages/Changelog';
