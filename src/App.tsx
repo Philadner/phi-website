@@ -128,9 +128,8 @@ useEffect(() => {
           <nav className="topnav titlebar-content">
             <Link to="/musicpl">Music Player</Link>
             <Link to="/quickl">Quick links</Link>
-            <Link to="/chatroom">Chatroom</Link>
-            <Link to="/add">Add</Link>
             <Link to="/news">News</Link>
+            <Link to="/add">Add</Link>
           </nav>
 
           <button
@@ -180,13 +179,13 @@ useEffect(() => {
             <span className="gameshow-divider">Play in browser</span>
           </div>
 
-          <Link
+          {/* <Link
             to="/workinhardorhardlyworkin"
             onClick={() => setSideOpen(false)}
             className="sidebar-note"
           >
             is phil lazy
-          </Link>
+          </Link> */}
           
           
 
@@ -195,7 +194,6 @@ useEffect(() => {
             <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music Player</Link>
             <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
             <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-            <Link to="/chatroom" onClick={() => setSideOpen(false)}>Chatroom</Link>
             <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
           </div>
         </nav>
@@ -213,7 +211,6 @@ useEffect(() => {
             <Route path="/about" element={<About />} />
             <Route path="/quickl" element={<QuickLinks />} />
             <Route path="/games" element={<Games />} />
-            <Route path="/chatroom" element={<Chatroom />} />
             <Route path="/floop" element={<Floop />} />
             <Route path="/add" element={<Append />} />
             <Route path="/changelog" element={<Changelog />} />

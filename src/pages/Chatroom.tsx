@@ -56,7 +56,7 @@ const ChatRoom = () => {
   if (connectionFailed) {
     return (
       <main id="main-site" className="page">
-        <h1 className="CenterTitle">Chatroom</h1>
+        <h1 className="CenterTitle">Chatroom - DEPRECATED. DO NOT USE.</h1>
         <p className="BodyTextLeft">⚠️ Failed to connect to the chat server.</p>
         <p className="BodyTextLeft">Try again in a moment — it might just be waking up.</p>
       </main>
