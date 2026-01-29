@@ -4,14 +4,20 @@ Most recent changes first
 ---
 
 ## Ultra modern redesign
-The current wbesite was looking dated and sad, so I redesigned it in ultra smooth liquid glass 
-Turn it on with the button in the top on pc ,
+The current wbesite was looking dated and sad, so I redesigned it in ultra smooth liquid glass   
+Turn it on with the button in the top bar on pc, and it should be in the sidebar on mobile.  
+
+---
+
+## Jay 
+A game where you can shoot jay a bunch of times, can play on web, windows, and android.   
+Play [here](phi.me.uk/jay)  
 
 ---
 
 ## The real changelog  
 ever wanted to see raw development pain?  
-well now you can [here](labs.phi.me.uk/realchangelog)  
+well now you can [here](phi.me.uk/realchangelog)  
 by the way the repo is public now :) there's like one outdated entry in the phrases list
 
 ---
@@ -19,7 +25,8 @@ by the way the repo is public now :) there's like one outdated entry in the phra
 ## sync labs with main
 the main website has been looking hella boring because i've just been working on labs  
 so now i've synced both the websites up so you don't have to type an extra labs in the url bar  
-if you have any complaints (probably with the music player being a bit iffy) shoot me an email [here](mailto:phil@phi.me.uk)  
+if you have any complaints (probably with the music player being a bit iffy) send me an email [here](mailto:phil@phi.me.uk)  
+or you could just tell me like a normal person  
 Link to [main](phi.me.uk) and [labs](labs.phi.me.uk) websites
 
 ---
