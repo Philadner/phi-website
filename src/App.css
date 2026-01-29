@@ -319,10 +319,14 @@ body.loaded {
 /* Responsive: collapse nav to burger on small screens if you want */
 @media (max-width: 720px) {
   .site-header__inner {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 1fr auto;
   }
   .site-header .topnav {
     display: none; /* you already have a sidebar */
+  }
+  .header-actions {
+    grid-column: 3;
+    justify-self: end;
   }
 }
 
