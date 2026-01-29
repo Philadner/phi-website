@@ -14,6 +14,8 @@ import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
 import Wpadmin from './pages/wp-admin';
+import News from './pages/News';
+import JayGame from './pages/JayGame';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import './App.css';
 
@@ -126,7 +128,7 @@ useEffect(() => {
           <nav className="topnav titlebar-content">
             <Link to="/musicpl">Music Player</Link>
             <Link to="/quickl">Quick links</Link>
-            <Link to="/chatroom">Chatroom</Link>
+            <Link to="/news">News</Link>
             <Link to="/add">Add</Link>
           </nav>
 
@@ -156,24 +158,34 @@ useEffect(() => {
           <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
           <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
+          <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
           <div
             className="gameshow-banner"
             role="button"
             tabIndex={0}
             onClick={() => {
-              navigate("/workinhardorhardlyworkin");
+              setSideOpen(false);
+              navigate("/jay");
               }
             }
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
-                navigate("/workinhardorhardlyworkin");
+                setSideOpen(false);
+                navigate("/jay");
               }
             }}
           >
-            <span className="gameshow-text">Workin' hard</span>
-            <span className="gameshow-divider">or</span>
-            <span className="gameshow-text">Hardly workin'?</span>
+            <span className="gameshow-text">Jay Game</span>
+            <span className="gameshow-divider">Play in browser</span>
           </div>
+
+          {/* <Link
+            to="/workinhardorhardlyworkin"
+            onClick={() => setSideOpen(false)}
+            className="sidebar-note"
+          >
+            is phil lazy
+          </Link> */}
           
           
 
@@ -182,7 +194,6 @@ useEffect(() => {
             <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music Player</Link>
             <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
             <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-            <Link to="/chatroom" onClick={() => setSideOpen(false)}>Chatroom</Link>
             <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
           </div>
         </nav>
@@ -200,7 +211,6 @@ useEffect(() => {
             <Route path="/about" element={<About />} />
             <Route path="/quickl" element={<QuickLinks />} />
             <Route path="/games" element={<Games />} />
-            <Route path="/chatroom" element={<Chatroom />} />
             <Route path="/floop" element={<Floop />} />
             <Route path="/add" element={<Append />} />
             <Route path="/changelog" element={<Changelog />} />
@@ -209,6 +219,8 @@ useEffect(() => {
             <Route path="/stats" element={<Stats />} />
             <Route path="/workinhardorhardlyworkin" element={<Stats />} />
             <Route path="/wp-admin" element={<Wpadmin />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/jay" element={<JayGame />} />
 
           </Routes>
           <MusicPLRouter />

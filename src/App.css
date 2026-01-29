@@ -518,7 +518,7 @@ nav a:hover::after {
   .sidebar-mobile-only { display: contents; }
 }
 
-/* WORKIN HARD OR HARDLY WORKIN? */
+/* Sidebar callout (glowing square) */
 .gameshow-banner {
   display: flex;
   flex-direction: column;
@@ -535,6 +535,15 @@ nav a:hover::after {
   text-align: center;
   gap: 8px;
   cursor: pointer;
+}
+
+.sidebar-nav a.sidebar-note {
+  color: yellow;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.sidebar-nav a.sidebar-note:hover {
+  color: #ffe36a;
 }
 
 .gameshow-banner:hover {
