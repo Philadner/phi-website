@@ -133,9 +133,6 @@ useEffect(() => {
             <Link to="/quickl">Quick links</Link>
             <Link to="/news">News</Link>
             <Link to="/add">Add</Link>
-          </nav>
-
-          <div className="header-actions titlebar-content">
             <button
               className="mode-1998-btn"
               type="button"
@@ -145,6 +142,9 @@ useEffect(() => {
             >
               {modeToggleText}
             </button>
+          </nav>
+
+          <div className="header-actions titlebar-content">
             <button
               className="menu-btn"
               onClick={() => setSideOpen(true)}

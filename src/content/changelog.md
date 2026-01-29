@@ -3,6 +3,12 @@ Most recent changes first
 
 ---
 
+## Ultra modern redesign
+The current wbesite was looking dated and sad, so I redesigned it in ultra smooth liquid glass 
+Turn it on with the button in the top on pc ,
+
+---
+
 ## The real changelog  
 ever wanted to see raw development pain?  
 well now you can [here](labs.phi.me.uk/realchangelog)  
