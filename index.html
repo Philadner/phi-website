@@ -1,6 +1,22 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (() => {
+        try {
+          const enabled = localStorage.getItem("phi.mode.1998") === "1";
+          if (!enabled) return;
+          document.documentElement.setAttribute("data-1998", "true");
+          const link = document.createElement("link");
+          link.id = "phi-1998-css";
+          link.rel = "stylesheet";
+          link.href = "/1998.css";
+          document.head.appendChild(link);
+        } catch {
+          // ignore
+        }
+      })();
+    </script>
     <!-- Add fonts here! -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

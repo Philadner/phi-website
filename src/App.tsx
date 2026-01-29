@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Routes, Route, Link,} from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 
 import Home from './pages/Home';
@@ -15,7 +15,9 @@ import MusicPLRouter from './pages/MusicPLRouter';
 import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
+import Toggle1998 from './pages/Toggle1998';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
+import use1998Mode from './hooks/use1998Mode';
 import './App.css';
 
 function Loader() {
@@ -30,7 +32,9 @@ function Loader() {
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
+  const [mode1998, setMode1998] = use1998Mode();
   const headerRef = useRef<HTMLElement | null>(null);
+  const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
@@ -131,13 +135,25 @@ useEffect(() => {
             <Link to="/add">Add</Link>
           </nav>
 
-          <button
-            className="menu-btn titlebar-content"
-            onClick={() => setSideOpen(true)}
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
+          <div className="header-actions titlebar-content">
+            <button
+              className="mode-1998-btn"
+              type="button"
+              aria-pressed={mode1998}
+              onClick={() => setMode1998((v) => !v)}
+              title="Toggle 1998 mode"
+            >
+              {modeToggleText}
+            </button>
+            <button
+              className="menu-btn"
+              onClick={() => setSideOpen(true)}
+              aria-label="Open menu"
+              type="button"
+            >
+              ☰
+            </button>
+          </div>
         </div>
       </header>
       <div className="header-spacer" />
@@ -151,6 +167,19 @@ useEffect(() => {
         </div>
 
         <nav className="sidebar-nav">
+          <button
+            className="mode-1998-btn sidebar-mode-btn"
+            type="button"
+            aria-pressed={mode1998}
+            onClick={() => {
+              setMode1998((v) => !v);
+              setSideOpen(false);
+            }}
+            title="Toggle 1998 mode"
+          >
+            {modeToggleText}
+          </button>
+
           {/* always visible in sidebar */}
           <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
           <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
@@ -207,6 +236,9 @@ useEffect(() => {
         <>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/1998" element={<Toggle1998 />} />
+            <Route path="/1998/:rest" element={<Navigate to="/" replace />} />
+            <Route path="/1998/:rest/*" element={<Navigate to="/" replace />} />
             <Route path="/about" element={<About />} />
             <Route path="/quickl" element={<QuickLinks />} />
             <Route path="/games" element={<Games />} />

@@ -1,0 +1,248 @@
+/* "1998 mode" — intentionally ugly, basic, and nostalgic. */
+
+html[data-1998="true"],
+html[data-1998="true"] body {
+  background: #c0c0c0 !important;
+  color: #000 !important;
+  font-family: "Times New Roman", Times, serif !important;
+}
+
+html[data-1998="true"] * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+/* Keep things static, but allow our retro ticker to animate. */
+html[data-1998="true"] *:not(.ticker-track) {
+  animation: none !important;
+}
+
+/* Make it scroll again even if modern CSS tries to lock it. */
+html[data-1998="true"] body {
+  overflow: auto !important;
+}
+
+html[data-1998="true"] #root {
+  display: block !important;
+}
+
+html[data-1998="true"] .page {
+  min-height: auto !important;
+  padding: 8px !important;
+  max-width: 980px !important;
+  margin: 0 auto !important;
+}
+
+/* Links: classic defaults */
+html[data-1998="true"] a {
+  color: #0000ee !important;
+  text-decoration: underline !important;
+  font-weight: normal !important;
+}
+html[data-1998="true"] a:visited {
+  color: #551a8b !important;
+}
+html[data-1998="true"] a:hover {
+  color: #ee0000 !important;
+}
+
+/* Headings: remove glow/modern vibes */
+html[data-1998="true"] h1,
+html[data-1998="true"] h2,
+html[data-1998="true"] h3,
+html[data-1998="true"] h4 {
+  color: #000 !important;
+  font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Basic "Win95-ish" controls */
+html[data-1998="true"] button,
+html[data-1998="true"] input,
+html[data-1998="true"] select,
+html[data-1998="true"] textarea {
+  font-family: "MS Sans Serif", Tahoma, Arial, sans-serif !important;
+  font-size: 14px !important;
+  background: #e0e0e0 !important;
+  color: #000 !important;
+  border: 2px outset #fff !important;
+  padding: 2px 6px !important;
+}
+html[data-1998="true"] button:active {
+  border: 2px inset #fff !important;
+}
+
+/* Header: stop the collapsing/fixed/glass effect */
+html[data-1998="true"] .site-header {
+  position: static !important;
+  height: auto !important;
+  background: #000080 !important; /* old-school navy */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 2px solid #000 !important;
+}
+html[data-1998="true"] .header-spacer {
+  display: none !important;
+}
+html[data-1998="true"] .site-header__inner {
+  max-width: 980px !important;
+  padding: 6px 8px !important;
+  gap: 10px !important;
+}
+
+html[data-1998="true"] .header-actions {
+  display: inline-flex !important;
+  gap: 6px !important;
+  align-items: center !important;
+}
+html[data-1998="true"] .site-header .logo {
+  color: #fff !important;
+  text-shadow: none !important;
+  font-weight: bold !important;
+}
+html[data-1998="true"] .site-header .topnav a {
+  color: #fff !important;
+  margin-left: 10px !important;
+  text-decoration: underline !important;
+}
+
+html[data-1998="true"] .topnav {
+  display: inline-block !important;
+}
+
+html[data-1998="true"] .topnav a + a {
+  margin-left: 12px !important;
+}
+
+/* Sidebar + overlay: de-glass */
+html[data-1998="true"] .sidebar {
+  position: fixed !important;
+  right: 0 !important;
+  top: 0 !important;
+  height: 100vh !important;
+  width: min(320px, 85vw) !important;
+  overflow: auto !important;
+  background: #c0c0c0 !important;
+  border-left: 2px solid #000 !important;
+  backdrop-filter: none !important;
+  transform: translateX(100%) !important;
+  transition: transform 180ms linear !important;
+  z-index: 1200 !important;
+}
+
+html[data-1998="true"] .sidebar.open {
+  transform: translateX(0) !important;
+}
+
+html[data-1998="true"] .sidebar-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 6px 8px !important;
+  background: #000080 !important;
+  color: #fff !important;
+  border-bottom: 2px solid #000 !important;
+}
+
+html[data-1998="true"] .close-btn {
+  background: #e0e0e0 !important;
+  border: 2px outset #fff !important;
+  color: #000 !important;
+  font-size: 14px !important;
+  padding: 0 6px !important;
+}
+html[data-1998="true"] .close-btn:active {
+  border: 2px inset #fff !important;
+}
+
+html[data-1998="true"] .sidebar-nav {
+  display: block !important;
+  padding: 8px !important;
+}
+
+html[data-1998="true"] .sidebar-nav a {
+  display: block !important;
+  padding: 2px 0 !important;
+  margin: 0 0 4px !important;
+}
+
+html[data-1998="true"] .gameshow-banner {
+  display: block !important;
+  padding: 8px !important;
+  margin: 8px 0 !important;
+  border: 2px outset #fff !important;
+  background: #ff0 !important;
+  color: #000 !important;
+  cursor: pointer !important;
+}
+html[data-1998="true"] .gameshow-text,
+html[data-1998="true"] .gameshow-divider {
+  display: block !important;
+  width: 100% !important;
+}
+html[data-1998="true"] .sidebar-header,
+html[data-1998="true"] .sidebar-nav a {
+  color: #000 !important;
+}
+html[data-1998="true"] .overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  z-index: 1100 !important;
+}
+
+html[data-1998="true"] .overlay.show {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Kill the neon/gold vibe everywhere */
+html[data-1998="true"] .logo,
+html[data-1998="true"] .HeadingBigLeft,
+html[data-1998="true"] .HeadingLeft,
+html[data-1998="true"] .ClickableHeadingLeft,
+html[data-1998="true"] .FancyLink {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+
+/* Optional: make images feel a bit more "web 1.0" */
+html[data-1998="true"] img,
+html[data-1998="true"] svg {
+  image-rendering: pixelated !important;
+}
+
+/* Ticker: keep it from dumping a novel on the page */
+html[data-1998="true"] .ticker-bg {
+  background: #fff !important;
+  color: #000 !important;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+  padding: 4px 0 !important;
+  overflow: hidden !important;
+}
+
+@keyframes phi-1998-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+html[data-1998="true"] .ticker-track {
+  display: inline-flex !important;
+  white-space: nowrap !important;
+  width: fit-content !important;
+  animation: phi-1998-marquee var(--ticker-duration, 30s) linear infinite !important;
+}
+
+html[data-1998="true"] .ticker-track[data-paused="true"] {
+  animation-play-state: paused !important;
+}
+
+html[data-1998="true"] .ticker-track [data-a],
+html[data-1998="true"] .ticker-track [data-b] {
+  padding-right: 24px !important;
+}
