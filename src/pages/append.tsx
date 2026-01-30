@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css"; // uses .home-stage and .phi-floating from Home
 import "../stylesheets/append.css";
+import { is1998ModeEnabled } from "../hooks/use1998Mode";
 
 const API_URL = "/api/append"; // your Vercel function
 
@@ -47,6 +48,8 @@ const Append: React.FC = () => {
 
   // background motion
   useEffect(() => {
+    if (is1998ModeEnabled()) return;
+
     const el = containerRef.current;
     if (!el) return;
 

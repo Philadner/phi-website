@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css";
 import Ticker from "../components/Ticker";
+import { is1998ModeEnabled } from "../hooks/use1998Mode";
 
 
 const Home: React.FC = () => {
@@ -60,6 +61,8 @@ const Home: React.FC = () => {
 
   // Mouse movement animation
   useEffect(() => {
+    if (is1998ModeEnabled()) return;
+
     const container = containerRef.current;
     if (!container) return;
 

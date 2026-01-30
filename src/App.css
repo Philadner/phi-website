@@ -246,6 +246,28 @@ body.loaded {
   padding: 0 16px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mode-1998-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mode-1998-btn[aria-pressed="true"] {
+  background: rgba(255, 215, 0, 0.22);
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
 .header-spacer { height: var(--header-full, 80px); }
 
 .site-header.is-revealed {
@@ -297,10 +319,14 @@ body.loaded {
 /* Responsive: collapse nav to burger on small screens if you want */
 @media (max-width: 720px) {
   .site-header__inner {
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 1fr auto;
   }
   .site-header .topnav {
     display: none; /* you already have a sidebar */
+  }
+  .header-actions {
+    grid-column: 3;
+    justify-self: end;
   }
 }
 
@@ -424,6 +450,11 @@ nav a:hover::after {
   display: flex;
   flex-direction: column;  /* stack vertically */
   gap: 14px;               /* spacing between items */
+}
+
+.sidebar-mode-btn {
+  width: 100%;
+  text-align: left;
 }
 
 .sidebar-nav a {
