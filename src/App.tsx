@@ -18,9 +18,10 @@ import JayGame from './pages/JayGame';
 import Toggle1998 from './pages/Toggle1998';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
+import { set1998ModeEnabled } from './hooks/use1998Mode';
 import './App.css';
 
-function Loader() {
+function ModernLoader() {
   return (
     <div id="loader">
       <svg className="phi" viewBox="-10 -10 104 116" width="120" height="auto">
@@ -29,12 +30,123 @@ function Loader() {
     </div>
   );
 }
+
+function RetroLoader() {
+  const text = "phi";
+  const [typedChars, setTypedChars] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setTypedChars((n) => (n < text.length ? n + 1 : n));
+    }, 140);
+    return () => window.clearInterval(timer);
+  }, [text.length]);
+
+  return (
+    <div
+      id="loader"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#c0c0c0",
+      }}
+    >
+      <div
+        style={{
+          textAlign: "center",
+          width: "min(520px, 80vw)",
+          background: "#d4d0c8",
+          borderTop: "2px solid #ffffff",
+          borderLeft: "2px solid #ffffff",
+          borderRight: "2px solid #404040",
+          borderBottom: "2px solid #404040",
+          padding: "22px 20px 16px",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            color: "#000000",
+            fontFamily: "'Press Start 2P', 'VT323', 'Lucida Console', 'Courier New', monospace",
+            fontSize: "clamp(28px, 6vw, 52px)",
+            letterSpacing: "0.14em",
+            textTransform: "lowercase",
+            lineHeight: 1.1,
+            textShadow: "1px 1px 0 #ffffff",
+            imageRendering: "pixelated",
+            minHeight: "1.4em",
+          }}
+        >
+          {text.slice(0, typedChars)}
+          <span
+            className="retro-loader-anim"
+            style={{
+              display: "inline-block",
+              width: "0.6ch",
+              marginLeft: "0.06em",
+              opacity: typedChars >= text.length ? 1 : 0.85,
+              animation: "phi-retro-cursor 0.65s steps(1, end) infinite",
+            }}
+          >
+            _
+          </span>
+        </p>
+
+        <div
+          aria-hidden="true"
+          style={{
+            marginTop: "1.1rem",
+            height: "20px",
+            borderTop: "2px solid #404040",
+            borderLeft: "2px solid #404040",
+            borderRight: "2px solid #ffffff",
+            borderBottom: "2px solid #ffffff",
+            background: "#808080",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="retro-loader-anim"
+            style={{
+              height: "100%",
+              width: "100%",
+              background:
+                "repeating-linear-gradient(90deg, #ff0040 0 14px, #ff8a00 14px 28px, #ffe100 28px 42px, #28d428 42px 56px, #00b7ff 56px 70px, #3d4dff 70px 84px, #a23cff 84px 98px)",
+              backgroundSize: "280px 100%",
+              animation: "phi-retro-rainbow 0.85s linear infinite",
+            }}
+          />
+        </div>
+
+      </div>
+
+      <style>{`
+        @keyframes phi-retro-rainbow {
+          from { background-position: 0 0; }
+          to { background-position: 280px 0; }
+        }
+        @keyframes phi-retro-cursor {
+          50% { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
-  const [mode1998, setMode1998] = use1998Mode();
+  const [mode1998] = use1998Mode();
   const headerRef = useRef<HTMLElement | null>(null);
   const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
+  const toggleModeWithRefresh = () => {
+    const next = !mode1998;
+    set1998ModeEnabled(next);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
@@ -122,7 +234,7 @@ useEffect(() => {
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
-      {!loaded && <Loader />}
+      {!loaded && (mode1998 ? <RetroLoader /> : <ModernLoader />)}
 
       <header ref={headerRef} className="site-header">
         <div className="site-header__inner">
@@ -137,7 +249,7 @@ useEffect(() => {
               className="mode-1998-btn"
               type="button"
               aria-pressed={mode1998}
-              onClick={() => setMode1998((v) => !v)}
+              onClick={toggleModeWithRefresh}
               title="Toggle 1998 mode"
             >
               {modeToggleText}
@@ -172,7 +284,7 @@ useEffect(() => {
             type="button"
             aria-pressed={mode1998}
             onClick={() => {
-              setMode1998((v) => !v);
+              toggleModeWithRefresh();
               setSideOpen(false);
             }}
             title="Toggle 1998 mode"
