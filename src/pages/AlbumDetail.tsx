@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBackwardStep,
+  faDownload,
+  faForwardStep,
+  faPause,
+  faPlay,
+  faSpinner,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import "../stylesheets/AlbumDetail.css";
 
 interface FileEntry {
@@ -260,7 +270,7 @@ export default function AlbumDetail() {
         aria-label="Close"
         style={{ float: "right", marginBottom: "1rem" }}
       >
-        ✕
+        <FontAwesomeIcon icon={faXmark} />
       </button>
 
       {/* Loading state */}
@@ -335,13 +345,13 @@ export default function AlbumDetail() {
 
           <div className="TransportBar" role="group" aria-label="Album playback controls">
             <button className="TransportButton" onClick={() => void playPrev()} disabled={!files.length}>
-              Prev
+              <FontAwesomeIcon icon={faBackwardStep} />
             </button>
             <button className="TransportButton TransportButtonPrimary" onClick={() => void toggleCurrent()} disabled={!files.length}>
-              {isPlaying ? "Pause" : "Play"}
+              <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
             </button>
             <button className="TransportButton" onClick={() => void playNext()} disabled={!files.length}>
-              Next
+              <FontAwesomeIcon icon={faForwardStep} />
             </button>
             <p className="NowPlaying" title={currentIndex !== null ? getTrackName(files[currentIndex]) : "Nothing playing"}>
               {currentIndex !== null ? `Now playing: ${getTrackName(files[currentIndex])}` : "Now playing: nothing yet"}
@@ -361,7 +371,7 @@ export default function AlbumDetail() {
                       onClick={() => void toggleTrack(i)}
                       aria-label={`${active ? "Pause" : "Play"} ${getTrackName(f)}`}
                     >
-                      {active ? "Pause" : "Play"}
+                      <FontAwesomeIcon icon={active ? faPause : faPlay} />
                     </button>
                     <span className="TrackIndex">{i + 1}.</span>
                     <span className="TrackName">{getTrackName(f)}</span>
@@ -392,7 +402,7 @@ export default function AlbumDetail() {
                       onClick={() => void downloadTrack(url, f.name, i)}
                       disabled={!!downloadingMap[i]}
                     >
-                      {downloadingMap[i] ? "Downloading..." : "Download"}
+                      <FontAwesomeIcon icon={downloadingMap[i] ? faSpinner : faDownload} spin={!!downloadingMap[i]} />
                     </button>
                   </div>
                   <audio

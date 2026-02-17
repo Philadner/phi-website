@@ -117,7 +117,9 @@
     background: #161616;
     color: #f4f4f4;
     border-radius: 10px;
-    padding: 0.5rem 0.8rem;
+    min-width: 2.8rem;
+    min-height: 2.2rem;
+    padding: 0.5rem 0.7rem;
     cursor: pointer;
     transition: background 0.2s ease;
 }
@@ -150,9 +152,13 @@
     background: rgba(255, 215, 0, 0.08);
     color: #ffe35c;
     font-size: 0.85rem;
-    min-width: 3.7rem;
-    padding: 0.28rem 0.5rem;
+    min-width: 2.9rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.55rem;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .TrackControls {
@@ -180,10 +186,15 @@
     border: 1px solid rgba(255, 215, 0, 0.24);
     background: rgba(255, 215, 0, 0.08);
     border-radius: 8px;
-    padding: 0.3rem 0.5rem;
+    min-width: 2.9rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.55rem;
     text-decoration: none;
     font-size: 0.82rem;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .TrackDownload:hover {
