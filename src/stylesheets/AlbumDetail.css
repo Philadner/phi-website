@@ -1,11 +1,12 @@
 
 .AlbumTitle {
-    font-size: 3rem;
+    font-size: clamp(2rem, 6vw, 3rem);
     font-weight: 600;
     color: white;
     margin-bottom: 0.25rem;
     text-align: center;
-
+    line-height: 1.08;
+    overflow-wrap: anywhere;
 }
 
 .AlbumCover {
@@ -34,10 +35,16 @@
 .BackLink {
     color: #ffd700; /* gold */
     text-decoration: none;
+    border: 1px solid rgba(255, 215, 0, 0.22);
+    border-radius: 10px;
+    background: rgba(10, 10, 10, 0.8);
+    min-width: 40px;
+    min-height: 40px;
 }
 
 .BackLink:hover {
-    text-decoration: underline;
+    text-decoration: none;
+    background: rgba(255, 215, 0, 0.1);
 }
 
 .AlbumHeader {
@@ -67,9 +74,10 @@
 }
 
 .TrackRow {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 46%);
     align-items: center;
-    justify-content: space-between;
+    gap: 0.8rem;
     background: #181818;
     padding: 0.5rem 1rem;
     border-radius: 8px;
@@ -93,8 +101,141 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: white;
+    min-width: 0;
 }
 
-.TrackAudio {
-    width: 150px;
+.TransportBar {
+    display: grid;
+    grid-template-columns: repeat(3, auto) minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.TransportButton {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: #161616;
+    color: #f4f4f4;
+    border-radius: 10px;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.TransportButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.TransportButton:not(:disabled):hover {
+    background: #242424;
+}
+
+.TransportButtonPrimary {
+    border-color: rgba(255, 215, 0, 0.45);
+    background: rgba(255, 215, 0, 0.12);
+}
+
+.NowPlaying {
+    margin: 0;
+    color: #d0d0d0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.TrackPlayButton {
+    border: 1px solid rgba(255, 215, 0, 0.24);
+    border-radius: 8px;
+    background: rgba(255, 215, 0, 0.08);
+    color: #ffe35c;
+    font-size: 0.85rem;
+    min-width: 3.7rem;
+    padding: 0.28rem 0.5rem;
+    cursor: pointer;
+}
+
+.TrackControls {
+    display: grid;
+    grid-template-columns: minmax(96px, 1fr) auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.TrackProgress {
+    width: 100%;
+    accent-color: #f7d324;
+}
+
+.TrackTime {
+    color: #bdbdbd;
+    font-size: 0.85rem;
+    min-width: 5.1rem;
+    text-align: right;
+}
+
+.TrackDownload {
+    color: #ffe35c;
+    border: 1px solid rgba(255, 215, 0, 0.24);
+    background: rgba(255, 215, 0, 0.08);
+    border-radius: 8px;
+    padding: 0.3rem 0.5rem;
+    text-decoration: none;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.TrackDownload:hover {
+    background: rgba(255, 215, 0, 0.16);
+}
+
+.TrackAudioHidden {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .AlbumPage {
+        padding: 1rem;
+    }
+
+    .TransportBar {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .NowPlaying {
+        grid-column: 1 / -1;
+    }
+
+    .TrackRow {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0.6rem 0.75rem;
+        display: flex;
+    }
+
+    .TrackInfo {
+        width: 100%;
+    }
+
+    .TrackControls {
+        width: 100%;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "progress progress"
+            "time download";
+    }
+
+    .TrackProgress {
+        grid-area: progress;
+    }
+
+    .TrackTime {
+        grid-area: time;
+        text-align: left;
+    }
+
+    .TrackDownload {
+        grid-area: download;
+    }
 }

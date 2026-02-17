@@ -248,21 +248,26 @@ useEffect(() => {
       <h1 className="CenterTitle">Archive.org Music Search</h1>
 
       {/* Search bar */}
-      <div className="search-container">
+      <form
+        className="search-container"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+      >
         <input
+          id="archive-search-input"
+          name="archiveSearch"
           className="search-input"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search music on Archive.org..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onSubmit();
-          }}
         />
-        <button className="search-button" onClick={onSubmit}>
+        <button type="submit" className="search-button">
           Search
         </button>
-      </div>
+      </form>
       
       {/* Info + controls */}
       {/* Info + controls */}

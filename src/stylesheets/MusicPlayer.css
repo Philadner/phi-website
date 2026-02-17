@@ -1,12 +1,15 @@
 .search-container {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
     margin: 2rem 0;
   }
   
   .search-input {
-    width: 60%;
+    width: min(60%, 600px);
     max-width: 600px;
+    min-width: 0;
     padding: 1rem 1.5rem;
     border: none;
     border-radius: 9999px; /* full pill shape */
@@ -24,7 +27,6 @@
   }
   
   .search-button {
-    margin-left: -80px; /* overlap end of pill */
     padding: 0.75rem 1.25rem;
     border: none;
     border-radius: 9999px;
@@ -37,6 +39,26 @@
   
   .search-button:hover {
     background: goldenrod;
+  }
+
+  @media (max-width: 760px) {
+    .search-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .search-input {
+      width: 100%;
+      max-width: none;
+      font-size: 1rem;
+      padding: 0.85rem 1rem;
+    }
+
+    .search-button {
+      width: 100%;
+      padding: 0.8rem 1rem;
+    }
   }
   
   .results-grid {

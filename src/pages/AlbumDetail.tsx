@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "../stylesheets/AlbumDetail.css";
 
@@ -7,6 +7,11 @@ interface FileEntry {
   format?: string;
   size?: number;
   title?: string;
+}
+
+interface PlaybackState {
+  currentTime: number;
+  duration: number;
 }
 
 function isAudioFile(f: FileEntry) {
@@ -19,6 +24,14 @@ function isAudioFile(f: FileEntry) {
 function getTrackName(file: FileEntry): string {
   if (file.title) return file.title;
   return file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
+}
+
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
 // tiny inline spinner
@@ -41,11 +54,17 @@ export default function AlbumDetail() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const panelRef = useRef<HTMLDivElement>(null);
+  const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
 
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [metadata, setMetadata] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [playbackMap, setPlaybackMap] = useState<Record<number, PlaybackState>>({});
+  const [downloadingMap, setDownloadingMap] = useState<Record<number, boolean>>({});
 
   // Close logic (Esc + button) that returns to exact list URL + scroll
   useEffect(() => {
@@ -77,6 +96,113 @@ export default function AlbumDetail() {
   useEffect(() => { panelRef.current?.focus(); }, []);
 
   useEffect(() => {
+    audioRefs.current = [];
+    setCurrentIndex(null);
+    setIsPlaying(false);
+    setPlaybackMap({});
+    setDownloadingMap({});
+  }, [id]);
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.matchMedia("(max-width: 760px)").matches);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      audioRefs.current.forEach((audio) => audio?.pause());
+    };
+  }, []);
+
+  const pauseOthers = useCallback((keepIndex: number) => {
+    audioRefs.current.forEach((audio, i) => {
+      if (i !== keepIndex && audio && !audio.paused) {
+        audio.pause();
+      }
+    });
+  }, []);
+
+  const playTrack = useCallback(async (index: number) => {
+    const audio = audioRefs.current[index];
+    if (!audio) return;
+    pauseOthers(index);
+    try {
+      await audio.play();
+      setCurrentIndex(index);
+      setIsPlaying(true);
+    } catch {
+      setIsPlaying(false);
+    }
+  }, [pauseOthers]);
+
+  const toggleTrack = useCallback(async (index: number) => {
+    const audio = audioRefs.current[index];
+    if (!audio) return;
+    if (!audio.paused) {
+      audio.pause();
+      setIsPlaying(false);
+      return;
+    }
+    await playTrack(index);
+  }, [playTrack]);
+
+  const playNext = useCallback(async () => {
+    if (!files.length) return;
+    const nextIndex = currentIndex === null ? 0 : (currentIndex + 1) % files.length;
+    await playTrack(nextIndex);
+  }, [currentIndex, files.length, playTrack]);
+
+  const playPrev = useCallback(async () => {
+    if (!files.length) return;
+    const prevIndex = currentIndex === null
+      ? 0
+      : (currentIndex - 1 + files.length) % files.length;
+    await playTrack(prevIndex);
+  }, [currentIndex, files.length, playTrack]);
+
+  const toggleCurrent = useCallback(async () => {
+    if (!files.length) return;
+    const index = currentIndex ?? 0;
+    await toggleTrack(index);
+  }, [currentIndex, files.length, toggleTrack]);
+
+  const setPlaybackState = useCallback((index: number, patch: Partial<PlaybackState>) => {
+    setPlaybackMap((prev) => ({
+      ...prev,
+      [index]: {
+        currentTime: prev[index]?.currentTime ?? 0,
+        duration: prev[index]?.duration ?? 0,
+        ...patch,
+      },
+    }));
+  }, []);
+
+  const downloadTrack = useCallback(async (url: string, filename: string, index: number) => {
+    if (downloadingMap[index]) return;
+    setDownloadingMap((prev) => ({ ...prev, [index]: true }));
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloadingMap((prev) => ({ ...prev, [index]: false }));
+    }
+  }, [downloadingMap]);
+
+  useEffect(() => {
     let aborted = false;
     async function fetchMeta() {
       if (!id) return;
@@ -105,23 +231,24 @@ export default function AlbumDetail() {
     <div
       ref={panelRef}
       tabIndex={-1}
-      role="dialog"
-      aria-modal="true"
+      role={isMobile ? undefined : "dialog"}
+      aria-modal={isMobile ? undefined : true}
       className="AlbumPage"
       style={{
         outline: "none",
-        width: "min(960px, 96vw)",
-        margin: "6vh auto",
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.06)",
-        background: "rgba(20,20,20,0.9)",
-        backdropFilter: "saturate(120%) blur(6px)",
-        padding: 24,
+        width: isMobile ? "100%" : "min(960px, calc(100vw - 1.5rem))",
+        margin: isMobile ? "0 auto" : "2vh auto",
+        borderRadius: isMobile ? 0 : 16,
+        border: isMobile ? "none" : "1px solid rgba(255,255,255,0.06)",
+        background: isMobile ? "transparent" : "rgba(20,20,20,0.9)",
+        backdropFilter: isMobile ? "none" : "saturate(120%) blur(6px)",
+        padding: isMobile ? 16 : 24,
         zIndex: 10,
 
         // NEW: allow the panel itself to scroll
-        maxHeight: "88vh",
-        overflowY: "auto",
+        maxHeight: isMobile ? "none" : "88vh",
+        overflowY: isMobile ? "visible" : "auto",
+        overflowX: "hidden",
         WebkitOverflowScrolling: "touch",
         overscrollBehavior: "contain",
       }}
@@ -206,16 +333,104 @@ export default function AlbumDetail() {
             </div>
           )}
 
+          <div className="TransportBar" role="group" aria-label="Album playback controls">
+            <button className="TransportButton" onClick={() => void playPrev()} disabled={!files.length}>
+              Prev
+            </button>
+            <button className="TransportButton TransportButtonPrimary" onClick={() => void toggleCurrent()} disabled={!files.length}>
+              {isPlaying ? "Pause" : "Play"}
+            </button>
+            <button className="TransportButton" onClick={() => void playNext()} disabled={!files.length}>
+              Next
+            </button>
+            <p className="NowPlaying" title={currentIndex !== null ? getTrackName(files[currentIndex]) : "Nothing playing"}>
+              {currentIndex !== null ? `Now playing: ${getTrackName(files[currentIndex])}` : "Now playing: nothing yet"}
+            </p>
+          </div>
+
           <div className="Tracklist">
             {files.map((f, i) => {
               const url = `https://archive.org/download/${id}/${encodeURIComponent(f.name)}`;
+              const active = currentIndex === i && isPlaying;
               return (
                 <div key={i} className="TrackRow">
                   <div className="TrackInfo">
+                    <button
+                      type="button"
+                      className="TrackPlayButton"
+                      onClick={() => void toggleTrack(i)}
+                      aria-label={`${active ? "Pause" : "Play"} ${getTrackName(f)}`}
+                    >
+                      {active ? "Pause" : "Play"}
+                    </button>
                     <span className="TrackIndex">{i + 1}.</span>
                     <span className="TrackName">{getTrackName(f)}</span>
                   </div>
-                  <audio controls preload="none" className="TrackAudio">
+                  <div className="TrackControls">
+                    <input
+                      className="TrackProgress"
+                      type="range"
+                      min={0}
+                      max={playbackMap[i]?.duration || 0}
+                      step={0.1}
+                      value={playbackMap[i]?.currentTime || 0}
+                      onChange={(e) => {
+                        const audio = audioRefs.current[i];
+                        if (!audio) return;
+                        const next = Number(e.target.value);
+                        audio.currentTime = next;
+                        setPlaybackState(i, { currentTime: next });
+                      }}
+                      aria-label={`Seek ${getTrackName(f)}`}
+                    />
+                    <span className="TrackTime">
+                      {formatTime(playbackMap[i]?.currentTime || 0)} / {formatTime(playbackMap[i]?.duration || 0)}
+                    </span>
+                    <button
+                      type="button"
+                      className="TrackDownload"
+                      onClick={() => void downloadTrack(url, f.name, i)}
+                      disabled={!!downloadingMap[i]}
+                    >
+                      {downloadingMap[i] ? "Downloading..." : "Download"}
+                    </button>
+                  </div>
+                  <audio
+                    preload="none"
+                    className="TrackAudioHidden"
+                    ref={(el) => {
+                      audioRefs.current[i] = el;
+                    }}
+                    onPlay={() => {
+                      pauseOthers(i);
+                      setCurrentIndex(i);
+                      setIsPlaying(true);
+                    }}
+                    onPause={() => {
+                      if (currentIndex === i) {
+                        setIsPlaying(false);
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      const target = e.currentTarget;
+                      setPlaybackState(i, {
+                        currentTime: target.currentTime,
+                        duration: target.duration || 0,
+                      });
+                    }}
+                    onLoadedMetadata={(e) => {
+                      const target = e.currentTarget;
+                      setPlaybackState(i, {
+                        duration: target.duration || 0,
+                      });
+                    }}
+                    onEnded={() => {
+                      if (i === currentIndex) {
+                        setPlaybackState(i, { currentTime: 0 });
+                        void playNext();
+                      }
+                    }}
+                  >
                     <source src={url} type="audio/mpeg" />
                   </audio>
                 </div>

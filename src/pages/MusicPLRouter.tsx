@@ -1,7 +1,7 @@
 // MusicPLRouter.tsx
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useScrollLock from "../hooks/useScrollLock"; // <- fix the typo
 import ArchiveMusicSearch from "./MusicPlayer";
 import AlbumDetail from "./AlbumDetail";
@@ -18,16 +18,25 @@ function CurrentMusicRoutes({ location }: { location: any }) {
 
 export default function MusicPLRouter() {
   const location = useLocation() as any;
+  const [isMobile, setIsMobile] = useState(false);
 
   const backgroundLocation = location.state?.backgroundLocation;
-  const isOverlay =
+  const hasOverlayState =
     /^\/musicpl\/[^/]+$/.test(location.pathname) && !!backgroundLocation;
+  const isOverlay = hasOverlayState && !isMobile;
 
   const isMusicPair =
     location.pathname === "/musicpl" || /^\/musicpl\/[^/]+$/.test(location.pathname);
 
   const savedY: number = isOverlay ? (location.state?.savedScrollY ?? 0) : 0;
   const savedH: number | undefined = isOverlay ? location.state?.savedDocH : undefined;
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.matchMedia("(max-width: 760px)").matches);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   useEffect(() => {
   document.body.classList.toggle("overlay-open", isOverlay);
