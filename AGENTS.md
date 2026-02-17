@@ -34,6 +34,8 @@ If you add tests, prefer colocated `*.test.ts(x)` files and document the command
 
 ## Commit & Pull Request Guidelines
 Recent history shows short, imperative commit subjects. Keep commits focused and descriptive, e.g. `fix mobile menu focus trap`.
+- Agents should commit changes as they work, in small logical increments.
+- Agent-authored commit subjects must be prefixed with `codex:` (for example `codex: fix mobile menu focus trap`).
 - One logical change per commit.
 - PRs should include: summary, affected routes/endpoints, env var changes, and screenshots/GIFs for UI updates.
 - Link relevant issues/tasks and include quick verification steps reviewers can run.
