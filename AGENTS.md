@@ -37,7 +37,7 @@ Recent history shows short, imperative commit subjects. Keep commits focused and
 - Agents should commit changes as they work, in small logical increments.
 - Agent-authored commit subjects must be prefixed with `codex:` (for example `codex: fix mobile menu focus trap`).
 - Commit messages do not need to be formal; casual wording is fine.
-- If the work was especially hard, commit messages can include swearing, as long as they stay respectful and avoid slurs/harassment.
+- If the work was especially hard, commit messages can include swearing, as long as they stay respectful and avoid slurs/harassment. for example: `codex: refactored half the fucking website for a dumbass light mode toggle`
 - One logical change per commit.
 - PRs should include: summary, affected routes/endpoints, env var changes, and screenshots/GIFs for UI updates.
 - Link relevant issues/tasks and include quick verification steps reviewers can run.
