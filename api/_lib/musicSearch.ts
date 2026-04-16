@@ -53,9 +53,19 @@ const ALBUM_CACHE_TTL_MS = 10 * 60_000
 const searchCache = new Map<string, { ts: number; value: MusicSearchResponse }>()
 const artistCache = new Map<string, { ts: number; value: MusicArtistPayload | null }>()
 const archiveMetadataCache = new Map<string, { ts: number; value: ParsedArchiveItem | null }>()
+const archiveSearchCache = new Map<
+  string,
+  { ts: number; value: { response?: { docs?: ArchiveDoc[]; numFound?: number } } }
+>()
 const ytAlbumCache = new Map<string, { ts: number; value: AlbumFull }>()
 const matchedAlbumCache = new Map<string, { ts: number; value: MatchedArchiveAlbum | null }>()
 const searchSeedCache = new Map<string, { ts: number; value: SearchSeed }>()
+const archiveMetadataInflight = new Map<string, Promise<ParsedArchiveItem | null>>()
+const archiveSearchInflight = new Map<
+  string,
+  Promise<{ response?: { docs?: ArchiveDoc[]; numFound?: number } }>
+>()
+const ytAlbumInflight = new Map<string, Promise<AlbumFull>>()
 
 type SearchSeed = {
   songs: MusicSongResult[]
@@ -191,6 +201,13 @@ async function fetchJson<T>(url: string) {
 }
 
 async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZE) {
+  const cacheKey = `${query}|${page}|${rows}`
+  const cached = getCached(archiveSearchCache, cacheKey, SEARCH_CACHE_TTL_MS)
+  if (cached) return cached
+
+  const inflight = archiveSearchInflight.get(cacheKey)
+  if (inflight) return inflight
+
   const url = new URL("https://archive.org/advancedsearch.php")
   url.searchParams.set(
     "q",
@@ -206,21 +223,43 @@ async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZ
   url.searchParams.set("page", String(page))
   url.searchParams.set("output", "json")
 
-  return fetchJson<{ response?: { docs?: ArchiveDoc[]; numFound?: number } }>(url.toString())
+  const request = fetchJson<{ response?: { docs?: ArchiveDoc[]; numFound?: number } }>(
+    url.toString()
+  )
+    .then((value) => {
+      setCached(archiveSearchCache, cacheKey, value)
+      return value
+    })
+    .finally(() => {
+      archiveSearchInflight.delete(cacheKey)
+    })
+
+  archiveSearchInflight.set(cacheKey, request)
+  return request
 }
 
 async function getArchiveMetadata(id: string) {
   const cached = getCached(archiveMetadataCache, id, ALBUM_CACHE_TTL_MS)
   if (cached !== null) return cached
 
-  try {
-    const data = await fetchJson<ArchiveMetadata>(
-      `https://archive.org/metadata/${encodeURIComponent(id)}`
-    )
-    return setCached(archiveMetadataCache, id, parseArchiveMetadata(id, data))
-  } catch {
-    return setCached(archiveMetadataCache, id, null)
-  }
+  const inflight = archiveMetadataInflight.get(id)
+  if (inflight) return inflight
+
+  const request = (async () => {
+    try {
+      const data = await fetchJson<ArchiveMetadata>(
+        `https://archive.org/metadata/${encodeURIComponent(id)}`
+      )
+      return setCached(archiveMetadataCache, id, parseArchiveMetadata(id, data))
+    } catch {
+      return setCached(archiveMetadataCache, id, null)
+    } finally {
+      archiveMetadataInflight.delete(id)
+    }
+  })()
+
+  archiveMetadataInflight.set(id, request)
+  return request
 }
 
 function createSongResult(track: QueueTrack, overrides?: {
@@ -289,9 +328,21 @@ function countTrackOverlap(left: string[], right: string[]) {
 async function getYtAlbum(albumId: string) {
   const cached = getCached(ytAlbumCache, albumId, ALBUM_CACHE_TTL_MS)
   if (cached) return cached
+  const inflight = ytAlbumInflight.get(albumId)
+  if (inflight) return inflight
   const client = await getYtMusic()
-  const album = await client.getAlbum(albumId)
-  return setCached(ytAlbumCache, albumId, album)
+  const request = client
+    .getAlbum(albumId)
+    .then((album) => {
+      setCached(ytAlbumCache, albumId, album)
+      return album
+    })
+    .finally(() => {
+      ytAlbumInflight.delete(albumId)
+    })
+
+  ytAlbumInflight.set(albumId, request)
+  return request
 }
 
 async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull) {
@@ -300,7 +351,7 @@ async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull) {
   if (cached !== null) return cached
 
   const albumQuery = [ytAlbum.name, ytAlbum.artist.name].filter(Boolean).join(" ")
-  const archiveSearch = await searchArchive(albumQuery, 1, 8)
+  const archiveSearch = await searchArchive(albumQuery, 1, 4)
   const docs = archiveSearch.response?.docs || []
   let bestMatch: MatchedArchiveAlbum | null = null
   let bestDownloads = -1
@@ -358,7 +409,7 @@ async function matchSongFromArchive(song: SongDetailed): Promise<MusicSongResult
   }
 
   const archiveQuery = [song.name, song.artist.name].filter(Boolean).join(" ")
-  const archiveSearch = await searchArchive(archiveQuery, 1, 6)
+  const archiveSearch = await searchArchive(archiveQuery, 1, 3)
   for (const doc of archiveSearch.response?.docs || []) {
     const parsed = await getArchiveMetadata(doc.identifier)
     if (!parsed) continue

@@ -185,7 +185,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const searchControllerRef = useRef<AbortController | null>(null)
-  const skipDebouncedSearchKeyRef = useRef<string | null>(null)
   const albumRequestRef = useRef(0)
   const artistRequestRef = useRef(0)
   const shouldAutoplayRef = useRef(false)
@@ -550,7 +549,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const goToMusicHome = useCallback(() => {
     searchControllerRef.current?.abort()
-    skipDebouncedSearchKeyRef.current = null
     setSearchQuery("")
     setSearchResults([])
     setNumFound(0)
@@ -591,37 +589,19 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [clearSelectedAlbum, clearSelectedArtist])
 
   useEffect(() => {
-    const trimmed = searchQuery.trim()
-    if (!trimmed) {
-      skipDebouncedSearchKeyRef.current = null
-      clearSelectedAlbum()
-      clearSelectedArtist()
-      setSearchLoading(false)
-      setSearchLoadingMore(false)
-      setSearchLoadingLabel("Searching YouTube Music first...")
-      setSearchError(null)
-      setSearchResults([])
-      setNumFound(0)
-      setHasMoreSearch(false)
-      setSearchPage(1)
-      return
-    }
+    if (searchQuery.trim()) return
 
-    const key = `${trimmed}|1`
-    if (skipDebouncedSearchKeyRef.current === key) {
-      skipDebouncedSearchKeyRef.current = null
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      clearSelectedAlbum()
-      clearSelectedArtist()
-      setSearchPage(1)
-      void runSearch(trimmed, 1)
-    }, 280)
-
-    return () => window.clearTimeout(timer)
-  }, [clearSelectedAlbum, clearSelectedArtist, runSearch, searchQuery])
+    clearSelectedAlbum()
+    clearSelectedArtist()
+    setSearchLoading(false)
+    setSearchLoadingMore(false)
+    setSearchLoadingLabel("Searching YouTube Music first...")
+    setSearchError(null)
+    setSearchResults([])
+    setNumFound(0)
+    setHasMoreSearch(false)
+    setSearchPage(1)
+  }, [clearSelectedAlbum, clearSelectedArtist, searchQuery])
 
   useEffect(() => {
     if (!audioRef.current) return
@@ -710,7 +690,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     const nextPage = 1
-    skipDebouncedSearchKeyRef.current = `${trimmed}|${nextPage}`
     setSearchPage(nextPage)
     clearSelectedAlbum()
     clearSelectedArtist()
