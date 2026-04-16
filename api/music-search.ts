@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { getMusicSearchResponse } from "./_lib/musicSearch"
+import { getMusicSearchResponse } from "./_lib/musicSearch.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const query = typeof req.query.q === "string" ? req.query.q.trim() : ""
