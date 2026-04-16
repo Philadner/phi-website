@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -19,6 +21,7 @@ import Toggle1998 from './pages/Toggle1998';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
+import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
 import './App.css';
 
 function ModernLoader() {
@@ -136,12 +139,16 @@ function RetroLoader() {
     </div>
   );
 }
-function App() {
+function AppShell() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
   const [mode1998] = use1998Mode();
+  const location = useLocation();
+  const isMusicMode = location.pathname.startsWith("/musicpl");
+  const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
   const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
+  const { searchQuery, setSearchQuery, submitSearch, resetSession, goToMusicHome } = useMusicPlayer();
   const toggleModeWithRefresh = () => {
     const next = !mode1998;
     set1998ModeEnabled(next);
@@ -157,11 +164,33 @@ function App() {
     document.body.classList.toggle('body--lock', sideOpen);
     return () => document.body.classList.remove('body--lock');
   }, [sideOpen]);
+
+  useEffect(() => {
+    document.body.classList.toggle('body--music-lock', isMusicMode);
+    return () => document.body.classList.remove('body--music-lock');
+  }, [isMusicMode]);
+
+  useEffect(() => {
+    if (wasMusicModeRef.current && !isMusicMode) {
+      resetSession();
+    }
+    wasMusicModeRef.current = isMusicMode;
+  }, [isMusicMode, resetSession]);
   
     // --- Collapsing titlebar logic (0–50px) ---
 useEffect(() => {
   const el = headerRef.current;
   if (!el) return;
+
+  if (isMusicMode) {
+    el.style.setProperty('--p', '0');
+    el.style.setProperty('--squish', '0');
+    el.style.setProperty('--fade', '0');
+    el.classList.add('is-revealed');
+    return () => {
+      el.classList.remove('is-revealed');
+    };
+  }
 
   let raf = 0;
   const hovering = { current: false };
@@ -227,7 +256,7 @@ useEffect(() => {
     el.removeEventListener('mouseleave', onLeave);
     window.removeEventListener('scroll', onScroll);
   };
-}, []);
+}, [isMusicMode]);
 
   
   const navigate = useNavigate();
@@ -236,25 +265,63 @@ useEffect(() => {
     <div className={loaded ? 'loaded page' : 'page'}>
       {!loaded && (mode1998 ? <RetroLoader /> : <ModernLoader />)}
 
-      <header ref={headerRef} className="site-header">
+      <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""}`}>
         <div className="site-header__inner">
-          <Link to="/" className="logo titlebar-content">phi(l)</Link>
+          {isMusicMode ? (
+            <div className="music-brand titlebar-content">
+              <Link to="/" className="music-brand__back" aria-label="Back to website">
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </Link>
+              <Link
+                to="/musicpl"
+                className="logo"
+                onClick={() => {
+                  goToMusicHome();
+                  setSideOpen(false);
+                }}
+              >
+                phi(music)
+              </Link>
+            </div>
+          ) : (
+            <Link to="/" className="logo titlebar-content">phi(l)</Link>
+          )}
 
-          <nav className="topnav titlebar-content">
-            <Link to="/musicpl">Music Player</Link>
-            <Link to="/quickl">Quick links</Link>
-            <Link to="/news">News</Link>
-            <Link to="/add">Add</Link>
-            <button
-              className="mode-1998-btn"
-              type="button"
-              aria-pressed={mode1998}
-              onClick={toggleModeWithRefresh}
-              title="Toggle 1998 mode"
+          {isMusicMode ? (
+            <form
+              className="music-header-search titlebar-content"
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitSearch();
+              }}
             >
-              {modeToggleText}
-            </button>
-          </nav>
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="music-header-search__icon" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search songs, albums, or artists..."
+                aria-label="Search music"
+              />
+              <button type="submit">Search</button>
+            </form>
+          ) : (
+            <nav className="topnav titlebar-content">
+              <Link to="/musicpl">Music Player</Link>
+              <Link to="/quickl">Quick links</Link>
+              <Link to="/news">News</Link>
+              <Link to="/add">Add</Link>
+              <button
+                className="mode-1998-btn"
+                type="button"
+                aria-pressed={mode1998}
+                onClick={toggleModeWithRefresh}
+                title="Toggle 1998 mode"
+              >
+                {modeToggleText}
+              </button>
+            </nav>
+          )}
 
           <div className="header-actions titlebar-content">
             <button
@@ -364,13 +431,19 @@ useEffect(() => {
             <Route path="/wp-admin" element={<Wpadmin />} />
             <Route path="/news" element={<News />} />
             <Route path="/jay" element={<JayGame />} />
+            <Route path="/musicpl/*" element={<MusicPLRouter />} />
 
           </Routes>
-          <MusicPLRouter />
         </>
       )}
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <MusicPlayerProvider>
+      <AppShell />
+    </MusicPlayerProvider>
+  );
+}
