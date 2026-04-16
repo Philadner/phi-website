@@ -57,6 +57,7 @@ export default function MusicPlayer({
     numFound,
     searchLoading,
     searchLoadingMore,
+    searchLoadingLabel,
     searchError,
     hasMoreSearch,
     loadMoreSearch,
@@ -393,7 +394,14 @@ export default function MusicPlayer({
               </div>
 
               {showInitialSearchLoading ? (
-                <div className="music-state-card">Searching…</div>
+                <div className="music-state-card music-state-card--loading">
+                  <div className="music-loading-copy">
+                    <strong>{searchLoadingLabel}</strong>
+                    <span>
+                      Archive fallback stays hidden until the YouTube song pass finishes.
+                    </span>
+                  </div>
+                </div>
               ) : searchError ? (
                 <div className="music-state-card music-state-card--error">
                   {searchError}
@@ -713,9 +721,7 @@ function ArtistCard({
         <img src={item.imageUrl} alt={item.name} className="music-artist-card-image" />
       </div>
       <span className="music-result-title">{item.name}</span>
-      <span className="music-result-artist">
-        {item.playableAlbumCount} albums · {item.playableSongCount} songs
-      </span>
+      <span className="music-result-artist">Artist</span>
     </button>
   )
 }

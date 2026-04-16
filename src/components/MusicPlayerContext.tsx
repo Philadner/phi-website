@@ -47,6 +47,7 @@ interface MusicPlayerContextValue {
   numFound: number
   searchLoading: boolean
   searchLoadingMore: boolean
+  searchLoadingLabel: string
   searchError: string | null
   hasMoreSearch: boolean
   loadMoreSearch: () => Promise<void>
@@ -161,6 +162,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [numFound, setNumFound] = useState(0)
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchLoadingMore, setSearchLoadingMore] = useState(false)
+  const [searchLoadingLabel, setSearchLoadingLabel] = useState("Searching YouTube Music first...")
   const [searchError, setSearchError] = useState<string | null>(null)
   const [hasMoreSearch, setHasMoreSearch] = useState(false)
   const [searchPage, setSearchPage] = useState(1)
@@ -212,6 +214,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       searchControllerRef.current?.abort()
       setSearchLoading(false)
       setSearchLoadingMore(false)
+      setSearchLoadingLabel("Searching YouTube Music first...")
       setSearchError(null)
       setSearchResults([])
       setNumFound(0)
@@ -233,6 +236,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setSearchError(null)
       setSearchLoading(false)
       setSearchLoadingMore(false)
+      setSearchLoadingLabel("Searching YouTube Music first...")
       if (append) setSearchPage(page)
       return
     }
@@ -242,6 +246,14 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     } else {
       searchControllerRef.current?.abort()
       setSearchLoading(true)
+      setSearchLoadingLabel("Searching YouTube Music first...")
+      window.setTimeout(() => {
+        setSearchLoadingLabel((previous) =>
+          previous === "Searching YouTube Music first..."
+            ? "Matching playable Archive results..."
+            : previous
+        )
+      }, 450)
     }
     setSearchError(null)
 
@@ -268,6 +280,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setHasMoreSearch(payload.hasMore)
       setSearchError(null)
       setSearchPage(page)
+      setSearchLoadingLabel("Searching YouTube Music first...")
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === "AbortError") return
       if (!append) {
@@ -276,6 +289,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         setHasMoreSearch(false)
       }
       setSearchError(error instanceof Error ? error.message : "Search failed")
+      setSearchLoadingLabel("Searching YouTube Music first...")
     } finally {
       if (append) {
         setSearchLoadingMore(false)
@@ -543,6 +557,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setSearchError(null)
     setSearchLoading(false)
     setSearchLoadingMore(false)
+    setSearchLoadingLabel("Searching YouTube Music first...")
     setHasMoreSearch(false)
     setSearchPage(1)
     clearSelectedAlbum()
@@ -564,6 +579,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setQueueDrawerOpen(false)
     setSearchLoading(false)
     setSearchLoadingMore(false)
+    setSearchLoadingLabel("Searching YouTube Music first...")
     setHasMoreSearch(false)
 
     const audio = audioRef.current
@@ -582,6 +598,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       clearSelectedArtist()
       setSearchLoading(false)
       setSearchLoadingMore(false)
+      setSearchLoadingLabel("Searching YouTube Music first...")
       setSearchError(null)
       setSearchResults([])
       setNumFound(0)
@@ -718,6 +735,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       numFound,
       searchLoading,
       searchLoadingMore,
+      searchLoadingLabel,
       searchError,
       hasMoreSearch,
       loadMoreSearch,
@@ -785,6 +803,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       searchError,
       searchLoading,
       searchLoadingMore,
+      searchLoadingLabel,
       searchQuery,
       searchResults,
       seek,

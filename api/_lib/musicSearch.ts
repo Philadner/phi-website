@@ -464,55 +464,53 @@ async function getSearchSeed(query: string) {
 
   const songs: MusicSongResult[] = []
   const albums: MusicAlbumResult[] = []
-  const artists: MusicArtistResult[] = []
   const usedArchiveIds = new Set<string>()
   const seenSongIds = new Set<string>()
   const seenAlbumIds = new Set<string>()
-  const seenArtistIds = new Set<string>()
+  const [songMatches, albumMatches] = await Promise.all([
+    Promise.allSettled(ytSongs.slice(0, 8).map((song) => matchSongFromArchive(song))),
+    Promise.allSettled(
+      ytAlbums.slice(0, 6).map(async (album) => {
+        const fullAlbum = await getYtAlbum(album.albumId)
+        const matchedAlbum = await matchArchiveAlbum(fullAlbum)
+        if (!matchedAlbum) return null
 
-  for (const song of ytSongs.slice(0, 6)) {
-    const matchedSong = await matchSongFromArchive(song)
-    if (!matchedSong || seenSongIds.has(matchedSong.id)) continue
-    seenSongIds.add(matchedSong.id)
-    usedArchiveIds.add(matchedSong.track.albumId)
-    songs.push(matchedSong)
-  }
-
-  for (const album of ytAlbums.slice(0, 6)) {
-    try {
-      const fullAlbum = await getYtAlbum(album.albumId)
-      const matchedAlbum = await matchArchiveAlbum(fullAlbum)
-      if (!matchedAlbum || seenAlbumIds.has(matchedAlbum.album.id)) continue
-      seenAlbumIds.add(matchedAlbum.album.id)
-      usedArchiveIds.add(matchedAlbum.album.id)
-      albums.push(
-        createAlbumResult(matchedAlbum, matchedAlbum.downloads, {
+        return createAlbumResult(matchedAlbum, matchedAlbum.downloads, {
           coverUrl: chooseThumbnail(album.thumbnails, matchedAlbum.album.coverUrl),
           title: album.name,
           artist: album.artist.name,
           matchedTrackCount: matchedAlbum.matchedTrackCount,
         })
-      )
-    } catch {
-      // ignore unstable YT album failures
-    }
+      })
+    ),
+  ])
+
+  for (const result of songMatches) {
+    if (result.status !== "fulfilled" || !result.value) continue
+    if (seenSongIds.has(result.value.id)) continue
+    seenSongIds.add(result.value.id)
+    usedArchiveIds.add(result.value.track.albumId)
+    songs.push(result.value)
   }
 
-  for (const artist of ytArtists.slice(0, 4)) {
-    if (seenArtistIds.has(artist.artistId)) continue
-    const payload = await getMusicArtistPayload(artist.artistId)
-    if (!payload) continue
-    seenArtistIds.add(artist.artistId)
-    artists.push({
+  for (const result of albumMatches) {
+    if (result.status !== "fulfilled" || !result.value) continue
+    if (seenAlbumIds.has(result.value.archiveId)) continue
+    seenAlbumIds.add(result.value.archiveId)
+    usedArchiveIds.add(result.value.archiveId)
+    albums.push(result.value)
+  }
+
+  const artists = ytArtists
+    .slice(0, 4)
+    .filter((artist, index, array) => array.findIndex((entry) => entry.artistId === artist.artistId) === index)
+    .map((artist) => ({
       type: "artist",
       id: `artist:${artist.artistId}`,
       artistId: artist.artistId,
-      name: payload.name,
-      imageUrl: payload.imageUrl || chooseThumbnail(artist.thumbnails, ""),
-      playableAlbumCount: payload.albums.length,
-      playableSongCount: payload.songs.length,
-    })
-  }
+      name: artist.name,
+      imageUrl: chooseThumbnail(artist.thumbnails, ""),
+    }) satisfies MusicArtistResult)
 
   return setCached(searchSeedCache, query, { songs, albums, artists, usedArchiveIds })
 }

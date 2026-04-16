@@ -48,8 +48,8 @@ export interface MusicArtistResult {
   artistId: string
   name: string
   imageUrl: string
-  playableAlbumCount: number
-  playableSongCount: number
+  playableAlbumCount?: number
+  playableSongCount?: number
 }
 
 export type MusicSearchResult =

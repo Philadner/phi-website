@@ -345,6 +345,22 @@
   background: rgba(117, 20, 20, 0.35);
 }
 
+.music-state-card--loading {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.music-loading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.music-loading-copy strong {
+  font-size: 1.1rem;
+  color: white;
+}
+
 .music-empty-state {
   flex-direction: column;
   gap: 12px;
