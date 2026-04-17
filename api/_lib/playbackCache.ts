@@ -4,14 +4,14 @@ import os from "node:os"
 import path from "node:path"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
-import { spawn } from "node:child_process"
-import ffmpegPath from "ffmpeg-static"
+import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg"
 import {
   buildArchiveDownloadUrl,
   type QueueTrack,
   type TrackResolveRequest,
   type TrackResolveResponse,
-} from "../../src/lib/musicTypes"
+} from "../../src/lib/musicTypes.js"
 import { archiveFetch } from "./archiveFetch.js"
 import { deleteBlobUrl, isBlobConfigured, putAudioBlob } from "./blobStore.js"
 import {
@@ -74,15 +74,15 @@ async function streamArchiveSource(track: TrackResolveRequest, destination: stri
     throw new Error(`Archive source failed: ${response.status}`)
   }
 
-  const body = Readable.fromWeb(response.body as globalThis.ReadableStream<Uint8Array>)
+  const body = Readable.fromWeb(response.body as unknown as globalThis.ReadableStream)
   await pipeline(body, createWriteStream(destination))
 }
 
 async function transcodeToMp3(sourcePath: string, outputPath: string) {
-  const binary = ffmpegPath || "ffmpeg"
+  const binary = ffmpegInstaller.path || "ffmpeg"
 
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(binary, [
+    const child: ChildProcessWithoutNullStreams = spawn(binary, [
       "-y",
       "-i",
       sourcePath,
@@ -97,11 +97,11 @@ async function transcodeToMp3(sourcePath: string, outputPath: string) {
     ])
 
     let stderr = ""
-    child.stderr.on("data", (chunk) => {
+    child.stderr.on("data", (chunk: Buffer | string) => {
       stderr += chunk.toString()
     })
     child.on("error", reject)
-    child.on("close", (code) => {
+    child.on("close", (code: number | null) => {
       if (code === 0) {
         resolve()
         return
