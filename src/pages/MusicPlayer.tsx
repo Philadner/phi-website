@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 import { useMusicPlayer } from "../components/MusicPlayerContext"
 import type { MusicAlbumResult, MusicArtistResult, MusicSongResult, QueueTrack } from "../lib/musicTypes"
+import { buildArchiveDownloadUrl } from "../lib/musicTypes"
 import "../stylesheets/MusicPlayer.css"
 
 type ContextMenuState =
@@ -148,6 +149,37 @@ export default function MusicPlayer({
     clearSelectedArtist()
     await selectAlbum(track.archiveItemId)
     navigate(`/musicpl/album/${track.archiveItemId}`)
+  }
+
+  const downloadFromArchive = (track: QueueTrack) => {
+    const url = buildArchiveDownloadUrl(track.archiveItemId, track.archiveFileName)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = track.archiveFileName
+    a.target = "_blank"
+    a.rel = "noreferrer"
+    a.click()
+  }
+
+  const downloadFromPhi = async (track: QueueTrack) => {
+    const response = await fetch("/api/track-resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        trackId: track.trackId,
+        archiveItemId: track.archiveItemId,
+        archiveFileName: track.archiveFileName,
+        sourceSizeBytes: track.sourceSizeBytes,
+        intent: "play",
+      }),
+    })
+    const payload = await response.json() as { status: string; playbackUrl?: string }
+    if (payload.status === "ready" && payload.playbackUrl) {
+      const a = document.createElement("a")
+      a.href = payload.playbackUrl
+      a.download = track.archiveFileName
+      a.click()
+    }
   }
 
   useEffect(() => {
@@ -731,6 +763,28 @@ export default function MusicPlayer({
                 }}
               >
                 Play next
+              </button>
+              <button
+                type="button"
+                className="music-context-menu__item"
+                title="Slower download, but can be higher quality"
+                onClick={() => {
+                  downloadFromArchive(contextMenu.track)
+                  setContextMenu(null)
+                }}
+              >
+                Download from archive
+              </button>
+              <button
+                type="button"
+                className="music-context-menu__item"
+                title="Fast download, but can be lower quality"
+                onClick={() => {
+                  void downloadFromPhi(contextMenu.track)
+                  setContextMenu(null)
+                }}
+              >
+                Download from phi
               </button>
             </>
           )}
