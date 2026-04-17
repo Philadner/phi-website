@@ -353,12 +353,30 @@
 .music-loading-copy {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .music-loading-copy strong {
   font-size: 1.1rem;
   color: white;
+}
+
+.music-loading-copy span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.music-loading-progress {
+  width: min(420px, 100%);
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.music-loading-progress__fill {
+  height: 100%;
+  background: #f0ca5f;
+  transition: width 0.25s ease;
 }
 
 .music-empty-state {
@@ -488,15 +506,90 @@
   width: 100%;
 }
 
+.music-bottom-cover-stage {
+  position: relative;
+  width: var(--music-bottom-height);
+  height: var(--music-bottom-height);
+  overflow: hidden;
+}
+
 .music-bottom-cover {
   width: var(--music-bottom-height);
   height: var(--music-bottom-height);
   aspect-ratio: auto;
   border-radius: 0;
+  display: block;
+}
+
+.music-bottom-cover--previous,
+.music-bottom-cover--incoming {
+  position: absolute;
+  inset: 0;
+  animation-duration: 0.32s;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
+}
+
+.music-bottom-cover--previous.music-bottom-cover--dir-next {
+  animation-name: music-cover-slide-out-next;
+}
+
+.music-bottom-cover--incoming.music-bottom-cover--dir-next {
+  transform: translateX(100%);
+  animation-name: music-cover-slide-in-next;
+}
+
+.music-bottom-cover--previous.music-bottom-cover--dir-previous {
+  animation-name: music-cover-slide-out-previous;
+}
+
+.music-bottom-cover--incoming.music-bottom-cover--dir-previous {
+  transform: translateX(-100%);
+  animation-name: music-cover-slide-in-previous;
 }
 
 .music-bottom-placeholder {
   color: rgba(255, 255, 255, 0.58);
+}
+
+@keyframes music-cover-slide-out-next {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes music-cover-slide-in-next {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes music-cover-slide-out-previous {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes music-cover-slide-in-previous {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .music-bottom-controls {

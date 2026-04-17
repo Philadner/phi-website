@@ -6,6 +6,7 @@ import YTMusic, {
   type SongDetailed,
 } from "ytmusic-api"
 import { archiveFetch } from "./archiveFetch.js"
+import { getCachedJson, setCachedJson } from "./serverCache.js"
 import type {
   AlbumSummary,
   MusicAlbumResult,
@@ -15,6 +16,7 @@ import type {
   MusicSongResult,
   QueueTrack,
 } from "../../src/lib/musicTypes"
+import { createTrackId } from "../../src/lib/musicTypes"
 
 type ArchiveDoc = {
   identifier: string
@@ -50,6 +52,9 @@ const SEARCH_PAGE_SIZE = 20
 const SEARCH_CACHE_TTL_MS = 60_000
 const ARTIST_CACHE_TTL_MS = 5 * 60_000
 const ALBUM_CACHE_TTL_MS = 10 * 60_000
+const SEARCH_CACHE_TTL_SECONDS = 6 * 60 * 60
+const METADATA_CACHE_TTL_SECONDS = 24 * 60 * 60
+const MATCH_CACHE_TTL_SECONDS = 24 * 60 * 60
 
 const searchCache = new Map<string, { ts: number; value: MusicSearchResponse }>()
 const artistCache = new Map<string, { ts: number; value: MusicArtistPayload | null }>()
@@ -122,6 +127,37 @@ function normaliseText(value: string) {
     .trim()
 }
 
+function getTitleMatchScore(query: string, candidate: string) {
+  const normalisedQuery = normaliseText(query)
+  const normalisedCandidate = normaliseText(candidate)
+
+  if (!normalisedQuery || !normalisedCandidate) return 0
+  if (normalisedCandidate === normalisedQuery) return 4
+  if (normalisedCandidate.startsWith(normalisedQuery)) return 3
+  if (normalisedCandidate.includes(normalisedQuery)) return 2
+
+  const queryWords = normalisedQuery.split(" ")
+  const candidateWords = new Set(normalisedCandidate.split(" "))
+  return queryWords.every((word) => candidateWords.has(word)) ? 1 : 0
+}
+
+function preferAlbumsFirst(
+  query: string,
+  songs: MusicSongResult[],
+  albums: MusicAlbumResult[]
+) {
+  const bestAlbumScore = albums.reduce(
+    (highest, album) => Math.max(highest, getTitleMatchScore(query, album.title)),
+    0
+  )
+  const bestSongScore = songs.reduce(
+    (highest, song) => Math.max(highest, getTitleMatchScore(query, song.title)),
+    0
+  )
+
+  return bestAlbumScore > 0 && bestAlbumScore >= bestSongScore
+}
+
 function chooseThumbnail(
   thumbnails: Array<{ url: string; width: number; height: number }> | undefined,
   fallback: string
@@ -133,6 +169,45 @@ function chooseThumbnail(
 
 function serviceThumb(id: string) {
   return `https://archive.org/services/img/${id}`
+}
+
+function searchResponseCacheKey(query: string, page: number) {
+  return `music:search:${encodeURIComponent(query)}:${page}`
+}
+
+function artistPayloadCacheKey(artistId: string) {
+  return `music:artist:${artistId}`
+}
+
+function archiveMetadataCacheKey(id: string) {
+  return `music:archive:meta:${id}`
+}
+
+function matchedAlbumCacheKey(key: string) {
+  return `music:match:album:${key}`
+}
+
+function matchedSongCacheKey(key: string) {
+  return `music:match:song:${key}`
+}
+
+function createQueueTrack(input: {
+  archiveItemId: string
+  albumTitle: string
+  artist: string
+  title: string
+  archiveFileName: string
+  coverUrl: string
+}) {
+  return {
+    trackId: createTrackId(input.archiveItemId, input.archiveFileName),
+    archiveItemId: input.archiveItemId,
+    archiveFileName: input.archiveFileName,
+    albumTitle: input.albumTitle,
+    artist: input.artist,
+    title: input.title,
+    coverUrl: input.coverUrl,
+  } satisfies QueueTrack
 }
 
 function isAudioFile(file: FileEntry) {
@@ -173,15 +248,16 @@ function parseArchiveMetadata(id: string, data: ArchiveMetadata): ParsedArchiveI
 
   const tracks = (data.files || [])
     .filter(isAudioFile)
-    .map((file) => ({
-      albumId: id,
-      albumTitle: album.title,
-      artist: album.creator || "Unknown Artist",
-      title: getTrackTitle(file),
-      fileName: file.name,
-      sourceUrl: `https://archive.org/download/${id}/${encodeURIComponent(file.name)}`,
-      coverUrl: album.coverUrl,
-    }))
+    .map((file) =>
+      createQueueTrack({
+        archiveItemId: id,
+        albumTitle: album.title,
+        artist: album.creator || "Unknown Artist",
+        title: getTrackTitle(file),
+        archiveFileName: file.name,
+        coverUrl: album.coverUrl,
+      })
+    )
 
   return { album, tracks }
 }
@@ -235,6 +311,12 @@ async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZ
 }
 
 async function getArchiveMetadata(id: string) {
+  const redisCached = await getCachedJson<ParsedArchiveItem>(archiveMetadataCacheKey(id))
+  if (redisCached) {
+    setCached(archiveMetadataCache, id, redisCached)
+    return redisCached
+  }
+
   const cached = getCached(archiveMetadataCache, id, ALBUM_CACHE_TTL_MS)
   if (cached !== null) return cached
 
@@ -246,7 +328,10 @@ async function getArchiveMetadata(id: string) {
       const data = await fetchJson<ArchiveMetadata>(
         `https://archive.org/metadata/${encodeURIComponent(id)}`
       )
-      return setCached(archiveMetadataCache, id, parseArchiveMetadata(id, data))
+      const parsed = parseArchiveMetadata(id, data)
+      setCached(archiveMetadataCache, id, parsed)
+      await setCachedJson(archiveMetadataCacheKey(id), parsed, METADATA_CACHE_TTL_SECONDS)
+      return parsed
     } catch {
       return setCached(archiveMetadataCache, id, null)
     } finally {
@@ -267,7 +352,7 @@ function createSongResult(track: QueueTrack, overrides?: {
 }) {
   return {
     type: "song",
-    id: `song:${track.albumId}:${track.fileName}`,
+    id: `song:${track.trackId}`,
     title: overrides?.title || track.title,
     artist: overrides?.artist || track.artist,
     coverUrl: overrides?.coverUrl || track.coverUrl,
@@ -343,6 +428,12 @@ async function getYtAlbum(albumId: string) {
 
 async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull) {
   const cacheKey = `${ytAlbum.albumId}:${normaliseText(ytAlbum.name)}`
+  const redisCached = await getCachedJson<MatchedArchiveAlbum>(matchedAlbumCacheKey(cacheKey))
+  if (redisCached) {
+    setCached(matchedAlbumCache, cacheKey, redisCached)
+    return redisCached
+  }
+
   const cached = getCached(matchedAlbumCache, cacheKey, ALBUM_CACHE_TTL_MS)
   if (cached !== null) return cached
 
@@ -381,23 +472,35 @@ async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull) {
     }
   }
 
-  return setCached(matchedAlbumCache, cacheKey, bestMatch)
+  setCached(matchedAlbumCache, cacheKey, bestMatch)
+  if (bestMatch) {
+    await setCachedJson(matchedAlbumCacheKey(cacheKey), bestMatch, MATCH_CACHE_TTL_SECONDS)
+  }
+  return bestMatch
 }
 
 async function matchSongFromArchive(song: SongDetailed): Promise<MusicSongResult | null> {
+  const songCacheKey = `${normaliseText(song.name)}:${normaliseText(song.artist.name)}`
+  const redisCached = await getCachedJson<MusicSongResult>(matchedSongCacheKey(songCacheKey))
+  if (redisCached) {
+    return redisCached
+  }
+
   if (song.album?.albumId) {
     try {
       const ytAlbum = await getYtAlbum(song.album.albumId)
       const matchedAlbum = await matchArchiveAlbum(ytAlbum)
       const matchedTrack = matchedAlbum?.tracks.find((track) => trackMatches(song.name, track.title))
       if (matchedAlbum && matchedTrack) {
-        return createSongResult(matchedTrack, {
+        const result = createSongResult(matchedTrack, {
           coverUrl: chooseThumbnail(song.thumbnails, matchedAlbum.album.coverUrl),
           duration: song.duration,
           title: song.name,
           artist: song.artist.name,
           albumTitle: ytAlbum.name,
         })
+        await setCachedJson(matchedSongCacheKey(songCacheKey), result, MATCH_CACHE_TTL_SECONDS)
+        return result
       }
     } catch {
       // fall through to direct archive matching
@@ -411,22 +514,26 @@ async function matchSongFromArchive(song: SongDetailed): Promise<MusicSongResult
     if (!parsed) continue
 
     if (parsed.tracks.length === 1 && trackMatches(song.name, parsed.tracks[0].title)) {
-      return createSongResult(parsed.tracks[0], {
+      const result = createSongResult(parsed.tracks[0], {
         coverUrl: chooseThumbnail(song.thumbnails, parsed.album.coverUrl),
         duration: song.duration,
         title: song.name,
         artist: song.artist.name,
       })
+      await setCachedJson(matchedSongCacheKey(songCacheKey), result, MATCH_CACHE_TTL_SECONDS)
+      return result
     }
 
     const matchedTrack = parsed.tracks.find((track) => trackMatches(song.name, track.title))
     if (matchedTrack) {
-      return createSongResult(matchedTrack, {
+      const result = createSongResult(matchedTrack, {
         coverUrl: chooseThumbnail(song.thumbnails, parsed.album.coverUrl),
         duration: song.duration,
         title: song.name,
         artist: song.artist.name,
       })
+      await setCachedJson(matchedSongCacheKey(songCacheKey), result, MATCH_CACHE_TTL_SECONDS)
+      return result
     }
   }
 
@@ -485,6 +592,12 @@ export async function getMusicArtistPayload(artistId: string) {
     throw new Error("Artist id required")
   }
 
+  const redisCached = await getCachedJson<MusicArtistPayload>(artistPayloadCacheKey(trimmed))
+  if (redisCached) {
+    setCached(artistCache, trimmed, redisCached)
+    return redisCached
+  }
+
   const cached = getCached(artistCache, trimmed, ARTIST_CACHE_TTL_MS)
   if (cached !== null) return cached
 
@@ -492,7 +605,11 @@ export async function getMusicArtistPayload(artistId: string) {
   try {
     const artist = await client.getArtist(trimmed)
     const payload = await buildArtistPayloadInternal(artist)
-    return setCached(artistCache, trimmed, payload)
+    setCached(artistCache, trimmed, payload)
+    if (payload) {
+      await setCachedJson(artistPayloadCacheKey(trimmed), payload, METADATA_CACHE_TTL_SECONDS)
+    }
+    return payload
   } catch {
     return setCached(artistCache, trimmed, null)
   }
@@ -536,7 +653,7 @@ async function getSearchSeed(query: string) {
     if (result.status !== "fulfilled" || !result.value) continue
     if (seenSongIds.has(result.value.id)) continue
     seenSongIds.add(result.value.id)
-    usedArchiveIds.add(result.value.track.albumId)
+    usedArchiveIds.add(result.value.track.archiveItemId)
     songs.push(result.value)
   }
 
@@ -610,6 +727,14 @@ export async function getMusicSearchResponse(query: string, page = 1): Promise<M
     throw new Error("Query required")
   }
 
+  const redisCached = await getCachedJson<MusicSearchResponse>(
+    searchResponseCacheKey(trimmed, currentPage)
+  )
+  if (redisCached) {
+    setCached(searchCache, `${trimmed}|${currentPage}`, redisCached)
+    return redisCached
+  }
+
   const cacheKey = `${trimmed}|${currentPage}`
   const cached = getCached(searchCache, cacheKey, SEARCH_CACHE_TTL_MS)
   if (cached) return cached
@@ -620,29 +745,39 @@ export async function getMusicSearchResponse(query: string, page = 1): Promise<M
     const numFound = Number(archiveData.response?.numFound || 0)
 
     if (currentPage > 1) {
-      const results = await buildArchiveFallbackResults(docs, new Set<string>())
-      return setCached(searchCache, cacheKey, {
+      const payload = {
         query: trimmed,
         page: currentPage,
         totalResults: numFound,
         hasMore: currentPage * SEARCH_PAGE_SIZE < numFound,
-        results,
-      })
+        results: await buildArchiveFallbackResults(docs, new Set<string>()),
+      } satisfies MusicSearchResponse
+      setCached(searchCache, cacheKey, payload)
+      await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+      return payload
     }
 
     const seed = await getSearchSeed(trimmed)
     const archiveFallback = await buildArchiveFallbackResults(docs, new Set(seed.usedArchiveIds))
-    const results = [...seed.songs, ...seed.albums, ...seed.artists, ...archiveFallback]
+    const primaryResults = preferAlbumsFirst(trimmed, seed.songs, seed.albums)
+      ? [...seed.albums, ...seed.songs]
+      : [...seed.songs, ...seed.albums]
+    const results = [...primaryResults, ...seed.artists, ...archiveFallback]
 
-    return setCached(searchCache, cacheKey, {
+    const payload = {
       query: trimmed,
       page: currentPage,
       totalResults: seed.songs.length + seed.albums.length + seed.artists.length + numFound,
       hasMore: currentPage * SEARCH_PAGE_SIZE < numFound,
       results,
-    })
+    } satisfies MusicSearchResponse
+    setCached(searchCache, cacheKey, payload)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+    return payload
   } catch {
     const fallback = await buildArchiveOnlySearch(trimmed, currentPage)
-    return setCached(searchCache, cacheKey, fallback)
+    setCached(searchCache, cacheKey, fallback)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), fallback, SEARCH_CACHE_TTL_SECONDS)
+    return fallback
   }
 }

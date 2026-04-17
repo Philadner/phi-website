@@ -1,5 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import { archiveFetch } from "./_lib/archiveFetch.js"
+import { getCachedString, setCachedString } from "./_lib/serverCache.js"
+
+function archiveMetadataCacheKey(id: string) {
+  return `music:archive:meta:raw:${id}`
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = typeof req.query.id === "string" ? req.query.id.trim() : ""
@@ -9,6 +14,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const cached = await getCachedString(archiveMetadataCacheKey(id))
+    if (cached) {
+      res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=1800")
+      res.setHeader("Content-Type", "application/json")
+      return res.status(200).send(cached)
+    }
+
     const archiveRes = await archiveFetch(
       `https://archive.org/metadata/${encodeURIComponent(id)}`
     )
@@ -23,6 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
+    await setCachedString(archiveMetadataCacheKey(id), body, 24 * 60 * 60)
     res.setHeader("Content-Type", "application/json")
     return res.status(200).send(body)
   } catch (error: unknown) {

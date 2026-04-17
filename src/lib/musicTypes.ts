@@ -8,14 +8,36 @@ export interface AlbumSummary {
 }
 
 export interface QueueTrack {
-  albumId: string
+  trackId: string
+  archiveItemId: string
+  archiveFileName: string
   albumTitle: string
   artist: string
   title: string
-  fileName: string
-  sourceUrl: string
   coverUrl: string
 }
+
+export interface TrackResolveRequest {
+  trackId: string
+  archiveItemId: string
+  archiveFileName: string
+  intent?: "play" | "preload"
+}
+
+export type TrackResolveResponse =
+  | {
+      status: "ready"
+      playbackUrl: string
+      mimeType: string
+      cachedAt: string
+    }
+  | {
+      status: "preparing"
+    }
+  | {
+      status: "error"
+      message: string
+    }
 
 export interface MusicSongResult {
   type: "song"
@@ -71,4 +93,12 @@ export interface MusicArtistPayload {
   imageUrl: string
   albums: MusicAlbumResult[]
   songs: MusicSongResult[]
+}
+
+export function createTrackId(archiveItemId: string, archiveFileName: string) {
+  return `${encodeURIComponent(archiveItemId)}::${encodeURIComponent(archiveFileName)}`
+}
+
+export function buildArchiveDownloadUrl(archiveItemId: string, archiveFileName: string) {
+  return `https://archive.org/download/${archiveItemId}/${encodeURIComponent(archiveFileName)}`
 }

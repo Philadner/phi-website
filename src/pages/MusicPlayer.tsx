@@ -34,12 +34,48 @@ type ContextMenuState =
     }
   | null
 
+type CoverTransitionState = {
+  previousSrc: string
+  previousAlt: string
+  currentSrc: string
+  currentAlt: string
+  direction: "next" | "previous"
+}
+
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00"
   const whole = Math.floor(seconds)
   const minutes = Math.floor(whole / 60)
   const remainder = whole % 60
   return `${minutes}:${String(remainder).padStart(2, "0")}`
+}
+
+function getLoadingState(label: string) {
+  if (label === "Checking what we can actually play...") {
+    return {
+      progress: 82,
+      detail: "Matching the best results to playable versions now.",
+    }
+  }
+
+  return {
+    progress: 42,
+    detail: "Pulling together the strongest song, album, and artist matches first.",
+  }
+}
+
+function getCoverDirection(
+  previousIndex: number | null,
+  nextIndex: number | null,
+  queueLength: number
+) {
+  if (previousIndex === null || nextIndex === null || queueLength <= 1) return null
+  if (previousIndex === nextIndex) return null
+
+  if ((previousIndex + 1) % queueLength === nextIndex) return "next"
+  if ((previousIndex - 1 + queueLength) % queueLength === nextIndex) return "previous"
+
+  return nextIndex > previousIndex ? "next" : "previous"
 }
 
 export default function MusicPlayer({
@@ -81,6 +117,8 @@ export default function MusicPlayer({
     currentTime,
     duration,
     volume,
+    currentPlaybackStatus,
+    currentPlaybackMessage,
     queueDrawerOpen,
     setQueueDrawerOpen,
     playTrack,
@@ -96,8 +134,19 @@ export default function MusicPlayer({
     setActiveQueueIndex,
   } = useMusicPlayer()
   const mainPaneRef = useRef<HTMLElement | null>(null)
+  const coverTimeoutRef = useRef<number | null>(null)
+  const previousTrackRef = useRef<QueueTrack | null>(null)
+  const previousIndexRef = useRef<number | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
+  const [coverTransition, setCoverTransition] = useState<CoverTransitionState | null>(null)
   const showInitialSearchLoading = searchLoading && searchResults.length === 0
+  const loadingState = getLoadingState(searchLoadingLabel)
+
+  const openAlbumForTrack = async (track: QueueTrack) => {
+    clearSelectedArtist()
+    await selectAlbum(track.archiveItemId)
+    navigate(`/musicpl/album/${track.archiveItemId}`)
+  }
 
   useEffect(() => {
     if (!initialArtistId) return
@@ -130,6 +179,63 @@ export default function MusicPlayer({
       window.removeEventListener("resize", close)
     }
   }, [contextMenu])
+
+  useEffect(() => {
+    const previousTrack = previousTrackRef.current
+    const previousIndex = previousIndexRef.current
+
+    if (!currentTrack) {
+      setCoverTransition(null)
+      previousTrackRef.current = null
+      previousIndexRef.current = activeQueueIndex
+      if (coverTimeoutRef.current) {
+        window.clearTimeout(coverTimeoutRef.current)
+        coverTimeoutRef.current = null
+      }
+      return
+    }
+
+    if (
+      previousTrack &&
+      previousTrack.trackId !== currentTrack.trackId &&
+      previousTrack.coverUrl !== currentTrack.coverUrl
+    ) {
+      const direction = getCoverDirection(previousIndex, activeQueueIndex, queue.length)
+      if (direction) {
+        if (coverTimeoutRef.current) {
+          window.clearTimeout(coverTimeoutRef.current)
+        }
+
+        setCoverTransition({
+          previousSrc: previousTrack.coverUrl,
+          previousAlt: previousTrack.albumTitle,
+          currentSrc: currentTrack.coverUrl,
+          currentAlt: currentTrack.albumTitle,
+          direction,
+        })
+
+        coverTimeoutRef.current = window.setTimeout(() => {
+          setCoverTransition(null)
+          coverTimeoutRef.current = null
+        }, 320)
+      } else {
+        setCoverTransition(null)
+      }
+    } else {
+      setCoverTransition(null)
+    }
+
+    previousTrackRef.current = currentTrack
+    previousIndexRef.current = activeQueueIndex
+  }, [activeQueueIndex, currentTrack, queue.length])
+
+  useEffect(() => {
+    return () => {
+      if (coverTimeoutRef.current) {
+        window.clearTimeout(coverTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (selectedAlbum || selectedArtist) return
@@ -346,11 +452,11 @@ export default function MusicPlayer({
                 <div className="music-track-list">
                   {albumTracks.map((track, index) => {
                     const queueSeed = albumTracks.slice(index)
-                    const isCurrent = currentTrack?.sourceUrl === track.sourceUrl
+                    const isCurrent = currentTrack?.trackId === track.trackId
                     return (
                       <button
                         type="button"
-                        key={track.sourceUrl}
+                        key={track.trackId}
                         className={`music-track-row ${isCurrent ? "is-current" : ""}`}
                         onClick={() => void playTrack(track, queueSeed)}
                         onContextMenu={(event) => {
@@ -397,9 +503,20 @@ export default function MusicPlayer({
                 <div className="music-state-card music-state-card--loading">
                   <div className="music-loading-copy">
                     <strong>{searchLoadingLabel}</strong>
-                    <span>
-                      Archive fallback stays hidden until the YouTube song pass finishes.
-                    </span>
+                    <span>{loadingState.detail}</span>
+                    <div
+                      className="music-loading-progress"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={loadingState.progress}
+                      aria-label={searchLoadingLabel}
+                    >
+                      <div
+                        className="music-loading-progress__fill"
+                        style={{ width: `${loadingState.progress}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               ) : searchError ? (
@@ -516,6 +633,16 @@ export default function MusicPlayer({
                 type="button"
                 className="music-context-menu__item"
                 onClick={() => {
+                  void openAlbumForTrack(queue[contextMenu.index])
+                  setContextMenu(null)
+                }}
+              >
+                Go to album
+              </button>
+              <button
+                type="button"
+                className="music-context-menu__item"
+                onClick={() => {
                   removeQueueItem(contextMenu.index)
                   setContextMenu(null)
                 }}
@@ -551,6 +678,16 @@ export default function MusicPlayer({
                 type="button"
                 className="music-context-menu__item"
                 onClick={() => {
+                  void openAlbumForTrack(contextMenu.track)
+                  setContextMenu(null)
+                }}
+              >
+                Go to album
+              </button>
+              <button
+                type="button"
+                className="music-context-menu__item"
+                onClick={() => {
                   addTrackToQueue(contextMenu.track)
                   setContextMenu(null)
                 }}
@@ -576,14 +713,37 @@ export default function MusicPlayer({
         <div className="music-bottom-track">
           {currentTrack ? (
             <>
-              <img
-                src={currentTrack.coverUrl}
-                alt={currentTrack.albumTitle}
-                className="music-bottom-cover"
-              />
+              <div className="music-bottom-cover-stage">
+                {coverTransition ? (
+                  <>
+                    <img
+                      src={coverTransition.previousSrc}
+                      alt={coverTransition.previousAlt}
+                      className={`music-bottom-cover music-bottom-cover--previous music-bottom-cover--dir-${coverTransition.direction}`}
+                    />
+                    <img
+                      src={coverTransition.currentSrc}
+                      alt={coverTransition.currentAlt}
+                      className={`music-bottom-cover music-bottom-cover--incoming music-bottom-cover--dir-${coverTransition.direction}`}
+                    />
+                  </>
+                ) : (
+                  <img
+                    src={currentTrack.coverUrl}
+                    alt={currentTrack.albumTitle}
+                    className="music-bottom-cover"
+                  />
+                )}
+              </div>
               <div className="music-bottom-copy">
                 <p className="music-bottom-title">{currentTrack.title}</p>
-                <p className="music-bottom-artist">{currentTrack.artist}</p>
+                <p className="music-bottom-artist">
+                  {currentPlaybackStatus === "preparing"
+                    ? "Preparing this track..."
+                    : currentPlaybackStatus === "error"
+                      ? currentPlaybackMessage || "Track unavailable"
+                      : currentTrack.artist}
+                </p>
               </div>
             </>
           ) : (
@@ -760,10 +920,10 @@ function QueuePanel({
 
       <div className="music-queue-list">
         {queue.map((track, index) => {
-          const isCurrent = currentTrack?.sourceUrl === track.sourceUrl
+          const isCurrent = currentTrack?.trackId === track.trackId
           return (
             <div
-              key={`${track.sourceUrl}-${index}`}
+              key={`${track.trackId}-${index}`}
               className={`music-queue-item ${isCurrent ? "is-current" : ""}`}
               draggable
               onContextMenu={(event) => onContextMenu(event, index)}

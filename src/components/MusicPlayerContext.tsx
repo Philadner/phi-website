@@ -14,7 +14,9 @@ import type {
   MusicSearchResponse,
   MusicSearchResult,
   QueueTrack,
+  TrackResolveResponse,
 } from "../lib/musicTypes"
+import { createTrackId } from "../lib/musicTypes"
 
 interface FileEntry {
   name: string
@@ -71,6 +73,8 @@ interface MusicPlayerContextValue {
   currentTime: number
   duration: number
   volume: number
+  currentPlaybackStatus: "idle" | "preparing" | "ready" | "error"
+  currentPlaybackMessage: string | null
   queueDrawerOpen: boolean
   setQueueDrawerOpen: (open: boolean) => void
   playTrack: (track: QueueTrack, queueSeed?: QueueTrack[]) => Promise<void>
@@ -90,6 +94,8 @@ interface MusicPlayerContextValue {
 const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 
 const SEARCH_CACHE_TTL_MS = 60_000
+const SEARCH_STAGE_MATCHES = "Looking for the best matches..."
+const SEARCH_STAGE_PLAYABLE = "Checking what we can actually play..."
 const ARTIST_CACHE_TTL_MS = 5 * 60_000
 const searchCache = new Map<string, SearchCacheEntry>()
 const albumCache = new Map<string, AlbumCacheEntry>()
@@ -104,11 +110,11 @@ function getMusicArtistUrl(id: string) {
 }
 
 function getArchiveMetadataUrl(id: string) {
-  if (import.meta.env.DEV) {
-    return `/archive-api/metadata/${encodeURIComponent(id)}`
-  }
-
   return `/api/archive-metadata?id=${encodeURIComponent(id)}`
+}
+
+function getTrackResolveUrl() {
+  return "/api/track-resolve"
 }
 
 function serviceThumb(id: string) {
@@ -162,7 +168,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [numFound, setNumFound] = useState(0)
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchLoadingMore, setSearchLoadingMore] = useState(false)
-  const [searchLoadingLabel, setSearchLoadingLabel] = useState("Searching YouTube Music first...")
+  const [searchLoadingLabel, setSearchLoadingLabel] = useState(SEARCH_STAGE_MATCHES)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [hasMoreSearch, setHasMoreSearch] = useState(false)
   const [searchPage, setSearchPage] = useState(1)
@@ -181,12 +187,20 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(0.8)
+  const [currentPlaybackStatus, setCurrentPlaybackStatus] = useState<"idle" | "preparing" | "ready" | "error">("idle")
+  const [currentPlaybackMessage, setCurrentPlaybackMessage] = useState<string | null>(null)
   const [queueDrawerOpen, setQueueDrawerOpen] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const preloadAudioRef = useRef<HTMLAudioElement | null>(null)
   const searchControllerRef = useRef<AbortController | null>(null)
   const albumRequestRef = useRef(0)
   const artistRequestRef = useRef(0)
+  const playbackRequestRef = useRef(0)
+  const preloadRequestRef = useRef(0)
+  const preloadTrackIdRef = useRef<string | null>(null)
+  const preloadUrlRef = useRef<string | null>(null)
+  const playbackUrlCacheRef = useRef(new Map<string, string>())
   const shouldAutoplayRef = useRef(false)
 
   const currentTrack =
@@ -207,13 +221,66 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setArtistLoading(false)
   }, [])
 
+  const requestTrackPlayback = useCallback(async (track: QueueTrack, intent: "play" | "preload") => {
+    const response = await fetch(getTrackResolveUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        trackId: track.trackId,
+        archiveItemId: track.archiveItemId,
+        archiveFileName: track.archiveFileName,
+        intent,
+      }),
+    })
+
+    const payload = (await response.json()) as TrackResolveResponse
+    if (!response.ok && payload.status !== "preparing") {
+      throw new Error(
+        payload.status === "error" ? payload.message : `Track resolve failed: ${response.status}`
+      )
+    }
+
+    return payload
+  }, [])
+
+  const waitForTrackPlayback = useCallback(async (track: QueueTrack, intent: "play" | "preload") => {
+    const cachedUrl = playbackUrlCacheRef.current.get(track.trackId)
+    if (cachedUrl && intent === "preload") {
+      return {
+        status: "ready",
+        playbackUrl: cachedUrl,
+        mimeType: "audio/mpeg",
+        cachedAt: new Date().toISOString(),
+      } satisfies TrackResolveResponse
+    }
+
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      const payload = await requestTrackPlayback(track, intent)
+
+      if (payload.status === "ready") {
+        playbackUrlCacheRef.current.set(track.trackId, payload.playbackUrl)
+        return payload
+      }
+
+      if (payload.status === "error") {
+        throw new Error(payload.message)
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, 1500))
+    }
+
+    throw new Error("Track preparation timed out")
+  }, [requestTrackPlayback])
+
   const runSearch = useCallback(async (query: string, page: number, append = false) => {
     const trimmed = query.trim()
     if (!trimmed) {
       searchControllerRef.current?.abort()
       setSearchLoading(false)
       setSearchLoadingMore(false)
-      setSearchLoadingLabel("Searching YouTube Music first...")
+      setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
       setSearchError(null)
       setSearchResults([])
       setNumFound(0)
@@ -235,7 +302,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setSearchError(null)
       setSearchLoading(false)
       setSearchLoadingMore(false)
-      setSearchLoadingLabel("Searching YouTube Music first...")
+      setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
       if (append) setSearchPage(page)
       return
     }
@@ -245,11 +312,11 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     } else {
       searchControllerRef.current?.abort()
       setSearchLoading(true)
-      setSearchLoadingLabel("Searching YouTube Music first...")
+      setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
       window.setTimeout(() => {
         setSearchLoadingLabel((previous) =>
-          previous === "Searching YouTube Music first..."
-            ? "Matching playable Archive results..."
+          previous === SEARCH_STAGE_MATCHES
+            ? SEARCH_STAGE_PLAYABLE
             : previous
         )
       }, 450)
@@ -279,7 +346,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setHasMoreSearch(payload.hasMore)
       setSearchError(null)
       setSearchPage(page)
-      setSearchLoadingLabel("Searching YouTube Music first...")
+        setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
     } catch (error: unknown) {
       if (error instanceof DOMException && error.name === "AbortError") return
       if (!append) {
@@ -288,7 +355,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         setHasMoreSearch(false)
       }
       setSearchError(error instanceof Error ? error.message : "Search failed")
-      setSearchLoadingLabel("Searching YouTube Music first...")
+      setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
     } finally {
       if (append) {
         setSearchLoadingMore(false)
@@ -330,12 +397,12 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       const tracks = ((data?.files || []) as FileEntry[])
         .filter(isAudioFile)
         .map((file) => ({
-          albumId: id,
+          trackId: createTrackId(id, file.name),
+          archiveItemId: id,
+          archiveFileName: file.name,
           albumTitle: album.title,
           artist: album.creator || "Unknown Artist",
           title: getTrackTitle(file),
-          fileName: file.name,
-          sourceUrl: `https://archive.org/download/${id}/${encodeURIComponent(file.name)}`,
           coverUrl: album.coverUrl,
         }))
 
@@ -410,7 +477,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const playTrack = useCallback(
     async (track: QueueTrack, queueSeed?: QueueTrack[]) => {
       const nextQueue = queueSeed?.length ? queueSeed : queue
-      const index = nextQueue.findIndex((item) => item.sourceUrl === track.sourceUrl)
+      const index = nextQueue.findIndex((item) => item.trackId === track.trackId)
       if (index === -1) return
       await queueAndPlayIndex(nextQueue, index)
     },
@@ -555,7 +622,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setSearchError(null)
     setSearchLoading(false)
     setSearchLoadingMore(false)
-    setSearchLoadingLabel("Searching YouTube Music first...")
+        setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
     setHasMoreSearch(false)
     setSearchPage(1)
     clearSelectedAlbum()
@@ -566,6 +633,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     searchControllerRef.current?.abort()
     albumRequestRef.current += 1
     artistRequestRef.current += 1
+    playbackRequestRef.current += 1
+    preloadRequestRef.current += 1
     shouldAutoplayRef.current = false
     clearSelectedAlbum()
     clearSelectedArtist()
@@ -574,17 +643,29 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setIsPlaying(false)
     setCurrentTime(0)
     setDuration(0)
+    setCurrentPlaybackStatus("idle")
+    setCurrentPlaybackMessage(null)
     setQueueDrawerOpen(false)
     setSearchLoading(false)
     setSearchLoadingMore(false)
     setSearchLoadingLabel("Searching YouTube Music first...")
     setHasMoreSearch(false)
+    playbackUrlCacheRef.current.clear()
+    preloadTrackIdRef.current = null
+    preloadUrlRef.current = null
 
     const audio = audioRef.current
     if (audio) {
       audio.pause()
       audio.removeAttribute("src")
       audio.load()
+    }
+
+    const preloadAudio = preloadAudioRef.current
+    if (preloadAudio) {
+      preloadAudio.pause()
+      preloadAudio.removeAttribute("src")
+      preloadAudio.load()
     }
   }, [clearSelectedAlbum, clearSelectedArtist])
 
@@ -597,6 +678,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setSearchLoadingMore(false)
     setSearchLoadingLabel("Searching YouTube Music first...")
     setSearchError(null)
+    setCurrentPlaybackStatus("idle")
+    setCurrentPlaybackMessage(null)
     setSearchResults([])
     setNumFound(0)
     setHasMoreSearch(false)
@@ -606,6 +689,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!audioRef.current) return
     audioRef.current.volume = volume
+    if (preloadAudioRef.current) {
+      preloadAudioRef.current.volume = volume
+    }
   }, [volume])
 
   useEffect(() => {
@@ -619,23 +705,36 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false)
       setCurrentTime(0)
       setDuration(0)
+      setCurrentPlaybackStatus("idle")
+      setCurrentPlaybackMessage(null)
       return
     }
 
-    const previousSrc = audio.currentSrc
-    if (previousSrc === currentTrack.sourceUrl) return
+    const requestId = playbackRequestRef.current + 1
+    playbackRequestRef.current = requestId
+    setCurrentPlaybackStatus("preparing")
+    setCurrentPlaybackMessage("Preparing this track...")
 
-    audio.src = currentTrack.sourceUrl
-    audio.load()
-    setCurrentTime(0)
-    setDuration(0)
+    const applyResolvedUrl = async (playbackUrl: string) => {
+      if (playbackRequestRef.current !== requestId) return
+      if (audio.currentSrc === playbackUrl) {
+        setCurrentPlaybackStatus("ready")
+        setCurrentPlaybackMessage(null)
+        return
+      }
 
-    if (!shouldAutoplayRef.current) {
-      setIsPlaying(false)
-      return
-    }
+      audio.src = playbackUrl
+      audio.load()
+      setCurrentTime(0)
+      setDuration(0)
+      setCurrentPlaybackStatus("ready")
+      setCurrentPlaybackMessage(null)
 
-    const playAudio = async () => {
+      if (!shouldAutoplayRef.current) {
+        setIsPlaying(false)
+        return
+      }
+
       try {
         await audio.play()
       } catch {
@@ -645,8 +744,65 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void playAudio()
-  }, [currentTrack])
+    const cachedPreloadUrl =
+      preloadTrackIdRef.current === currentTrack.trackId ? preloadUrlRef.current : null
+
+    if (cachedPreloadUrl) {
+      void requestTrackPlayback(currentTrack, "play").catch(() => {})
+      void applyResolvedUrl(cachedPreloadUrl)
+      return
+    }
+
+    void waitForTrackPlayback(currentTrack, "play")
+      .then((payload) => {
+        if (payload.status !== "ready") return
+        return applyResolvedUrl(payload.playbackUrl)
+      })
+      .catch((error: unknown) => {
+        if (playbackRequestRef.current !== requestId) return
+        setCurrentPlaybackStatus("error")
+        setCurrentPlaybackMessage(
+          error instanceof Error ? error.message : "Track failed to prepare"
+        )
+        shouldAutoplayRef.current = false
+      })
+  }, [currentTrack, requestTrackPlayback, waitForTrackPlayback])
+
+  useEffect(() => {
+    if (!currentTrack || !queue.length || duration <= 0) return
+    if (duration - currentTime > 8) return
+
+    const nextIndex =
+      activeQueueIndexState === null
+        ? null
+        : (activeQueueIndexState + 1) % queue.length
+    if (nextIndex === null || nextIndex === activeQueueIndexState) return
+
+    const nextTrack = queue[nextIndex]
+    if (!nextTrack || preloadTrackIdRef.current === nextTrack.trackId) return
+
+    const requestId = preloadRequestRef.current + 1
+    preloadRequestRef.current = requestId
+
+    void waitForTrackPlayback(nextTrack, "preload")
+      .then((payload) => {
+        if (preloadRequestRef.current !== requestId || payload.status !== "ready") return
+
+        preloadTrackIdRef.current = nextTrack.trackId
+        preloadUrlRef.current = payload.playbackUrl
+
+        const preloadAudio = preloadAudioRef.current
+        if (!preloadAudio) return
+
+        preloadAudio.src = payload.playbackUrl
+        preloadAudio.load()
+      })
+      .catch(() => {
+        if (preloadRequestRef.current !== requestId) return
+        preloadTrackIdRef.current = null
+        preloadUrlRef.current = null
+      })
+  }, [activeQueueIndexState, currentTime, currentTrack, duration, queue, waitForTrackPlayback])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -738,6 +894,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       currentTime,
       duration,
       volume,
+      currentPlaybackStatus,
+      currentPlaybackMessage,
       queueDrawerOpen,
       setQueueDrawerOpen,
       playTrack,
@@ -764,6 +922,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       clearSelectedArtist,
       currentTime,
       currentTrack,
+      currentPlaybackMessage,
+      currentPlaybackStatus,
       duration,
       goToMusicHome,
       hasMoreSearch,
@@ -805,6 +965,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     <MusicPlayerContext.Provider value={value}>
       {children}
       <audio ref={audioRef} preload="metadata" />
+      <audio ref={preloadAudioRef} preload="metadata" hidden aria-hidden="true" />
     </MusicPlayerContext.Provider>
   )
 }
