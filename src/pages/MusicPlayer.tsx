@@ -10,6 +10,7 @@ import {
   faMagnifyingGlass,
   faPause,
   faPlay,
+  faSpinner,
   faVolumeHigh,
   faVolumeXmark,
 } from "@fortawesome/free-solid-svg-icons"
@@ -89,6 +90,7 @@ export default function MusicPlayer({
   const {
     searchQuery,
     submitSearch,
+    lookHarderSearch,
     searchResults,
     numFound,
     searchLoading,
@@ -576,7 +578,18 @@ export default function MusicPlayer({
 
               {searchResults.length ? (
                 <div className="music-results-sentinel">
-                  {searchLoadingMore ? "Loading more..." : hasMoreSearch ? "Loading more soon..." : "End of results"}
+                  {searchLoading ? (
+                    <span className="music-results-status">
+                      <FontAwesomeIcon icon={faSpinner} spin />
+                      Still searching...
+                    </span>
+                  ) : searchLoadingMore ? (
+                    "Loading more..."
+                  ) : hasMoreSearch ? (
+                    "Loading more soon..."
+                  ) : (
+                    "End of results"
+                  )}
                 </div>
               ) : (
                 searchQuery.trim() && !searchLoading && !searchError && (
@@ -585,6 +598,21 @@ export default function MusicPlayer({
                   </div>
                 )
               )}
+
+              {searchQuery.trim() && !searchLoading && !searchLoadingMore && !searchError ? (
+                <div className="music-search-help">
+                  <p>Still can't find the song? Try searching for the album and artist.</p>
+                  {!hasMoreSearch ? (
+                    <button
+                      type="button"
+                      className="music-search-help__button"
+                      onClick={() => lookHarderSearch()}
+                    >
+                      Look harder
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           )}
         </section>

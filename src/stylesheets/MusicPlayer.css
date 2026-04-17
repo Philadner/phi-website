@@ -442,6 +442,35 @@
   text-align: center;
 }
 
+.music-results-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.music-search-help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 0 28px;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.music-search-help p {
+  margin: 0;
+}
+
+.music-search-help__button {
+  border: 1px solid rgba(240, 202, 95, 0.45);
+  background: rgba(240, 202, 95, 0.08);
+  color: #f0ca5f;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
 .music-context-menu {
   position: fixed;
   z-index: 1400;

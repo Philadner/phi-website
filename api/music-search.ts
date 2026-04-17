@@ -4,6 +4,9 @@ import { createSearchTrace, streamMusicSearchResponse } from "./_lib/musicSearch
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const query = typeof req.query.q === "string" ? req.query.q.trim() : ""
   const page = Number(typeof req.query.page === "string" ? req.query.page : "1")
+  const harder =
+    typeof req.query.harder === "string" &&
+    ["1", "true", "yes", "on"].includes(req.query.harder.toLowerCase())
 
   if (!query) {
     return res.status(400).json({ error: "Query required" })
@@ -24,7 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       async (chunk) => {
         res.write(`${JSON.stringify(chunk)}\n`)
       },
-      trace
+      trace,
+      harder
     )
 
     return res.end()

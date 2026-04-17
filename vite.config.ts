@@ -25,6 +25,9 @@ export default defineConfig({
             const url = new URL(req.url || '/', 'http://localhost')
             const query = url.searchParams.get('q')?.trim() || ''
             const page = Number(url.searchParams.get('page') || '1')
+            const harder = ['1', 'true', 'yes', 'on'].includes(
+              (url.searchParams.get('harder') || '').toLowerCase()
+            )
 
             if (!query) {
               res.statusCode = 400
@@ -38,7 +41,7 @@ export default defineConfig({
 
             await streamMusicSearchResponse(query, page, async (chunk) => {
               res.write(`${JSON.stringify(chunk)}\n`)
-            })
+            }, undefined, harder)
 
             res.end()
           } catch (error) {

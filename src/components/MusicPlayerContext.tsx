@@ -63,6 +63,7 @@ interface MusicPlayerContextValue {
   searchQuery: string
   setSearchQuery: (value: string) => void
   submitSearch: () => void
+  lookHarderSearch: () => void
   goToMusicHome: () => void
   searchResults: MusicSearchResult[]
   numFound: number
@@ -174,6 +175,11 @@ function getMusicSearchUrl(query: string, page: number) {
   return `/api/music-search?q=${encodeURIComponent(query)}&page=${page}`
 }
 
+function getMusicSearchUrlWithMode(query: string, page: number, harder: boolean) {
+  if (!harder) return getMusicSearchUrl(query, page)
+  return `${getMusicSearchUrl(query, page)}&harder=1`
+}
+
 function getMusicArtistUrl(id: string) {
   return `/api/music-artist?id=${encodeURIComponent(id)}`
 }
@@ -254,6 +260,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [hasMoreSearch, setHasMoreSearch] = useState(false)
   const [searchPage, setSearchPage] = useState(1)
+  const [searchHarder, setSearchHarder] = useState(false)
   const [selectedAlbum, setSelectedAlbum] = useState<AlbumSummary | null>(null)
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null)
   const [albumTracks, setAlbumTracks] = useState<QueueTrack[]>([])
@@ -357,7 +364,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     throw new Error("Track preparation timed out")
   }, [requestTrackPlayback])
 
-  const runSearch = useCallback(async (query: string, page: number, append = false) => {
+  const runSearch = useCallback(async (query: string, page: number, append = false, harder = false) => {
     const trimmed = query.trim()
     if (!trimmed) {
       searchControllerRef.current?.abort()
@@ -371,7 +378,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const cacheKey = `${trimmed}|${page}`
+    const cacheKey = `${trimmed}|${page}|${harder ? "harder" : "normal"}`
     const cached = searchCache.get(cacheKey)
     if (cached && Date.now() - cached.ts < SEARCH_CACHE_TTL_MS) {
       setSearchResults((previous) => {
@@ -410,7 +417,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     searchControllerRef.current = controller
 
     try {
-      const response = await fetch(getMusicSearchUrl(trimmed, page), {
+      const response = await fetch(getMusicSearchUrlWithMode(trimmed, page, harder), {
         signal: controller.signal,
       })
       if (!response.ok) {
@@ -992,9 +999,21 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
     const nextPage = 1
     setSearchPage(nextPage)
+    setSearchHarder(false)
     clearSelectedAlbum()
     clearSelectedArtist()
-    void runSearch(trimmed, nextPage)
+    void runSearch(trimmed, nextPage, false, false)
+  }, [clearSelectedAlbum, clearSelectedArtist, runSearch, searchQuery])
+
+  const lookHarderSearch = useCallback(() => {
+    const trimmed = searchQuery.trim()
+    if (!trimmed) return
+
+    setSearchPage(1)
+    setSearchHarder(true)
+    clearSelectedAlbum()
+    clearSelectedArtist()
+    void runSearch(trimmed, 1, false, true)
   }, [clearSelectedAlbum, clearSelectedArtist, runSearch, searchQuery])
 
   const loadMoreSearch = useCallback(async () => {
@@ -1002,14 +1021,15 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (!trimmed || searchLoading || searchLoadingMore || !hasMoreSearch) return
 
     const nextPage = searchPage + 1
-    await runSearch(trimmed, nextPage, true)
-  }, [hasMoreSearch, runSearch, searchLoading, searchLoadingMore, searchPage, searchQuery])
+    await runSearch(trimmed, nextPage, true, searchHarder)
+  }, [hasMoreSearch, runSearch, searchHarder, searchLoading, searchLoadingMore, searchPage, searchQuery])
 
   const value = useMemo<MusicPlayerContextValue>(
     () => ({
       searchQuery,
       setSearchQuery,
       submitSearch,
+      lookHarderSearch,
       goToMusicHome,
       searchResults,
       numFound,

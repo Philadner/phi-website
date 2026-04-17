@@ -94,6 +94,7 @@ type SearchSeedProgress = {
 type SearchSeedOptions = {
   trace?: SearchTrace
   onProgress?: (progress: SearchSeedProgress) => Promise<void> | void
+  harder?: boolean
 }
 
 type SearchTrace = {
@@ -280,8 +281,8 @@ function serviceThumb(id: string) {
   return `https://archive.org/services/img/${id}`
 }
 
-function searchResponseCacheKey(query: string, page: number) {
-  return `music:search:${encodeURIComponent(query)}:${page}`
+function searchResponseCacheKey(query: string, page: number, harder = false) {
+  return `music:search:${encodeURIComponent(query)}:${page}:${harder ? "harder" : "normal"}`
 }
 
 function artistPayloadCacheKey(artistId: string) {
@@ -384,27 +385,30 @@ async function fetchJson<T>(url: string) {
   return (await response.json()) as T
 }
 
-async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZE, trace?: SearchTrace) {
-  const cacheKey = `${query}|${page}|${rows}`
+async function searchArchiveExpression(
+  expression: string,
+  cacheNamespace: string,
+  page: number,
+  rows = SEARCH_PAGE_SIZE,
+  trace?: SearchTrace
+) {
+  const cacheKey = `${cacheNamespace}|${page}|${rows}`
   const cached = getCached(archiveSearchCache, cacheKey, SEARCH_CACHE_TTL_MS)
   if (cached) {
     trace?.count("archiveSearch.memoryHit")
-    trace?.log("archive-search:cache-hit", { query, page, rows, layer: "memory" })
+    trace?.log("archive-search:cache-hit", { query: cacheNamespace, page, rows, layer: "memory" })
     return cached
   }
 
   const inflight = archiveSearchInflight.get(cacheKey)
   if (inflight) {
     trace?.count("archiveSearch.inflightHit")
-    trace?.log("archive-search:inflight-hit", { query, page, rows })
+    trace?.log("archive-search:inflight-hit", { query: cacheNamespace, page, rows })
     return inflight
   }
 
   const url = new URL("https://archive.org/advancedsearch.php")
-  url.searchParams.set(
-    "q",
-    `(title:("${query}") OR creator:("${query}")) AND mediatype:(audio)`
-  )
+  url.searchParams.set("q", expression)
   url.searchParams.set("fl[]", "identifier")
   url.searchParams.append("fl[]", "title")
   url.searchParams.append("fl[]", "creator")
@@ -421,7 +425,7 @@ async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZ
         "archive-search:network",
         async () =>
           fetchJson<{ response?: { docs?: ArchiveDoc[]; numFound?: number } }>(url.toString()),
-        { query, page, rows }
+        { query: cacheNamespace, page, rows }
       )
     : fetchJson<{ response?: { docs?: ArchiveDoc[]; numFound?: number } }>(url.toString()))
     .then((value) => {
@@ -434,6 +438,42 @@ async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZ
 
   archiveSearchInflight.set(cacheKey, request)
   return request
+}
+
+async function searchArchive(query: string, page: number, rows = SEARCH_PAGE_SIZE, trace?: SearchTrace) {
+  return searchArchiveExpression(
+    `(title:("${query}") OR creator:("${query}")) AND mediatype:(audio)`,
+    query,
+    page,
+    rows,
+    trace
+  )
+}
+
+async function searchArchiveAlbumCandidates(
+  albumTitle: string,
+  artistName: string,
+  page: number,
+  rows: number,
+  trace?: SearchTrace
+) {
+  const strictExpression = `(title:("${albumTitle}") AND creator:("${artistName}")) AND mediatype:(audio)`
+  const strictNamespace = `album:${artistName}:${albumTitle}:strict`
+  const strictResults = await searchArchiveExpression(
+    strictExpression,
+    strictNamespace,
+    page,
+    rows,
+    trace
+  )
+
+  if ((strictResults.response?.docs || []).length) {
+    return strictResults
+  }
+
+  const looseExpression = `(title:("${albumTitle}") OR (title:("${albumTitle}") AND creator:("${artistName}"))) AND mediatype:(audio)`
+  const looseNamespace = `album:${artistName}:${albumTitle}:loose`
+  return searchArchiveExpression(looseExpression, looseNamespace, page, rows, trace)
 }
 
 async function getArchiveMetadata(id: string, trace?: SearchTrace) {
@@ -614,7 +654,11 @@ async function getYtAlbum(albumId: string, trace?: SearchTrace) {
   return request
 }
 
-async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull, trace?: SearchTrace) {
+async function matchArchiveAlbum(
+  ytAlbum: AlbumDetailed | AlbumFull,
+  trace?: SearchTrace,
+  harder = false
+) {
   const cacheKey = `${ytAlbum.albumId}:${normaliseText(ytAlbum.name)}`
   const redisCached = await getCachedJson<MatchedArchiveAlbum>(matchedAlbumCacheKey(cacheKey))
   if (redisCached) {
@@ -631,13 +675,18 @@ async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull, trace?: Sea
     return cached
   }
 
-  const albumQuery = [ytAlbum.artist.name, ytAlbum.name].filter(Boolean).join(" ")
-  const searchPages = [1, 2, 3]
+  const searchPages = harder ? [1, 2, 3, 4, 5] : [1, 2, 3]
   const docs: ArchiveDoc[] = []
   const seenDocIds = new Set<string>()
 
   for (const page of searchPages) {
-    const archiveSearch = await searchArchive(albumQuery, page, 4, trace)
+    const archiveSearch = await searchArchiveAlbumCandidates(
+      ytAlbum.name,
+      ytAlbum.artist.name,
+      page,
+      harder ? 6 : 4,
+      trace
+    )
     for (const doc of archiveSearch.response?.docs || []) {
       if (seenDocIds.has(doc.identifier)) continue
       seenDocIds.add(doc.identifier)
@@ -826,7 +875,7 @@ export async function getMusicArtistPayload(artistId: string) {
 }
 
 async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
-  const { trace, onProgress } = options
+  const { trace, onProgress, harder = false } = options
   const cached = getCached(searchSeedCache, query, SEARCH_CACHE_TTL_MS)
   if (cached) {
     trace?.count("searchSeed.memoryHit")
@@ -883,11 +932,11 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
     ytAlbums: ytAlbums.length,
   })
 
-  const albumCandidates = ytAlbums.slice(0, albumFirst ? 4 : 3)
+  const albumCandidates = ytAlbums.slice(0, albumFirst ? (harder ? 6 : 4) : harder ? 5 : 3)
   for (const album of albumCandidates) {
     try {
       const fullAlbum = await getYtAlbum(album.albumId, trace)
-      const matchedAlbum = await matchArchiveAlbum(fullAlbum, trace)
+      const matchedAlbum = await matchArchiveAlbum(fullAlbum, trace, harder)
       if (!matchedAlbum) continue
 
       const result = createAlbumResult(matchedAlbum, matchedAlbum.downloads, {
@@ -908,7 +957,7 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
   }
 
   if (!albumFirst) {
-    for (const song of ytSongs.slice(0, 6)) {
+    for (const song of ytSongs.slice(0, harder ? 8 : 6)) {
       try {
         const matchedSong = await matchSongFromArchive(song, trace)
         if (!matchedSong || seenSongIds.has(matchedSong.id)) continue
@@ -1117,7 +1166,8 @@ export async function streamMusicSearchResponse(
   query: string,
   page = 1,
   writeChunk: (chunk: MusicSearchStreamChunk) => Promise<void> | void,
-  trace?: SearchTrace
+  trace?: SearchTrace,
+  harder = false
 ) {
   const trimmed = query.trim()
   const currentPage = Number.isFinite(page) && page > 0 ? page : 1
@@ -1126,7 +1176,7 @@ export async function streamMusicSearchResponse(
   }
 
   const redisCached = await getCachedJson<MusicSearchResponse>(
-    searchResponseCacheKey(trimmed, currentPage)
+    searchResponseCacheKey(trimmed, currentPage, harder)
   )
   if (redisCached) {
     trace?.count("search.redisHit")
@@ -1159,7 +1209,7 @@ export async function streamMusicSearchResponse(
         results: await buildArchiveFallbackResults(docs, new Set<string>(), trace),
       } satisfies MusicSearchResponse
       setCached(searchCache, cacheKey, payload)
-      await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+      await setCachedJson(searchResponseCacheKey(trimmed, currentPage, harder), payload, SEARCH_CACHE_TTL_SECONDS)
       await writeChunk({ type: "final", response: payload })
       trace?.flush("ok", { mode: "page>1", resultCount: payload.results.length, numFound })
       return
@@ -1174,6 +1224,7 @@ export async function streamMusicSearchResponse(
 
     const seed = await getSearchSeed(trimmed, {
       trace,
+      harder,
       onProgress: async (progress) => {
         latestSeed = {
           songs: progress.songs,
@@ -1195,7 +1246,16 @@ export async function streamMusicSearchResponse(
     })
 
     latestSeed = seed
-    const archiveFallback = await buildArchiveFallbackResults(docs, new Set(seed.usedArchiveIds), trace)
+    const archiveFallback = await buildArchiveFallbackResults(
+      docs,
+      new Set(seed.usedArchiveIds),
+      trace,
+      {
+        query: trimmed,
+        metadataBudget: harder ? PAGE_ONE_FALLBACK_METADATA_BUDGET * 2 : PAGE_ONE_FALLBACK_METADATA_BUDGET,
+        resultLimit: harder ? PAGE_ONE_FALLBACK_RESULT_LIMIT * 2 : PAGE_ONE_FALLBACK_RESULT_LIMIT,
+      }
+    )
     const results = [...buildSeedResults(trimmed, seed), ...archiveFallback]
 
     const payload = {
@@ -1206,7 +1266,7 @@ export async function streamMusicSearchResponse(
       results,
     } satisfies MusicSearchResponse
     setCached(searchCache, cacheKey, payload)
-    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage, harder), payload, SEARCH_CACHE_TTL_SECONDS)
     await writeChunk({ type: "final", response: payload })
     trace?.flush("ok", {
       mode: "page1",
@@ -1223,7 +1283,7 @@ export async function streamMusicSearchResponse(
     })
     const fallback = await buildArchiveOnlySearch(trimmed, currentPage)
     setCached(searchCache, cacheKey, fallback)
-    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), fallback, SEARCH_CACHE_TTL_SECONDS)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage, harder), fallback, SEARCH_CACHE_TTL_SECONDS)
     await writeChunk({ type: "final", response: fallback })
     trace?.flush("ok", {
       mode: "archive-only-fallback",
