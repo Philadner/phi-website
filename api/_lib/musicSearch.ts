@@ -82,6 +82,8 @@ type SearchSeed = {
   albums: MusicAlbumResult[]
   artists: MusicArtistResult[]
   usedArchiveIds: Set<string>
+  earlyStop?: boolean
+  triedYtAlbumIds?: Set<string>
 }
 
 type SearchSeedProgress = {
@@ -874,12 +876,19 @@ export async function getMusicArtistPayload(artistId: string) {
   }
 }
 
+function seedCacheKey(query: string, harder: boolean) {
+  return harder ? `${query}|h` : query
+}
+
 async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
   const { trace, onProgress, harder = false } = options
-  const cached = getCached(searchSeedCache, query, SEARCH_CACHE_TTL_MS)
+
+  // Harder mode has its own cache slot so it can run fully without being short-circuited
+  // by a normal-mode early-stop result
+  const cached = getCached(searchSeedCache, seedCacheKey(query, harder), SEARCH_CACHE_TTL_MS)
   if (cached) {
     trace?.count("searchSeed.memoryHit")
-    trace?.log("search-seed:cache-hit", { layer: "memory" })
+    trace?.log("search-seed:cache-hit", { layer: "memory", harder })
     return cached
   }
 
@@ -901,6 +910,20 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
   const usedArchiveIds = new Set<string>()
   const seenSongIds = new Set<string>()
   const seenAlbumIds = new Set<string>()
+  const triedYtAlbumIds = new Set<string>()
+
+  // Harder mode seeds from the normal-mode result so it continues from where normal left off
+  if (harder) {
+    const normalCached = getCached(searchSeedCache, query, SEARCH_CACHE_TTL_MS)
+    if (normalCached) {
+      songs.push(...normalCached.songs)
+      albums.push(...normalCached.albums)
+      for (const id of normalCached.usedArchiveIds) usedArchiveIds.add(id)
+      for (const s of normalCached.songs) seenSongIds.add(s.id)
+      for (const a of normalCached.albums) seenAlbumIds.add(a.archiveId)
+      for (const id of normalCached.triedYtAlbumIds ?? []) triedYtAlbumIds.add(id)
+    }
+  }
 
   const artists = ytArtists
     .slice(0, 4)
@@ -933,7 +956,10 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
   })
 
   const albumCandidates = ytAlbums.slice(0, albumFirst ? (harder ? 6 : 4) : harder ? 5 : 3)
+  let earlyStop = false
   for (const album of albumCandidates) {
+    if (triedYtAlbumIds.has(album.albumId)) continue
+    triedYtAlbumIds.add(album.albumId)
     try {
       const fullAlbum = await getYtAlbum(album.albumId, trace)
       const matchedAlbum = await matchArchiveAlbum(fullAlbum, trace, harder)
@@ -951,6 +977,11 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
       usedArchiveIds.add(result.archiveId)
       albums.push(result)
       await emitProgress()
+
+      if (!harder && matchedAlbum.matchStrength === "strong") {
+        earlyStop = true
+        break
+      }
     } catch {
       continue
     }
@@ -978,8 +1009,16 @@ async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
     matchedSongs: songs.length,
     matchedAlbums: albums.length,
     artists: artists.length,
+    earlyStop,
   })
-  return setCached(searchSeedCache, query, { songs, albums, artists, usedArchiveIds })
+  return setCached(searchSeedCache, seedCacheKey(query, harder), {
+    songs,
+    albums,
+    artists,
+    usedArchiveIds,
+    earlyStop,
+    triedYtAlbumIds,
+  })
 }
 
 function trimmedQuery(query: string) {
