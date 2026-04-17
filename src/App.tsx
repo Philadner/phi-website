@@ -14,6 +14,7 @@ import Changelog from './pages/Changelog';
 import Sex from './pages/jacobpage';
 import Stats from './pages/stats';
 import MusicPLRouter from './pages/MusicPLRouter';
+import AboutMusicPL from './pages/AboutMusicPlayer';
 import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
@@ -432,6 +433,7 @@ useEffect(() => {
             <Route path="/news" element={<News />} />
             <Route path="/jay" element={<JayGame />} />
             <Route path="/musicpl/*" element={<MusicPLRouter />} />
+            <Route path="/about-musicpl" element={<AboutMusicPL />} />
 
           </Routes>
         </>
