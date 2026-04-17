@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { getMusicSearchResponse } from "./_lib/musicSearch.js"
+import { createSearchTrace, getMusicSearchResponse } from "./_lib/musicSearch.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const query = typeof req.query.q === "string" ? req.query.q.trim() : ""
@@ -9,11 +9,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Query required" })
   }
 
+  const trace = createSearchTrace(query, page)
+
   try {
-    const payload = await getMusicSearchResponse(query, page)
+    trace.log("request:start")
+    const payload = await getMusicSearchResponse(query, page, trace)
+    res.setHeader("x-music-search-request-id", trace.requestId)
     res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300")
     return res.status(200).json(payload)
   } catch (error: unknown) {
+    trace.flush("error", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    })
     return res.status(500).json({
       error: "Hybrid music search failed",
       message: error instanceof Error ? error.message : "Unknown error",
