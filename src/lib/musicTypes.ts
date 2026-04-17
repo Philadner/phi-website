@@ -15,12 +15,14 @@ export interface QueueTrack {
   artist: string
   title: string
   coverUrl: string
+  sourceSizeBytes?: number
 }
 
 export interface TrackResolveRequest {
   trackId: string
   archiveItemId: string
   archiveFileName: string
+  sourceSizeBytes?: number
   intent?: "play" | "preload"
 }
 
@@ -33,6 +35,7 @@ export type TrackResolveResponse =
     }
   | {
       status: "preparing"
+      mode: "loading" | "compressing"
     }
   | {
       status: "error"

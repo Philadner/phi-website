@@ -36,6 +36,8 @@ type PlaybackRecord = {
   playCount: number
 }
 
+type PreparationMode = "loading" | "compressing"
+
 const TRACK_INDEX_KEY = "music:track:index"
 const LOCK_TTL_SECONDS = 15 * 60
 const FAILURE_TTL_SECONDS = 60 * 60
@@ -62,7 +64,48 @@ function ensureTrackInput(track: TrackResolveRequest | QueueTrack): TrackResolve
     trackId: track.trackId,
     archiveItemId: track.archiveItemId,
     archiveFileName: track.archiveFileName,
+    sourceSizeBytes: track.sourceSizeBytes,
   }
+}
+
+function getFileExtension(fileName: string) {
+  return path.extname(fileName).toLowerCase()
+}
+
+function getAudioMimeType(fileName: string) {
+  switch (getFileExtension(fileName)) {
+    case ".mp3":
+      return "audio/mpeg"
+    case ".m4a":
+    case ".aac":
+      return "audio/aac"
+    case ".ogg":
+    case ".oga":
+    case ".opus":
+      return "audio/ogg"
+    case ".wav":
+      return "audio/wav"
+    case ".aif":
+    case ".aiff":
+      return "audio/aiff"
+    case ".flac":
+      return "audio/flac"
+    default:
+      return "application/octet-stream"
+  }
+}
+
+function getPreparationMode(track: TrackResolveRequest): PreparationMode {
+  const extension = getFileExtension(track.archiveFileName)
+  if ([".flac", ".wav", ".aif", ".aiff"].includes(extension)) {
+    return "compressing"
+  }
+
+  if ((track.sourceSizeBytes || 0) > 25 * 1024 * 1024) {
+    return "compressing"
+  }
+
+  return "loading"
 }
 
 async function streamArchiveSource(track: TrackResolveRequest, destination: string) {
@@ -111,6 +154,41 @@ async function transcodeToMp3(sourcePath: string, outputPath: string) {
   })
 }
 
+async function copySourceToBlob(track: TrackResolveRequest, sourcePath: string) {
+  const body = await fs.readFile(sourcePath)
+  const extension = getFileExtension(track.archiveFileName) || ".bin"
+
+  if (!isBlobConfigured()) {
+    if (process.env.NODE_ENV !== "production") {
+      return {
+        trackId: track.trackId,
+        archiveItemId: track.archiveItemId,
+        archiveFileName: track.archiveFileName,
+        blobUrl: buildArchiveDownloadUrl(track.archiveItemId, track.archiveFileName),
+        mimeType: getAudioMimeType(track.archiveFileName),
+        createdAt: nowIso(),
+        lastPlayed: nowIso(),
+        playCount: 0,
+      } satisfies PlaybackRecord
+    }
+
+    throw new Error("Blob storage is not configured")
+  }
+
+  const blob = await putAudioBlob(track.trackId, extension, body, getAudioMimeType(track.archiveFileName))
+  const createdAt = nowIso()
+  return {
+    trackId: track.trackId,
+    archiveItemId: track.archiveItemId,
+    archiveFileName: track.archiveFileName,
+    blobUrl: blob.url,
+    mimeType: getAudioMimeType(track.archiveFileName),
+    createdAt,
+    lastPlayed: createdAt,
+    playCount: 0,
+  } satisfies PlaybackRecord
+}
+
 async function prepareTrack(track: TrackResolveRequest) {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "phi-music-"))
   const sourcePath = path.join(tempRoot, "input")
@@ -118,6 +196,10 @@ async function prepareTrack(track: TrackResolveRequest) {
 
   try {
     await streamArchiveSource(track, sourcePath)
+    if (getPreparationMode(track) === "loading") {
+      return await copySourceToBlob(track, sourcePath)
+    }
+
     await transcodeToMp3(sourcePath, outputPath)
     const body = await fs.readFile(outputPath)
 
@@ -138,7 +220,7 @@ async function prepareTrack(track: TrackResolveRequest) {
       throw new Error("Blob storage is not configured")
     }
 
-    const blob = await putAudioBlob(track.trackId, body)
+    const blob = await putAudioBlob(track.trackId, ".mp3", body, "audio/mpeg")
     const createdAt = nowIso()
     return {
       trackId: track.trackId,
@@ -197,6 +279,7 @@ export async function resolveTrackPlayback(
   if (!locked) {
     return {
       status: "preparing",
+      mode: getPreparationMode(track),
     }
   }
 

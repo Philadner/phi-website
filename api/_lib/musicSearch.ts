@@ -198,6 +198,7 @@ function createQueueTrack(input: {
   title: string
   archiveFileName: string
   coverUrl: string
+  sourceSizeBytes?: number
 }) {
   return {
     trackId: createTrackId(input.archiveItemId, input.archiveFileName),
@@ -207,6 +208,7 @@ function createQueueTrack(input: {
     artist: input.artist,
     title: input.title,
     coverUrl: input.coverUrl,
+    sourceSizeBytes: input.sourceSizeBytes,
   } satisfies QueueTrack
 }
 
@@ -256,6 +258,7 @@ function parseArchiveMetadata(id: string, data: ArchiveMetadata): ParsedArchiveI
         title: getTrackTitle(file),
         archiveFileName: file.name,
         coverUrl: album.coverUrl,
+        sourceSizeBytes: typeof file.size === "number" ? file.size : Number(file.size) || undefined,
       })
     )
 

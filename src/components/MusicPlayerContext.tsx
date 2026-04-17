@@ -121,6 +121,19 @@ function serviceThumb(id: string) {
   return `https://archive.org/services/img/${id}`
 }
 
+function getTrackPrepareMessage(track: QueueTrack) {
+  const extension = track.archiveFileName.toLowerCase().split(".").pop() || ""
+  if (["flac", "wav", "aif", "aiff"].includes(extension)) {
+    return "huge file: compressing..."
+  }
+
+  if ((track.sourceSizeBytes || 0) > 25 * 1024 * 1024) {
+    return "huge file: compressing..."
+  }
+
+  return "loading"
+}
+
 function isAudioFile(file: FileEntry) {
   const format = (file.format || "").toLowerCase()
   if (format.includes("audio")) return true
@@ -231,6 +244,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         trackId: track.trackId,
         archiveItemId: track.archiveItemId,
         archiveFileName: track.archiveFileName,
+        sourceSizeBytes: track.sourceSizeBytes,
         intent,
       }),
     })
@@ -404,6 +418,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
           artist: album.creator || "Unknown Artist",
           title: getTrackTitle(file),
           coverUrl: album.coverUrl,
+          sourceSizeBytes: typeof file.size === "number" ? file.size : Number(file.size) || undefined,
         }))
 
       albumCache.set(id, { album, tracks })
@@ -713,7 +728,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const requestId = playbackRequestRef.current + 1
     playbackRequestRef.current = requestId
     setCurrentPlaybackStatus("preparing")
-    setCurrentPlaybackMessage("Preparing this track...")
+    setCurrentPlaybackMessage(getTrackPrepareMessage(currentTrack))
 
     const applyResolvedUrl = async (playbackUrl: string) => {
       if (playbackRequestRef.current !== requestId) return
