@@ -47,6 +47,7 @@ type ParsedArchiveItem = {
 
 type MatchedArchiveAlbum = ParsedArchiveItem & {
   matchedTrackCount: number
+  matchStrength: "strong" | "weak"
 }
 
 const SEARCH_PAGE_SIZE = 20
@@ -56,6 +57,8 @@ const ALBUM_CACHE_TTL_MS = 10 * 60_000
 const SEARCH_CACHE_TTL_SECONDS = 6 * 60 * 60
 const METADATA_CACHE_TTL_SECONDS = 24 * 60 * 60
 const MATCH_CACHE_TTL_SECONDS = 24 * 60 * 60
+const PAGE_ONE_FALLBACK_METADATA_BUDGET = 6
+const PAGE_ONE_FALLBACK_RESULT_LIMIT = 6
 
 const searchCache = new Map<string, { ts: number; value: MusicSearchResponse }>()
 const artistCache = new Map<string, { ts: number; value: MusicArtistPayload | null }>()
@@ -265,6 +268,12 @@ function chooseThumbnail(
   if (!thumbnails?.length) return fallback
   const sorted = [...thumbnails].sort((a, b) => b.width * b.height - a.width * a.height)
   return sorted[0]?.url || fallback
+}
+
+function getArchiveFallbackScore(query: string, doc: ArchiveDoc) {
+  const titleScore = getTitleMatchScore(query, doc.title || "")
+  const creatorScore = getTitleMatchScore(query, doc.creator || "")
+  return titleScore * 3 + creatorScore
 }
 
 function serviceThumb(id: string) {
@@ -543,6 +552,38 @@ function countTrackOverlap(left: string[], right: string[]) {
   return count
 }
 
+function getArtistMatchScore(left?: string, right?: string) {
+  if (!left || !right) return 0
+  const normalisedLeft = normaliseText(left)
+  const normalisedRight = normaliseText(right)
+  if (!normalisedLeft || !normalisedRight) return 0
+  if (normalisedLeft === normalisedRight) return 3
+  if (normalisedLeft.includes(normalisedRight) || normalisedRight.includes(normalisedLeft)) {
+    return 2
+  }
+  const leftWords = new Set(normalisedLeft.split(" "))
+  const rightWords = normalisedRight.split(" ")
+  return rightWords.some((word) => leftWords.has(word)) ? 1 : 0
+}
+
+function getArchiveAlbumCandidateScore(ytAlbum: AlbumDetailed | AlbumFull, parsed: ParsedArchiveItem) {
+  const ytTrackNames =
+    "songs" in ytAlbum && Array.isArray(ytAlbum.songs) ? ytAlbum.songs.map((song) => song.name) : []
+  const overlap = countTrackOverlap(
+    ytTrackNames,
+    parsed.tracks.map((track) => track.title)
+  )
+  const titleScore = getTitleMatchScore(ytAlbum.name, parsed.album.title)
+  const artistScore = getArtistMatchScore(ytAlbum.artist.name, parsed.album.creator)
+
+  return {
+    overlap,
+    titleScore,
+    artistScore,
+    totalScore: overlap * 8 + titleScore * 5 + artistScore * 4,
+  }
+}
+
 async function getYtAlbum(albumId: string, trace?: SearchTrace) {
   const cached = getCached(ytAlbumCache, albumId, ALBUM_CACHE_TTL_MS)
   if (cached) {
@@ -590,41 +631,77 @@ async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull, trace?: Sea
     return cached
   }
 
-  const albumQuery = [ytAlbum.name, ytAlbum.artist.name].filter(Boolean).join(" ")
-  const archiveSearch = await searchArchive(albumQuery, 1, 4, trace)
-  const docs = archiveSearch.response?.docs || []
-  let bestMatch: MatchedArchiveAlbum | null = null
-  let bestDownloads = -1
+  const albumQuery = [ytAlbum.artist.name, ytAlbum.name].filter(Boolean).join(" ")
+  const searchPages = [1, 2, 3]
+  const docs: ArchiveDoc[] = []
+  const seenDocIds = new Set<string>()
 
-  const ytTrackNames =
-    "songs" in ytAlbum && Array.isArray(ytAlbum.songs) ? ytAlbum.songs.map((song) => song.name) : []
+  for (const page of searchPages) {
+    const archiveSearch = await searchArchive(albumQuery, page, 4, trace)
+    for (const doc of archiveSearch.response?.docs || []) {
+      if (seenDocIds.has(doc.identifier)) continue
+      seenDocIds.add(doc.identifier)
+      docs.push(doc)
+    }
+  }
+
+  let bestStrongMatch: MatchedArchiveAlbum | null = null
+  let bestWeakMatch: MatchedArchiveAlbum | null = null
+  let bestStrongScore = -1
+  let bestWeakScore = -1
 
   for (const doc of docs) {
     const parsed = await getArchiveMetadata(doc.identifier, trace)
-    if (!parsed || parsed.tracks.length < 2 || ytTrackNames.length < 2) continue
+    if (!parsed || parsed.tracks.length < 2) continue
 
-    const matchedTrackCount = countTrackOverlap(
-      ytTrackNames,
-      parsed.tracks.map((track) => track.title)
-    )
-
-    if (matchedTrackCount < 2) continue
-
+    const score = getArchiveAlbumCandidateScore(ytAlbum, parsed)
     const downloads = doc.downloads || 0
-    if (
-      !bestMatch ||
-      matchedTrackCount > bestMatch.matchedTrackCount ||
-      (matchedTrackCount === bestMatch.matchedTrackCount && downloads > bestDownloads)
-    ) {
-      bestDownloads = downloads
-      bestMatch = {
+    const isStrongMatch =
+      score.overlap >= 2 ||
+      (score.overlap >= 1 && score.titleScore >= 3 && score.artistScore >= 2)
+    const isWeakMatch =
+      !isStrongMatch &&
+      score.titleScore >= 3 &&
+      score.artistScore >= 1 &&
+      (score.overlap >= 1 || parsed.tracks.length >= 6)
+
+    if (isStrongMatch) {
+      const candidate = {
         ...parsed,
         downloads: doc.downloads,
-        matchedTrackCount,
+        matchedTrackCount: score.overlap,
+        matchStrength: "strong" as const,
+      }
+      if (
+        !bestStrongMatch ||
+        score.totalScore > bestStrongScore ||
+        (score.totalScore === bestStrongScore && downloads > (bestStrongMatch.downloads || 0))
+      ) {
+        bestStrongScore = score.totalScore
+        bestStrongMatch = candidate
+      }
+      continue
+    }
+
+    if (isWeakMatch) {
+      const candidate = {
+        ...parsed,
+        downloads: doc.downloads,
+        matchedTrackCount: score.overlap,
+        matchStrength: "weak" as const,
+      }
+      if (
+        !bestWeakMatch ||
+        score.totalScore > bestWeakScore ||
+        (score.totalScore === bestWeakScore && downloads > (bestWeakMatch.downloads || 0))
+      ) {
+        bestWeakScore = score.totalScore
+        bestWeakMatch = candidate
       }
     }
   }
 
+  const bestMatch = bestStrongMatch || bestWeakMatch
   setCached(matchedAlbumCache, cacheKey, bestMatch)
   if (bestMatch) {
     await setCachedJson(matchedAlbumCacheKey(cacheKey), bestMatch, MATCH_CACHE_TTL_SECONDS)
@@ -633,6 +710,7 @@ async function matchArchiveAlbum(ytAlbum: AlbumDetailed | AlbumFull, trace?: Sea
     albumId: ytAlbum.albumId,
     matched: Boolean(bestMatch),
     matchedTrackCount: bestMatch?.matchedTrackCount || 0,
+    matchStrength: bestMatch?.matchStrength || "none",
     docsChecked: docs.length,
   })
   return bestMatch
@@ -862,13 +940,36 @@ function trimmedQuery(query: string) {
 async function buildArchiveFallbackResults(
   docs: ArchiveDoc[],
   usedArchiveIds: Set<string>,
-  trace?: SearchTrace
+  trace?: SearchTrace,
+  options?: {
+    metadataBudget?: number
+    resultLimit?: number
+    query?: string
+  }
 ) {
   const results: Array<MusicSongResult | MusicAlbumResult> = []
+  const metadataBudget = options?.metadataBudget ?? docs.length
+  const resultLimit = options?.resultLimit ?? docs.length
+  const rankedDocs = options?.query
+    ? [...docs]
+        .map((doc) => ({
+          doc,
+          score: getArchiveFallbackScore(options.query as string, doc),
+        }))
+        .filter((entry) => entry.score > 0)
+        .sort((left, right) => {
+          if (right.score !== left.score) return right.score - left.score
+          return (right.doc.downloads || 0) - (left.doc.downloads || 0)
+        })
+        .map((entry) => entry.doc)
+    : docs
+  let inspected = 0
 
-  for (const doc of docs) {
+  for (const doc of rankedDocs) {
     if (usedArchiveIds.has(doc.identifier)) continue
+    if (inspected >= metadataBudget || results.length >= resultLimit) break
 
+    inspected += 1
     const parsed = await getArchiveMetadata(doc.identifier, trace)
     if (!parsed?.tracks.length) continue
 
@@ -884,6 +985,7 @@ async function buildArchiveFallbackResults(
 
   trace?.log("archive-fallback:result", {
     docs: docs.length,
+    inspected,
     results: results.length,
   })
   return results
@@ -894,7 +996,9 @@ async function buildArchiveOnlySearch(query: string, page: number): Promise<Musi
   const docs = archiveData.response?.docs || []
   const numFound = Number(archiveData.response?.numFound || 0)
   const usedArchiveIds = new Set<string>()
-  const results = await buildArchiveFallbackResults(docs, usedArchiveIds)
+  const results = await buildArchiveFallbackResults(docs, usedArchiveIds, undefined, {
+    query,
+  })
 
   return {
     query,
@@ -941,7 +1045,9 @@ export async function getMusicSearchResponse(query: string, page = 1, trace?: Se
         page: currentPage,
         totalResults: numFound,
         hasMore: currentPage * SEARCH_PAGE_SIZE < numFound,
-        results: await buildArchiveFallbackResults(docs, new Set<string>(), trace),
+        results: await buildArchiveFallbackResults(docs, new Set<string>(), trace, {
+          query: trimmed,
+        }),
       } satisfies MusicSearchResponse
       setCached(searchCache, cacheKey, payload)
       await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
@@ -950,7 +1056,16 @@ export async function getMusicSearchResponse(query: string, page = 1, trace?: Se
     }
 
     const seed = await getSearchSeed(trimmed, { trace })
-    const archiveFallback = await buildArchiveFallbackResults(docs, new Set(seed.usedArchiveIds), trace)
+    const archiveFallback = await buildArchiveFallbackResults(
+      docs,
+      new Set(seed.usedArchiveIds),
+      trace,
+      {
+        query: trimmed,
+        metadataBudget: PAGE_ONE_FALLBACK_METADATA_BUDGET,
+        resultLimit: PAGE_ONE_FALLBACK_RESULT_LIMIT,
+      }
+    )
     const primaryResults = preferAlbumsFirst(trimmed, seed.songs, seed.albums)
       ? [...seed.albums, ...seed.songs]
       : [...seed.songs, ...seed.albums]

@@ -579,7 +579,7 @@ export default function MusicPlayer({
                   {searchLoadingMore ? "Loading more..." : hasMoreSearch ? "Loading more soon..." : "End of results"}
                 </div>
               ) : (
-                searchQuery.trim() && !searchLoading && (
+                searchQuery.trim() && !searchLoading && !searchError && (
                   <div className="music-state-card">
                     No results yet. Try a broader search.
                   </div>

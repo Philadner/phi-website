@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from "react"
 import type {
   AlbumSummary,
@@ -39,6 +41,22 @@ type AlbumCacheEntry = {
 type ArtistCacheEntry = {
   artist: MusicArtistPayload | null
   ts: number
+}
+
+function isMusicSearchResponse(value: unknown): value is MusicSearchResponse {
+  if (!value || typeof value !== "object") return false
+  return "results" in value && "query" in value && "page" in value
+}
+
+function parseSearchStreamMessage(raw: string): MusicSearchStreamChunk {
+  const parsed = JSON.parse(raw) as MusicSearchStreamChunk | MusicSearchResponse
+  if (isMusicSearchResponse(parsed)) {
+    return {
+      type: "final",
+      response: parsed,
+    }
+  }
+  return parsed
 }
 
 interface MusicPlayerContextValue {
@@ -124,6 +142,32 @@ function mergeSearchResults(previous: MusicSearchResult[], incoming: MusicSearch
   }
 
   return ordered
+}
+
+function applySearchChunk(
+  chunk: MusicSearchStreamChunk,
+  append: boolean,
+  page: number,
+  setSearchResults: Dispatch<SetStateAction<MusicSearchResult[]>>,
+  setNumFound: Dispatch<SetStateAction<number>>,
+  setHasMoreSearch: Dispatch<SetStateAction<boolean>>,
+  setSearchError: Dispatch<SetStateAction<string | null>>,
+  setSearchPage: Dispatch<SetStateAction<number>>,
+  setSearchLoadingLabel: Dispatch<SetStateAction<string>>
+) {
+  if (chunk.type === "error") {
+    throw new Error(chunk.message)
+  }
+
+  setSearchResults((previous) => {
+    if (!append) return chunk.response.results
+    return mergeSearchResults(previous, chunk.response.results)
+  })
+  setNumFound(chunk.response.totalResults)
+  setHasMoreSearch(chunk.response.hasMore)
+  setSearchError(null)
+  setSearchPage(page)
+  setSearchLoadingLabel(chunk.type === "partial" ? SEARCH_STAGE_PLAYABLE : SEARCH_STAGE_MATCHES)
 }
 
 function getMusicSearchUrl(query: string, page: number) {
@@ -373,10 +417,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         throw new Error(`Search failed: ${response.status}`)
       }
 
-      const contentType = response.headers.get("content-type") || ""
       let finalPayload: MusicSearchResponse | null = null
 
-      if (contentType.includes("application/x-ndjson") && response.body) {
+      if (response.body) {
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ""
@@ -393,45 +436,41 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
             const trimmedLine = line.trim()
             if (!trimmedLine) continue
 
-            const chunk = JSON.parse(trimmedLine) as MusicSearchStreamChunk
-            if (chunk.type === "error") {
-              throw new Error(chunk.message)
+            const chunk = parseSearchStreamMessage(trimmedLine)
+            if (chunk.type !== "error") {
+              finalPayload = chunk.response
             }
-
-            finalPayload = chunk.response
-            setSearchResults((previous) => {
-              if (!append) return chunk.response.results
-              return mergeSearchResults(previous, chunk.response.results)
-            })
-            setNumFound(chunk.response.totalResults)
-            setHasMoreSearch(chunk.response.hasMore)
-            setSearchError(null)
-            setSearchPage(page)
-            if (chunk.type === "partial") {
-              setSearchLoadingLabel(SEARCH_STAGE_PLAYABLE)
-            } else {
-              setSearchLoadingLabel(SEARCH_STAGE_MATCHES)
-            }
+            applySearchChunk(
+              chunk,
+              append,
+              page,
+              setSearchResults,
+              setNumFound,
+              setHasMoreSearch,
+              setSearchError,
+              setSearchPage,
+              setSearchLoadingLabel
+            )
           }
         }
 
         const finalLine = buffer.trim()
         if (finalLine) {
-          const chunk = JSON.parse(finalLine) as MusicSearchStreamChunk
-          if (chunk.type === "error") {
-            throw new Error(chunk.message)
+          const chunk = parseSearchStreamMessage(finalLine)
+          if (chunk.type !== "error") {
+            finalPayload = chunk.response
           }
-
-          finalPayload = chunk.response
-          setSearchResults((previous) => {
-            if (!append) return chunk.response.results
-            return mergeSearchResults(previous, chunk.response.results)
-          })
-          setNumFound(chunk.response.totalResults)
-          setHasMoreSearch(chunk.response.hasMore)
-          setSearchError(null)
-          setSearchPage(page)
-          setSearchLoadingLabel(chunk.type === "partial" ? SEARCH_STAGE_PLAYABLE : SEARCH_STAGE_MATCHES)
+          applySearchChunk(
+            chunk,
+            append,
+            page,
+            setSearchResults,
+            setNumFound,
+            setHasMoreSearch,
+            setSearchError,
+            setSearchPage,
+            setSearchLoadingLabel
+          )
         }
       } else {
         const payload = (await response.json()) as MusicSearchResponse
