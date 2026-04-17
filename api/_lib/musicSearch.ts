@@ -5,6 +5,7 @@ import YTMusic, {
   type ArtistFull,
   type SongDetailed,
 } from "ytmusic-api"
+import { archiveFetch } from "./archiveFetch.js"
 import type {
   AlbumSummary,
   MusicAlbumResult,
@@ -186,12 +187,7 @@ function parseArchiveMetadata(id: string, data: ArchiveMetadata): ParsedArchiveI
 }
 
 async function fetchJson<T>(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "phi-music-player",
-    },
-  })
+  const response = await archiveFetch(url)
 
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`)

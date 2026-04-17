@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
+import { archiveFetch } from "./_lib/archiveFetch.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const query = typeof req.query.q === "string" ? req.query.q.trim() : ""
@@ -25,12 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     url.searchParams.set("page", page)
     url.searchParams.set("output", "json")
 
-    const archiveRes = await fetch(url.toString(), {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "phi-music-player",
-      },
-    })
+    const archiveRes = await archiveFetch(url.toString())
 
     const body = await archiveRes.text()
     res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300")

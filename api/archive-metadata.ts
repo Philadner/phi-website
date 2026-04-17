@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
+import { archiveFetch } from "./_lib/archiveFetch.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = typeof req.query.id === "string" ? req.query.id.trim() : ""
@@ -8,12 +9,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const archiveRes = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "phi-music-player",
-      },
-    })
+    const archiveRes = await archiveFetch(
+      `https://archive.org/metadata/${encodeURIComponent(id)}`
+    )
 
     const body = await archiveRes.text()
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=1800")
