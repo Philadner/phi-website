@@ -15,8 +15,8 @@ import type {
   MusicSearchResponse,
   MusicSongResult,
   QueueTrack,
-} from "../../src/lib/musicTypes"
-import { createTrackId } from "../../src/lib/musicTypes"
+} from "../../src/lib/musicTypes.js"
+import { createTrackId } from "../../src/lib/musicTypes.js"
 
 type ArchiveDoc = {
   identifier: string
