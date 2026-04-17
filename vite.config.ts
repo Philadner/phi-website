@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { getMusicArtistPayload, getMusicSearchResponse } from './api/_lib/musicSearch'
+import { getMusicArtistPayload, streamMusicSearchResponse } from './api/_lib/musicSearch'
 import { archiveFetch } from './api/_lib/archiveFetch'
 import { resolveTrackPlayback } from './api/_lib/playbackCache'
 
@@ -33,18 +33,22 @@ export default defineConfig({
               return
             }
 
-            const payload = await getMusicSearchResponse(query, page)
             res.statusCode = 200
-            res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify(payload))
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8')
+
+            await streamMusicSearchResponse(query, page, async (chunk) => {
+              res.write(`${JSON.stringify(chunk)}\n`)
+            })
+
+            res.end()
           } catch (error) {
             res.statusCode = 500
-            res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8')
             res.end(
-              JSON.stringify({
-                error: 'Hybrid music search failed',
+              `${JSON.stringify({
+                type: 'error',
                 message: error instanceof Error ? error.message : 'Unknown error',
-              })
+              })}\n`
             )
           }
         })

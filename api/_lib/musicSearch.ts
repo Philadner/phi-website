@@ -13,6 +13,7 @@ import type {
   MusicArtistPayload,
   MusicArtistResult,
   MusicSearchResponse,
+  MusicSearchStreamChunk,
   MusicSongResult,
   QueueTrack,
 } from "../../src/lib/musicTypes.js"
@@ -78,6 +79,18 @@ type SearchSeed = {
   albums: MusicAlbumResult[]
   artists: MusicArtistResult[]
   usedArchiveIds: Set<string>
+}
+
+type SearchSeedProgress = {
+  songs: MusicSongResult[]
+  albums: MusicAlbumResult[]
+  artists: MusicArtistResult[]
+  usedArchiveIds: Set<string>
+}
+
+type SearchSeedOptions = {
+  trace?: SearchTrace
+  onProgress?: (progress: SearchSeedProgress) => Promise<void> | void
 }
 
 type SearchTrace = {
@@ -222,6 +235,23 @@ function preferAlbumsFirst(
   )
   const bestSongScore = songs.reduce(
     (highest, song) => Math.max(highest, getTitleMatchScore(query, song.title)),
+    0
+  )
+
+  return bestAlbumScore > 0 && bestAlbumScore >= bestSongScore
+}
+
+function preferAlbumsFirstFromCandidates(
+  query: string,
+  songs: Array<{ name: string }>,
+  albums: Array<{ name: string }>
+) {
+  const bestAlbumScore = albums.reduce(
+    (highest, album) => Math.max(highest, getTitleMatchScore(query, album.name)),
+    0
+  )
+  const bestSongScore = songs.reduce(
+    (highest, song) => Math.max(highest, getTitleMatchScore(query, song.name)),
     0
   )
 
@@ -634,37 +664,7 @@ async function matchSongFromArchive(song: SongDetailed, trace?: SearchTrace): Pr
         return result
       }
     } catch {
-      // fall through to direct archive matching
-    }
-  }
-
-  const archiveQuery = [song.name, song.artist.name].filter(Boolean).join(" ")
-  const archiveSearch = await searchArchive(archiveQuery, 1, 3, trace)
-  for (const doc of archiveSearch.response?.docs || []) {
-    const parsed = await getArchiveMetadata(doc.identifier, trace)
-    if (!parsed) continue
-
-    if (parsed.tracks.length === 1 && trackMatches(song.name, parsed.tracks[0].title)) {
-      const result = createSongResult(parsed.tracks[0], {
-        coverUrl: chooseThumbnail(song.thumbnails, parsed.album.coverUrl),
-        duration: song.duration,
-        title: song.name,
-        artist: song.artist.name,
-      })
-      await setCachedJson(matchedSongCacheKey(songCacheKey), result, MATCH_CACHE_TTL_SECONDS)
-      return result
-    }
-
-    const matchedTrack = parsed.tracks.find((track) => trackMatches(song.name, track.title))
-    if (matchedTrack) {
-      const result = createSongResult(matchedTrack, {
-        coverUrl: chooseThumbnail(song.thumbnails, parsed.album.coverUrl),
-        duration: song.duration,
-        title: song.name,
-        artist: song.artist.name,
-      })
-      await setCachedJson(matchedSongCacheKey(songCacheKey), result, MATCH_CACHE_TTL_SECONDS)
-      return result
+      // ignore and return null below
     }
   }
 
@@ -747,7 +747,8 @@ export async function getMusicArtistPayload(artistId: string) {
   }
 }
 
-async function getSearchSeed(query: string, trace?: SearchTrace) {
+async function getSearchSeed(query: string, options: SearchSeedOptions = {}) {
+  const { trace, onProgress } = options
   const cached = getCached(searchSeedCache, query, SEARCH_CACHE_TTL_MS)
   if (cached) {
     trace?.count("searchSeed.memoryHit")
@@ -773,39 +774,6 @@ async function getSearchSeed(query: string, trace?: SearchTrace) {
   const usedArchiveIds = new Set<string>()
   const seenSongIds = new Set<string>()
   const seenAlbumIds = new Set<string>()
-  const [songMatches, albumMatches] = await Promise.all([
-    Promise.allSettled(ytSongs.slice(0, 8).map((song) => matchSongFromArchive(song, trace))),
-    Promise.allSettled(
-      ytAlbums.slice(0, 6).map(async (album) => {
-        const fullAlbum = await getYtAlbum(album.albumId, trace)
-        const matchedAlbum = await matchArchiveAlbum(fullAlbum, trace)
-        if (!matchedAlbum) return null
-
-        return createAlbumResult(matchedAlbum, matchedAlbum.downloads, {
-          coverUrl: chooseThumbnail(album.thumbnails, matchedAlbum.album.coverUrl),
-          title: album.name,
-          artist: album.artist.name,
-          matchedTrackCount: matchedAlbum.matchedTrackCount,
-        })
-      })
-    ),
-  ])
-
-  for (const result of songMatches) {
-    if (result.status !== "fulfilled" || !result.value) continue
-    if (seenSongIds.has(result.value.id)) continue
-    seenSongIds.add(result.value.id)
-    usedArchiveIds.add(result.value.track.archiveItemId)
-    songs.push(result.value)
-  }
-
-  for (const result of albumMatches) {
-    if (result.status !== "fulfilled" || !result.value) continue
-    if (seenAlbumIds.has(result.value.archiveId)) continue
-    seenAlbumIds.add(result.value.archiveId)
-    usedArchiveIds.add(result.value.archiveId)
-    albums.push(result.value)
-  }
 
   const artists = ytArtists
     .slice(0, 4)
@@ -818,6 +786,64 @@ async function getSearchSeed(query: string, trace?: SearchTrace) {
       imageUrl: chooseThumbnail(artist.thumbnails, ""),
     }) satisfies MusicArtistResult)
 
+  const emitProgress = async () => {
+    if (!onProgress) return
+    await onProgress({
+      songs: [...songs],
+      albums: [...albums],
+      artists: [...artists],
+      usedArchiveIds: new Set(usedArchiveIds),
+    })
+  }
+
+  await emitProgress()
+
+  const albumFirst = preferAlbumsFirstFromCandidates(trimmedQuery(query), ytSongs, ytAlbums)
+  trace?.log("search-seed:intent", {
+    albumFirst,
+    ytSongs: ytSongs.length,
+    ytAlbums: ytAlbums.length,
+  })
+
+  const albumCandidates = ytAlbums.slice(0, albumFirst ? 4 : 3)
+  for (const album of albumCandidates) {
+    try {
+      const fullAlbum = await getYtAlbum(album.albumId, trace)
+      const matchedAlbum = await matchArchiveAlbum(fullAlbum, trace)
+      if (!matchedAlbum) continue
+
+      const result = createAlbumResult(matchedAlbum, matchedAlbum.downloads, {
+        coverUrl: chooseThumbnail(album.thumbnails, matchedAlbum.album.coverUrl),
+        title: album.name,
+        artist: album.artist.name,
+        matchedTrackCount: matchedAlbum.matchedTrackCount,
+      })
+
+      if (seenAlbumIds.has(result.archiveId)) continue
+      seenAlbumIds.add(result.archiveId)
+      usedArchiveIds.add(result.archiveId)
+      albums.push(result)
+      await emitProgress()
+    } catch {
+      continue
+    }
+  }
+
+  if (!albumFirst) {
+    for (const song of ytSongs.slice(0, 6)) {
+      try {
+        const matchedSong = await matchSongFromArchive(song, trace)
+        if (!matchedSong || seenSongIds.has(matchedSong.id)) continue
+        seenSongIds.add(matchedSong.id)
+        usedArchiveIds.add(matchedSong.track.archiveItemId)
+        songs.push(matchedSong)
+        await emitProgress()
+      } catch {
+        continue
+      }
+    }
+  }
+
   trace?.log("search-seed:result", {
     ytSongs: ytSongs.length,
     ytAlbums: ytAlbums.length,
@@ -827,6 +853,10 @@ async function getSearchSeed(query: string, trace?: SearchTrace) {
     artists: artists.length,
   })
   return setCached(searchSeedCache, query, { songs, albums, artists, usedArchiveIds })
+}
+
+function trimmedQuery(query: string) {
+  return query.trim()
 }
 
 async function buildArchiveFallbackResults(
@@ -919,7 +949,7 @@ export async function getMusicSearchResponse(query: string, page = 1, trace?: Se
       return payload
     }
 
-    const seed = await getSearchSeed(trimmed, trace)
+    const seed = await getSearchSeed(trimmed, { trace })
     const archiveFallback = await buildArchiveFallbackResults(docs, new Set(seed.usedArchiveIds), trace)
     const primaryResults = preferAlbumsFirst(trimmed, seed.songs, seed.albums)
       ? [...seed.albums, ...seed.songs]
@@ -957,5 +987,132 @@ export async function getMusicSearchResponse(query: string, page = 1, trace?: Se
       resultCount: fallback.results.length,
     })
     return fallback
+  }
+}
+
+function buildSeedResults(query: string, seed: SearchSeed) {
+  const primaryResults = preferAlbumsFirst(query, seed.songs, seed.albums)
+    ? [...seed.albums, ...seed.songs]
+    : [...seed.songs, ...seed.albums]
+
+  return [...primaryResults, ...seed.artists]
+}
+
+export async function streamMusicSearchResponse(
+  query: string,
+  page = 1,
+  writeChunk: (chunk: MusicSearchStreamChunk) => Promise<void> | void,
+  trace?: SearchTrace
+) {
+  const trimmed = query.trim()
+  const currentPage = Number.isFinite(page) && page > 0 ? page : 1
+  if (!trimmed) {
+    throw new Error("Query required")
+  }
+
+  const redisCached = await getCachedJson<MusicSearchResponse>(
+    searchResponseCacheKey(trimmed, currentPage)
+  )
+  if (redisCached) {
+    trace?.count("search.redisHit")
+    await writeChunk({ type: "final", response: redisCached })
+    trace?.flush("ok", { cacheLayer: "redis", resultCount: redisCached.results.length })
+    setCached(searchCache, `${trimmed}|${currentPage}`, redisCached)
+    return
+  }
+
+  const cacheKey = `${trimmed}|${currentPage}`
+  const cached = getCached(searchCache, cacheKey, SEARCH_CACHE_TTL_MS)
+  if (cached) {
+    trace?.count("search.memoryHit")
+    await writeChunk({ type: "final", response: cached })
+    trace?.flush("ok", { cacheLayer: "memory", resultCount: cached.results.length })
+    return
+  }
+
+  try {
+    const archiveData = await searchArchive(trimmed, currentPage, SEARCH_PAGE_SIZE, trace)
+    const docs = archiveData.response?.docs || []
+    const numFound = Number(archiveData.response?.numFound || 0)
+
+    if (currentPage > 1) {
+      const payload = {
+        query: trimmed,
+        page: currentPage,
+        totalResults: numFound,
+        hasMore: currentPage * SEARCH_PAGE_SIZE < numFound,
+        results: await buildArchiveFallbackResults(docs, new Set<string>(), trace),
+      } satisfies MusicSearchResponse
+      setCached(searchCache, cacheKey, payload)
+      await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+      await writeChunk({ type: "final", response: payload })
+      trace?.flush("ok", { mode: "page>1", resultCount: payload.results.length, numFound })
+      return
+    }
+
+    let latestSeed: SearchSeed = {
+      songs: [],
+      albums: [],
+      artists: [],
+      usedArchiveIds: new Set<string>(),
+    }
+
+    const seed = await getSearchSeed(trimmed, {
+      trace,
+      onProgress: async (progress) => {
+        latestSeed = {
+          songs: progress.songs,
+          albums: progress.albums,
+          artists: progress.artists,
+          usedArchiveIds: progress.usedArchiveIds,
+        }
+
+        const partialPayload = {
+          query: trimmed,
+          page: currentPage,
+          totalResults: progress.songs.length + progress.albums.length + progress.artists.length,
+          hasMore: false,
+          results: buildSeedResults(trimmed, latestSeed),
+        } satisfies MusicSearchResponse
+
+        await writeChunk({ type: "partial", response: partialPayload })
+      },
+    })
+
+    latestSeed = seed
+    const archiveFallback = await buildArchiveFallbackResults(docs, new Set(seed.usedArchiveIds), trace)
+    const results = [...buildSeedResults(trimmed, seed), ...archiveFallback]
+
+    const payload = {
+      query: trimmed,
+      page: currentPage,
+      totalResults: seed.songs.length + seed.albums.length + seed.artists.length + numFound,
+      hasMore: currentPage * SEARCH_PAGE_SIZE < numFound,
+      results,
+    } satisfies MusicSearchResponse
+    setCached(searchCache, cacheKey, payload)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), payload, SEARCH_CACHE_TTL_SECONDS)
+    await writeChunk({ type: "final", response: payload })
+    trace?.flush("ok", {
+      mode: "page1",
+      resultCount: payload.results.length,
+      matchedSongs: seed.songs.length,
+      matchedAlbums: seed.albums.length,
+      artists: seed.artists.length,
+      archiveFallback: archiveFallback.length,
+      numFound,
+    })
+  } catch (error: unknown) {
+    trace?.log("search:fallback", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    })
+    const fallback = await buildArchiveOnlySearch(trimmed, currentPage)
+    setCached(searchCache, cacheKey, fallback)
+    await setCachedJson(searchResponseCacheKey(trimmed, currentPage), fallback, SEARCH_CACHE_TTL_SECONDS)
+    await writeChunk({ type: "final", response: fallback })
+    trace?.flush("ok", {
+      mode: "archive-only-fallback",
+      resultCount: fallback.results.length,
+    })
   }
 }

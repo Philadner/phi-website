@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createSearchTrace, getMusicSearchResponse } from "./_lib/musicSearch.js"
+import { createSearchTrace, streamMusicSearchResponse } from "./_lib/musicSearch.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const query = typeof req.query.q === "string" ? req.query.q.trim() : ""
@@ -13,17 +13,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     trace.log("request:start")
-    const payload = await getMusicSearchResponse(query, page, trace)
     res.setHeader("x-music-search-request-id", trace.requestId)
     res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300")
-    return res.status(200).json(payload)
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8")
+    res.setHeader("Transfer-Encoding", "chunked")
+
+    await streamMusicSearchResponse(
+      query,
+      page,
+      async (chunk) => {
+        res.write(`${JSON.stringify(chunk)}\n`)
+      },
+      trace
+    )
+
+    return res.end()
   } catch (error: unknown) {
     trace.flush("error", {
       message: error instanceof Error ? error.message : "Unknown error",
     })
-    return res.status(500).json({
-      error: "Hybrid music search failed",
-      message: error instanceof Error ? error.message : "Unknown error",
-    })
+    if (!res.headersSent) {
+      return res.status(500).json({
+        error: "Hybrid music search failed",
+        message: error instanceof Error ? error.message : "Unknown error",
+      })
+    }
+
+    res.write(
+      `${JSON.stringify({
+        type: "error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      })}\n`
+    )
+    return res.end()
   }
 }

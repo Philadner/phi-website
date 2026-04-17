@@ -90,6 +90,20 @@ export interface MusicSearchResponse {
   results: MusicSearchResult[]
 }
 
+export type MusicSearchStreamChunk =
+  | {
+      type: "partial"
+      response: MusicSearchResponse
+    }
+  | {
+      type: "final"
+      response: MusicSearchResponse
+    }
+  | {
+      type: "error"
+      message: string
+    }
+
 export interface MusicArtistPayload {
   artistId: string
   name: string
