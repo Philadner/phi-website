@@ -11,6 +11,7 @@ import {
   type SetStateAction,
 } from "react"
 import type {
+  MusicAlbumPayload,
   AlbumSummary,
   MusicArtistPayload,
   MusicSearchResponse,
@@ -19,14 +20,6 @@ import type {
   QueueTrack,
   TrackResolveResponse,
 } from "../lib/musicTypes"
-import { createTrackId } from "../lib/musicTypes"
-
-interface FileEntry {
-  name: string
-  format?: string
-  size?: number
-  title?: string
-}
 
 type SearchCacheEntry = {
   response: MusicSearchResponse
@@ -184,62 +177,16 @@ function getMusicArtistUrl(id: string) {
   return `/api/music-artist?id=${encodeURIComponent(id)}`
 }
 
-function getArchiveMetadataUrl(id: string) {
-  return `/api/archive-metadata?id=${encodeURIComponent(id)}`
+function getMusicAlbumUrl(id: string) {
+  return `/api/music-album?id=${encodeURIComponent(id)}`
 }
 
 function getTrackResolveUrl() {
   return "/api/track-resolve"
 }
 
-function serviceThumb(id: string) {
-  return `https://archive.org/services/img/${id}`
-}
-
-function getTrackPrepareMessage(track: QueueTrack) {
-  const extension = track.archiveFileName.toLowerCase().split(".").pop() || ""
-  if (["flac", "wav", "aif", "aiff"].includes(extension)) {
-    return "huge file: compressing..."
-  }
-
-  if ((track.sourceSizeBytes || 0) > 25 * 1024 * 1024) {
-    return "huge file: compressing..."
-  }
-
+function getTrackPrepareMessage(_track: QueueTrack) {
   return "loading"
-}
-
-function isAudioFile(file: FileEntry) {
-  const format = (file.format || "").toLowerCase()
-  if (format.includes("audio")) return true
-  const name = file.name.toLowerCase()
-  return [".mp3", ".ogg", ".oga", ".flac", ".wav", ".aif", ".aiff", ".m4a"].some((ext) =>
-    name.endsWith(ext)
-  )
-}
-
-function getTrackTitle(file: FileEntry) {
-  if (file.title?.trim()) return file.title.trim()
-  return file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim()
-}
-
-function normaliseAlbum(metadata: Record<string, unknown>, id: string): AlbumSummary {
-  const year =
-    typeof metadata.year === "string"
-      ? metadata.year
-      : typeof metadata.date === "string"
-        ? metadata.date
-        : undefined
-
-  return {
-    id,
-    title: typeof metadata.title === "string" ? metadata.title : id,
-    creator: typeof metadata.creator === "string" ? metadata.creator : undefined,
-    description:
-      typeof metadata.description === "string" ? metadata.description : undefined,
-    year,
-    coverUrl: serviceThumb(id),
-  }
 }
 
 function moveIndex(current: number | null, from: number, to: number) {
@@ -318,9 +265,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify({
         trackId: track.trackId,
-        archiveItemId: track.archiveItemId,
-        archiveFileName: track.archiveFileName,
-        sourceSizeBytes: track.sourceSizeBytes,
+        videoId: track.videoId,
         intent,
       }),
     })
@@ -536,27 +481,19 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     albumRequestRef.current = requestId
 
     try {
-      const response = await fetch(getArchiveMetadataUrl(id))
+      const response = await fetch(getMusicAlbumUrl(id))
       if (!response.ok) {
         throw new Error(`Album failed: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as MusicAlbumPayload
       if (albumRequestRef.current !== requestId) return
 
-      const album = normaliseAlbum(data?.metadata || {}, id)
-      const tracks = ((data?.files || []) as FileEntry[])
-        .filter(isAudioFile)
-        .map((file) => ({
-          trackId: createTrackId(id, file.name),
-          archiveItemId: id,
-          archiveFileName: file.name,
-          albumTitle: album.title,
-          artist: album.creator || "Unknown Artist",
-          title: getTrackTitle(file),
-          coverUrl: album.coverUrl,
-          sourceSizeBytes: typeof file.size === "number" ? file.size : Number(file.size) || undefined,
-        }))
+      const album = data.album
+      const tracks = data.tracks.map((track) => ({
+        ...track,
+        albumId: track.albumId || id,
+      }))
 
       albumCache.set(id, { album, tracks })
       setSelectedAlbum(album)

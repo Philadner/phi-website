@@ -1,0 +1,22 @@
+[package]
+name = "phi-website-rust-functions"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+vercel_runtime = { version = "2" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", features = ["json"] }
+rusty_ytdl = "0.7.4"
+url = "2"
+
+[[bin]]
+name = "ytdl_rust"
+path = "api/ytdl.rs"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3

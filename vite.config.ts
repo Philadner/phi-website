@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { getMusicArtistPayload, streamMusicSearchResponse } from './api/_lib/musicSearch'
-import { archiveFetch } from './api/_lib/archiveFetch'
-import { resolveTrackPlayback } from './api/_lib/playbackCache'
+import {
+  getMusicAlbumPayload,
+  getMusicArtistPayload,
+  streamMusicSearchResponse,
+} from './api/_lib/musicSearch'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -91,7 +93,7 @@ export default defineConfig({
           }
         })
 
-        server.middlewares.use('/api/archive-metadata', async (req, res) => {
+        server.middlewares.use('/api/music-album', async (req, res) => {
           try {
             const url = new URL(req.url || '/', 'http://localhost')
             const id = url.searchParams.get('id')?.trim() || ''
@@ -103,27 +105,23 @@ export default defineConfig({
               return
             }
 
-            const archiveRes = await archiveFetch(
-              `https://archive.org/metadata/${encodeURIComponent(id)}`
-            )
-            const body = await archiveRes.text()
+            const payload = await getMusicAlbumPayload(id)
+            if (!payload) {
+              res.statusCode = 404
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: 'Album not found' }))
+              return
+            }
 
-            res.statusCode = archiveRes.ok ? 200 : archiveRes.status
+            res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
-            res.end(
-              archiveRes.ok
-                ? body
-                : JSON.stringify({
-                    error: 'Archive metadata failed',
-                    details: body.slice(0, 300),
-                  })
-            )
+            res.end(JSON.stringify(payload))
           } catch (error) {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')
             res.end(
               JSON.stringify({
-                error: 'Archive metadata failed',
+                error: 'Album lookup failed',
                 message: error instanceof Error ? error.message : 'Unknown error',
               })
             )
@@ -148,10 +146,19 @@ export default defineConfig({
               req.on('error', reject)
             })
 
-            const payload = await resolveTrackPlayback(JSON.parse(body))
-            res.statusCode = payload.status === 'error' ? 500 : 200
+            const parsed = JSON.parse(body) as { trackId?: string; videoId?: string }
+            if (!parsed.trackId || !parsed.videoId) {
+              res.statusCode = 400
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: 'Invalid track payload' }))
+              return
+            }
+
+            // Local dev doesn't bundle the Rust serverless function through Vite, so keep
+            // the contract visible and prompt callers to use the deployed backend here.
+            res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify(payload))
+            res.end(JSON.stringify({ status: 'preparing', mode: 'loading' }))
           } catch (error) {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')

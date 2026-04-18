@@ -9,20 +9,19 @@ export interface AlbumSummary {
 
 export interface QueueTrack {
   trackId: string
-  archiveItemId: string
-  archiveFileName: string
+  videoId: string
+  albumId?: string
   albumTitle: string
   artist: string
   title: string
   coverUrl: string
-  sourceSizeBytes?: number
+  duration?: number | null
+  contentType?: string
 }
 
 export interface TrackResolveRequest {
   trackId: string
-  archiveItemId: string
-  archiveFileName: string
-  sourceSizeBytes?: number
+  videoId: string
   intent?: "play" | "preload"
 }
 
@@ -56,15 +55,13 @@ export interface MusicSongResult {
 export interface MusicAlbumResult {
   type: "album"
   id: string
-  archiveId: string
+  albumId: string
   title: string
   artist: string
   coverUrl: string
   year?: string
   description?: string
-  downloads?: number
   trackCount: number
-  matchedTrackCount?: number
 }
 
 export interface MusicArtistResult {
@@ -112,10 +109,11 @@ export interface MusicArtistPayload {
   songs: MusicSongResult[]
 }
 
-export function createTrackId(archiveItemId: string, archiveFileName: string) {
-  return `${encodeURIComponent(archiveItemId)}::${encodeURIComponent(archiveFileName)}`
+export interface MusicAlbumPayload {
+  album: AlbumSummary
+  tracks: QueueTrack[]
 }
 
-export function buildArchiveDownloadUrl(archiveItemId: string, archiveFileName: string) {
-  return `https://archive.org/download/${archiveItemId}/${encodeURIComponent(archiveFileName)}`
+export function createTrackId(videoId: string) {
+  return encodeURIComponent(videoId)
 }

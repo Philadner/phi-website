@@ -1,10 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/cleanup-audio-cache",
-      "schedule": "0 4 * * *"
-    }
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]

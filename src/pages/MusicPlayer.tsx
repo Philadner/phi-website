@@ -16,7 +16,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 import { useMusicPlayer } from "../components/MusicPlayerContext"
 import type { MusicAlbumResult, MusicArtistResult, MusicSongResult, QueueTrack } from "../lib/musicTypes"
-import { buildArchiveDownloadUrl } from "../lib/musicTypes"
 import "../stylesheets/MusicPlayer.css"
 
 type ContextMenuState =
@@ -146,19 +145,10 @@ export default function MusicPlayer({
   const loadingState = getLoadingState(searchLoadingLabel)
 
   const openAlbumForTrack = async (track: QueueTrack) => {
+    if (!track.albumId) return
     clearSelectedArtist()
-    await selectAlbum(track.archiveItemId)
-    navigate(`/musicpl/album/${track.archiveItemId}`)
-  }
-
-  const downloadFromArchive = (track: QueueTrack) => {
-    const url = buildArchiveDownloadUrl(track.archiveItemId, track.archiveFileName)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = track.archiveFileName
-    a.target = "_blank"
-    a.rel = "noreferrer"
-    a.click()
+    await selectAlbum(track.albumId)
+    navigate(`/musicpl/album/${track.albumId}`)
   }
 
   const downloadFromPhi = async (track: QueueTrack) => {
@@ -167,9 +157,7 @@ export default function MusicPlayer({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         trackId: track.trackId,
-        archiveItemId: track.archiveItemId,
-        archiveFileName: track.archiveFileName,
-        sourceSizeBytes: track.sourceSizeBytes,
+        videoId: track.videoId,
         intent: "play",
       }),
     })
@@ -177,7 +165,7 @@ export default function MusicPlayer({
     if (payload.status === "ready" && payload.playbackUrl) {
       const a = document.createElement("a")
       a.href = payload.playbackUrl
-      a.download = track.archiveFileName
+      a.download = `${track.title}.mp3`
       a.click()
     }
   }
@@ -401,7 +389,7 @@ export default function MusicPlayer({
                           <AlbumCard
                             key={album.id}
                             item={album}
-                            onOpen={() => void selectAlbum(album.archiveId)}
+                            onOpen={() => void selectAlbum(album.albumId)}
                           />
                         ))}
                       </div>
@@ -601,7 +589,7 @@ export default function MusicPlayer({
                       <AlbumCard
                         key={item.id}
                         item={item}
-                        onOpen={() => void selectAlbum(item.archiveId)}
+                        onOpen={() => void selectAlbum(item.albumId)}
                       />
                     )
                   })}
@@ -692,6 +680,7 @@ export default function MusicPlayer({
               <button
                 type="button"
                 className="music-context-menu__item"
+                disabled={!queue[contextMenu.index]?.albumId}
                 onClick={() => {
                   void openAlbumForTrack(queue[contextMenu.index])
                   setContextMenu(null)
@@ -737,6 +726,7 @@ export default function MusicPlayer({
               <button
                 type="button"
                 className="music-context-menu__item"
+                disabled={!contextMenu.track.albumId}
                 onClick={() => {
                   void openAlbumForTrack(contextMenu.track)
                   setContextMenu(null)
@@ -767,24 +757,13 @@ export default function MusicPlayer({
               <button
                 type="button"
                 className="music-context-menu__item"
-                title="Slower download, but can be higher quality"
-                onClick={() => {
-                  downloadFromArchive(contextMenu.track)
-                  setContextMenu(null)
-                }}
-              >
-                Download from archive
-              </button>
-              <button
-                type="button"
-                className="music-context-menu__item"
-                title="Fast download, but can be lower quality"
+                title="Download the cached or freshly prepared audio file"
                 onClick={() => {
                   void downloadFromPhi(contextMenu.track)
                   setContextMenu(null)
                 }}
               >
-                Download from phi
+                Download
               </button>
             </>
           )}
@@ -910,9 +889,7 @@ function AlbumCard({
       <img src={item.coverUrl} alt={item.title} className="music-result-cover" />
       <span className="music-result-title">{item.title}</span>
       <span className="music-result-artist">{item.artist}</span>
-      {item.matchedTrackCount ? (
-        <span className="music-result-meta">{item.matchedTrackCount} matching tracks</span>
-      ) : null}
+      <span className="music-result-meta">{item.trackCount} tracks</span>
     </button>
   )
 }
