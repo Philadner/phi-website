@@ -17,6 +17,6 @@ name = "ytdl_rust"
 path = "api/ytdl.rs"
 
 [profile.release]
-codegen-units = 1
-lto = "fat"
+codegen-units = 16
+lto = "thin"
 opt-level = 3
