@@ -166,7 +166,7 @@ function createAlbumSummary(album: AlbumFull): AlbumSummary {
 function createAlbumPayload(album: AlbumFull): MusicAlbumPayload {
   return {
     album: createAlbumSummary(album),
-    tracks: album.songs.map((song) =>
+    tracks: album.songs.map((song: SongDetailed) =>
       buildQueueTrack(song, {
         albumId: album.albumId,
         albumTitle: album.name,

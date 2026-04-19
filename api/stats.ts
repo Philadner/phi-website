@@ -81,16 +81,19 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       : [];
 
     // newest first just in case
-    deployments.sort((a, b) => b.createdAt - a.createdAt);
+    deployments.sort(
+      (a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt
+    );
 
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
     const deploymentsToday = deployments.filter(
-      (d) => d.state === "READY" && d.createdAt >= startOfToday.getTime()
+      (d: { state: string; createdAt: number }) =>
+        d.state === "READY" && d.createdAt >= startOfToday.getTime()
     ).length;
 
-    const lastReady = deployments.find((d) => d.state === "READY");
+    const lastReady = deployments.find((d: { state: string }) => d.state === "READY");
     const vercel = {
       deploymentsToday,
       lastDeploymentAt: lastReady ? new Date(lastReady.createdAt).toISOString() : null,
