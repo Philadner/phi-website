@@ -27,11 +27,10 @@ export default function ResearchPost() {
     <main id="main-site" className="research-page">
       <article className="research-shell research-shell--post">
         <Link to="/research" className="research-back">
-          Research
+          &larr; Back to research home
         </Link>
 
         <header className="research-post-header">
-          <p className="research-kicker">Research</p>
           <h1>{post.title}</h1>
           {post.subtitle ? <p className="research-post-subtitle">{post.subtitle}</p> : null}
 
