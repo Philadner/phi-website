@@ -115,24 +115,20 @@ const albumCache = new Map<string, AlbumCacheEntry>()
 const artistCache = new Map<string, ArtistCacheEntry>()
 
 function mergeSearchResults(previous: MusicSearchResult[], incoming: MusicSearchResult[]) {
-  const byId = new Map(previous.map((item) => [item.id, item]))
-  for (const item of incoming) {
-    byId.set(item.id, item)
-  }
-
+  const incomingById = new Map(incoming.map((item) => [item.id, item]))
   const ordered: MusicSearchResult[] = []
   const seen = new Set<string>()
-
-  for (const item of incoming) {
-    if (seen.has(item.id)) continue
-    seen.add(item.id)
-    ordered.push(byId.get(item.id) || item)
-  }
 
   for (const item of previous) {
     if (seen.has(item.id)) continue
     seen.add(item.id)
-    ordered.push(byId.get(item.id) || item)
+    ordered.push(incomingById.get(item.id) || item)
+  }
+
+  for (const item of incoming) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    ordered.push(item)
   }
 
   return ordered

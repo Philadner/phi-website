@@ -3,6 +3,7 @@ import YTMusic, {
   type AlbumFull,
   type ArtistDetailed,
   type ArtistFull,
+  type SearchResult,
   type SongDetailed,
 } from "ytmusic-api"
 import { getCachedJson, setCachedJson } from "./serverCache.js"
@@ -65,7 +66,7 @@ function setCached<T>(store: Map<string, { ts: number; value: T }>, key: string,
 }
 
 function searchResponseCacheKey(query: string, page: number, harder = false) {
-  return `music:search:v2:${encodeURIComponent(query)}:${page}:${harder ? "harder" : "normal"}`
+  return `music:search:v3:${encodeURIComponent(query)}:${page}:${harder ? "harder" : "normal"}`
 }
 
 function artistPayloadCacheKey(artistId: string) {
@@ -127,6 +128,29 @@ function createSongResult(song: SongDetailed): MusicSongResult {
   }
 }
 
+function createVideoResult(video: Extract<SearchResult, { type: "VIDEO" }>): MusicSongResult {
+  const track: QueueTrack = {
+    trackId: createTrackId(video.videoId),
+    videoId: video.videoId,
+    albumTitle: "Video",
+    artist: video.artist.name,
+    title: video.name,
+    coverUrl: chooseThumbnail(video.thumbnails, ""),
+    duration: video.duration,
+  }
+
+  return {
+    type: "song",
+    id: `song:${video.videoId}`,
+    title: video.name,
+    artist: video.artist.name,
+    coverUrl: chooseThumbnail(video.thumbnails, ""),
+    albumTitle: "Video",
+    duration: video.duration,
+    track,
+  }
+}
+
 function createAlbumResult(album: AlbumDetailed | AlbumFull): MusicAlbumResult {
   const trackCount = "songs" in album ? album.songs.length : 0
   return {
@@ -151,6 +175,37 @@ function createArtistResult(artist: ArtistDetailed | ArtistFull): MusicArtistRes
     playableAlbumCount: "topAlbums" in artist ? artist.topAlbums.length + artist.topSingles.length : undefined,
     playableSongCount: "topSongs" in artist ? artist.topSongs.length : undefined,
   }
+}
+
+function createRankedSearchResult(result: SearchResult): MusicSearchResult | null {
+  switch (result.type) {
+    case "SONG":
+      return createSongResult(result)
+    case "VIDEO":
+      return createVideoResult(result)
+    case "ALBUM":
+      return createAlbumResult(result)
+    case "ARTIST":
+      return createArtistResult(result)
+    default:
+      return null
+  }
+}
+
+function appendUniqueResults(
+  base: MusicSearchResult[],
+  incoming: MusicSearchResult[]
+): MusicSearchResult[] {
+  const seen = new Set(base.map((item) => item.id))
+  const results = [...base]
+
+  for (const item of incoming) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    results.push(item)
+  }
+
+  return results
 }
 
 function createAlbumSummary(album: AlbumFull): AlbumSummary {
@@ -208,23 +263,47 @@ async function buildSearchResponse(
   if (cached) return cached
 
   const client = await getYtMusic(trace)
-  const [songs, albums, artists] = await Promise.all([
-    trace
-      ? trace.time("yt-search:songs", async () => client.searchSongs(trimmed), { query: trimmed })
-      : client.searchSongs(trimmed),
-    trace
-      ? trace.time("yt-search:albums", async () => client.searchAlbums(trimmed), { query: trimmed })
-      : client.searchAlbums(trimmed),
-    trace
-      ? trace.time("yt-search:artists", async () => client.searchArtists(trimmed), { query: trimmed })
-      : client.searchArtists(trimmed),
-  ])
+  const rankedResults = trace
+    ? await trace.time("yt-search:ranked", async () => client.search(trimmed), { query: trimmed })
+    : await client.search(trimmed)
 
-  const allResults: MusicSearchResult[] = [
-    ...songs.map(createSongResult),
-    ...albums.map(createAlbumResult),
-    ...artists.map(createArtistResult),
-  ]
+  let allResults = appendUniqueResults(
+    [],
+    rankedResults
+      .map(createRankedSearchResult)
+      .filter((result): result is MusicSearchResult => result !== null)
+  )
+
+  const minimumResultsNeeded = currentPage * SEARCH_PAGE_SIZE
+  const shouldSupplementResults = harder || allResults.length < minimumResultsNeeded
+  if (shouldSupplementResults) {
+    const [songs, albums, artists] = await Promise.all([
+      trace
+        ? trace.time("yt-search:songs", async () => client.searchSongs(trimmed), { query: trimmed })
+        : client.searchSongs(trimmed),
+      trace
+        ? trace.time("yt-search:albums", async () => client.searchAlbums(trimmed), { query: trimmed })
+        : client.searchAlbums(trimmed),
+      trace
+        ? trace.time("yt-search:artists", async () => client.searchArtists(trimmed), { query: trimmed })
+        : client.searchArtists(trimmed),
+    ])
+
+    allResults = appendUniqueResults(allResults, [
+      ...songs.map(createSongResult),
+      ...albums.map(createAlbumResult),
+      ...artists.map(createArtistResult),
+    ])
+  }
+
+  trace?.log("yt-search:ranked-results", {
+    ranked: rankedResults.length,
+    usable: allResults.length,
+    songs: allResults.filter((result) => result.type === "song").length,
+    albums: allResults.filter((result) => result.type === "album").length,
+    artists: allResults.filter((result) => result.type === "artist").length,
+    supplemented: shouldSupplementResults,
+  })
 
   const response = {
     query: trimmed,
