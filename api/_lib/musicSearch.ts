@@ -128,29 +128,6 @@ function createSongResult(song: SongDetailed): MusicSongResult {
   }
 }
 
-function createVideoResult(video: Extract<SearchResult, { type: "VIDEO" }>): MusicSongResult {
-  const track: QueueTrack = {
-    trackId: createTrackId(video.videoId),
-    videoId: video.videoId,
-    albumTitle: "Video",
-    artist: video.artist.name,
-    title: video.name,
-    coverUrl: chooseThumbnail(video.thumbnails, ""),
-    duration: video.duration,
-  }
-
-  return {
-    type: "song",
-    id: `song:${video.videoId}`,
-    title: video.name,
-    artist: video.artist.name,
-    coverUrl: chooseThumbnail(video.thumbnails, ""),
-    albumTitle: "Video",
-    duration: video.duration,
-    track,
-  }
-}
-
 function createAlbumResult(album: AlbumDetailed | AlbumFull): MusicAlbumResult {
   const trackCount = "songs" in album ? album.songs.length : 0
   return {
@@ -181,8 +158,6 @@ function createRankedSearchResult(result: SearchResult): MusicSearchResult | nul
   switch (result.type) {
     case "SONG":
       return createSongResult(result)
-    case "VIDEO":
-      return createVideoResult(result)
     case "ALBUM":
       return createAlbumResult(result)
     case "ARTIST":
