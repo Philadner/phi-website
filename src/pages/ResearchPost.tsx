@@ -27,7 +27,7 @@ export default function ResearchPost() {
     <main id="main-site" className="research-page">
       <article className="research-shell research-shell--post">
         <Link to="/research" className="research-back">
-          &larr; Back to research home
+        <span>&lt;&lt;&lt;</span>Back to research home
         </Link>
 
         <header className="research-post-header">

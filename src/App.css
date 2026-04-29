@@ -324,6 +324,33 @@ body.loaded.body--music-lock {
   opacity: 1;
 }
 
+.site-header .topnav .topnav__add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.topnav__add-icon {
+  display: inline-block;
+  font-size: 1.35em;
+  font-weight: inherit;
+  line-height: inherit;
+  animation: topnav-add-spin 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes topnav-add-spin {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  60% {
+    transform: rotate(200deg) scale(1.15);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
 .site-header .menu-btn {
   background: transparent;
   border: none;
@@ -415,6 +442,11 @@ body.loaded.body--music-lock {
   }
   .titlebar-content {
     transition: none;
+  }
+  .site-header .topnav .topnav__add-button,
+  .topnav__add-icon {
+    transition: none;
+    animation: none;
   }
 }
 

@@ -19,8 +19,6 @@ import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
 import Toggle1998 from './pages/Toggle1998';
-import Research from './pages/Research';
-import ResearchPost from './pages/ResearchPost';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
@@ -310,20 +308,9 @@ useEffect(() => {
             </form>
           ) : (
             <nav className="topnav titlebar-content">
-              <Link to="/musicpl">Music Player</Link>
+              <Link to="/musicpl">Music</Link>
               <Link to="/quickl">Quick links</Link>
-              <Link to="/news">News</Link>
-              <Link to="/research">Research</Link>
-              <Link to="/add">Add</Link>
-              <button
-                className="mode-1998-btn"
-                type="button"
-                aria-pressed={mode1998}
-                onClick={toggleModeWithRefresh}
-                title="Toggle 1998 mode"
-              >
-                {modeToggleText}
-              </button>
+              <Link to="/add">➕</Link>
             </nav>
           )}
 
@@ -370,7 +357,6 @@ useEffect(() => {
           <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
           <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
-          <Link to="/research" onClick={() => setSideOpen(false)}>Research</Link>
           <div
             className="gameshow-banner"
             role="button"
@@ -403,7 +389,7 @@ useEffect(() => {
 
           {/* only visible on mobile test change */}
           <div className="sidebar-mobile-only">
-            <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music Player</Link>
+            <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music</Link>
             <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
             <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
             <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
@@ -435,8 +421,6 @@ useEffect(() => {
             <Route path="/workinhardorhardlyworkin" element={<Stats />} />
             <Route path="/wp-admin" element={<Wpadmin />} />
             <Route path="/news" element={<News />} />
-            <Route path="/research" element={<Research />} />
-            <Route path="/research/:slug" element={<ResearchPost />} />
             <Route path="/jay" element={<JayGame />} />
             <Route path="/musicpl/*" element={<MusicPLRouter />} />
             <Route path="/about-musicpl" element={<AboutMusicPL />} />
