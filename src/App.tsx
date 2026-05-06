@@ -19,6 +19,8 @@ import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
 import Toggle1998 from './pages/Toggle1998';
+import Presentation from './pages/Presentation';
+import Remote from './pages/Remote';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
@@ -146,6 +148,7 @@ function AppShell() {
   const [mode1998] = use1998Mode();
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
+  const isPresentationDemo = location.pathname === "/presentation" || location.pathname === "/remote";
   const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
   const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
@@ -266,7 +269,7 @@ useEffect(() => {
     <div className={loaded ? 'loaded page' : 'page'}>
       {!loaded && (mode1998 ? <RetroLoader /> : <ModernLoader />)}
 
-      <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""}`}>
+      {!isPresentationDemo && <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""}`}>
         <div className="site-header__inner">
           {isMusicMode ? (
             <div className="music-brand titlebar-content">
@@ -325,8 +328,8 @@ useEffect(() => {
             </button>
           </div>
         </div>
-      </header>
-      <div className="header-spacer" />
+      </header>}
+      {!isPresentationDemo && <div className="header-spacer" />}
 
 
       {/* Sidebar */}
@@ -422,6 +425,8 @@ useEffect(() => {
             <Route path="/wp-admin" element={<Wpadmin />} />
             <Route path="/news" element={<News />} />
             <Route path="/jay" element={<JayGame />} />
+            <Route path="/presentation" element={<Presentation />} />
+            <Route path="/remote" element={<Remote />} />
             <Route path="/musicpl/*" element={<MusicPLRouter />} />
             <Route path="/about-musicpl" element={<AboutMusicPL />} />
 

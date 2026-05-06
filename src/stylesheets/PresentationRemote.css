@@ -1,0 +1,228 @@
+.pairing-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 214, 102, 0.22), transparent 28rem),
+    linear-gradient(135deg, #111111 0%, #171c22 52%, #101010 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 4vw, 56px);
+}
+
+.pairing-stage {
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 72px);
+}
+
+.pairing-stage__copy {
+  display: grid;
+  gap: 24px;
+}
+
+.pairing-kicker {
+  color: #f6ca45;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.pairing-stage h1,
+.remote-shell h1 {
+  font-size: clamp(2.5rem, 8vw, 7.5rem);
+  line-height: 0.94;
+  margin: 0;
+  max-width: 820px;
+}
+
+.pairing-lede {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  max-width: 620px;
+  margin: 0;
+}
+
+.pairing-status-row,
+.pairing-signal {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.pairing-status-row--subtle {
+  color: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pairing-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #9ca3af;
+}
+
+.pairing-dot--live {
+  background: #55e17a;
+  box-shadow: 0 0 22px rgba(85, 225, 122, 0.65);
+}
+
+.pairing-signal {
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: min(320px, 100%);
+}
+
+.pairing-signal span,
+.remote-readout span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.9rem;
+}
+
+.pairing-signal strong {
+  font-size: 1.8rem;
+  text-transform: capitalize;
+}
+
+.pairing-counter {
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  color: #111111;
+  background: #f6ca45;
+  border-radius: 8px;
+  font-size: 3rem;
+  font-weight: 900;
+  box-shadow: 0 18px 50px rgba(246, 202, 69, 0.25);
+}
+
+.pairing-qr-panel {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.pairing-qr-panel img {
+  width: min(320px, 72vw);
+  aspect-ratio: 1;
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.pairing-qr-panel p {
+  max-width: 360px;
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.pairing-qr-panel span {
+  color: #f6ca45;
+  font-weight: 800;
+}
+
+.pairing-screen--remote {
+  align-items: stretch;
+  padding: 18px;
+}
+
+.remote-shell {
+  width: min(520px, 100%);
+  margin: auto;
+  display: grid;
+  gap: 24px;
+}
+
+.remote-shell h1 {
+  font-size: clamp(2.4rem, 18vw, 5rem);
+}
+
+.remote-form {
+  display: grid;
+  gap: 12px;
+}
+
+.remote-form label {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+}
+
+.remote-form input {
+  width: 100%;
+  min-height: 56px;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 1.2rem;
+}
+
+.remote-form button,
+.remote-controls button {
+  min-height: 58px;
+  color: #111111;
+  background: #f6ca45;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.remote-form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.remote-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.remote-controls button {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.remote-controls__primary {
+  background: #f6ca45 !important;
+  color: #111111 !important;
+}
+
+.remote-readout {
+  display: grid;
+  gap: 8px;
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+@media (max-width: 820px) {
+  .pairing-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .pairing-stage__copy {
+    gap: 18px;
+  }
+}
