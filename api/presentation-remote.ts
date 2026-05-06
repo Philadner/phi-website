@@ -4,7 +4,7 @@ import {
   readRoomState,
   writeRoomState,
   type RemoteCommandType,
-} from "./_lib/presentationRemote"
+} from "./_lib/presentationRemote.js"
 
 const PASSWORD = "a"
 
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const body = (req.body || {}) as {
     action?: string
     password?: string
-    command?: RemoteCommand["type"]
+    command?: RemoteCommandType
   }
 
   if (body.password !== PASSWORD) {
