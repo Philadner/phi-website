@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import type { CSSProperties } from "react"
 import { createClient } from "@supabase/supabase-js"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faQrcode } from "@fortawesome/free-solid-svg-icons"
 import "../stylesheets/PresentationRemote.css"
 
 type RoomState = {
@@ -23,6 +26,16 @@ type PresentationRoomRow = {
   command_type: "next" | "previous" | "ping" | null
   command_at: string | null
 }
+
+type DeckStep = 0 | 1 | 2 | 3 | 4
+
+const aiIntroText = "You've all probably used ai before."
+const aiHelpItems = [
+  "Find out about _____",
+  "Do my maths homework",
+  "Make this picture",
+]
+const dadSiteImageUrl = "https://cdn.phi.me.uk/pictures/DadSite.png"
 
 function createRoomId() {
   const bytes = new Uint8Array(4)
@@ -64,13 +77,34 @@ function stateFromRow(row: PresentationRoomRow): RoomState {
   }
 }
 
+function AnimatedLetters({ text, className = "" }: { text: string; className?: string }) {
+  return (
+    <span className={`presentation-letter-line ${className}`} aria-label={text}>
+      {Array.from(text).map((letter, index) => (
+        <span
+          key={`${letter}-${index}`}
+          className="presentation-letter"
+          style={{ "--letter-index": index } as CSSProperties}
+          aria-hidden="true"
+        >
+          {letter === " " ? "\u00a0" : letter}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 export default function Presentation() {
   const [room] = useState(getRoomId)
   const [state, setState] = useState<RoomState | null>(null)
-  const [signalCount, setSignalCount] = useState(0)
-  const [lastSignal, setLastSignal] = useState("Waiting for remote")
   const [connectionMode, setConnectionMode] = useState("Connecting")
+  const [qrPanelOpen, setQrPanelOpen] = useState(false)
+  const [deckStep, setDeckStep] = useState<DeckStep>(0)
+  const [slideOneExiting, setSlideOneExiting] = useState(false)
   const lastCommandIdRef = useRef<string | null>(null)
+  const deckStepRef = useRef<DeckStep>(0)
+  const slideOneExitingRef = useRef(false)
+  const slideOneExitTimerRef = useRef<number | null>(null)
 
   const remoteUrl = useMemo(() => {
     return `${window.location.origin}/remote?room=${encodeURIComponent(room)}`
@@ -81,13 +115,61 @@ export default function Presentation() {
     return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=16&data=${encoded}`
   }, [remoteUrl])
 
+  function advanceDeck() {
+    if (slideOneExitingRef.current) return
+
+    if (deckStepRef.current === 0) {
+      slideOneExitingRef.current = true
+      setSlideOneExiting(true)
+      slideOneExitTimerRef.current = window.setTimeout(() => {
+        deckStepRef.current = 1
+        setDeckStep(1)
+        slideOneExitingRef.current = false
+        setSlideOneExiting(false)
+      }, 680)
+      return
+    }
+
+    if (deckStepRef.current < 4) {
+      const nextStep = (deckStepRef.current + 1) as DeckStep
+      deckStepRef.current = nextStep
+      setDeckStep(nextStep)
+    }
+  }
+
+  function retreatDeck() {
+    if (slideOneExitTimerRef.current !== null) {
+      window.clearTimeout(slideOneExitTimerRef.current)
+      slideOneExitTimerRef.current = null
+    }
+
+    slideOneExitingRef.current = false
+    setSlideOneExiting(false)
+
+    if (deckStepRef.current > 0) {
+      const previousStep = (deckStepRef.current - 1) as DeckStep
+      deckStepRef.current = previousStep
+      setDeckStep(previousStep)
+    }
+  }
+
+  function handleRemoteCommand(command: RoomState["command"]) {
+    if (!command || command.type === "ping") return
+    if (command.type === "next") advanceDeck()
+    if (command.type === "previous") retreatDeck()
+  }
+
   function applyState(nextState: RoomState) {
     setState(nextState)
-    if (nextState.command && nextState.command.id !== lastCommandIdRef.current) {
+    if (!nextState.command || nextState.command.id === lastCommandIdRef.current) return
+
+    if (lastCommandIdRef.current === null) {
       lastCommandIdRef.current = nextState.command.id
-      setSignalCount((count) => count + 1)
-      setLastSignal(nextState.command.type)
+      return
     }
+
+    lastCommandIdRef.current = nextState.command.id
+    handleRemoteCommand(nextState.command)
   }
 
   useEffect(() => {
@@ -105,9 +187,7 @@ export default function Presentation() {
 
         applyState(nextState)
       } catch {
-        if (!cancelled) {
-          setLastSignal("Connection check failed")
-        }
+        // Keep the realtime listener as the main path; polling is only a quiet fallback.
       }
     }
 
@@ -155,44 +235,124 @@ export default function Presentation() {
     }
   }, [room])
 
+  useEffect(() => {
+    return () => {
+      if (slideOneExitTimerRef.current !== null) {
+        window.clearTimeout(slideOneExitTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight" || event.key === " ") {
+        event.preventDefault()
+        advanceDeck()
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault()
+        retreatDeck()
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+
   const isPaired = Boolean(state?.pairedAt)
+  const isRealtimeLive = connectionMode === "Realtime live"
+  const remoteStatus = isPaired && isRealtimeLive ? "live" : isPaired ? "fallback" : "offline"
+  const remoteStatusLabel =
+    remoteStatus === "live"
+      ? "Remote paired and realtime live"
+      : remoteStatus === "fallback"
+        ? "Remote paired on polling fallback"
+        : "No remote connected"
 
   return (
     <main className="pairing-screen pairing-screen--presentation">
-      <section className="pairing-stage" aria-labelledby="presentation-demo-title">
-        <div className="pairing-stage__copy">
-          <p className="pairing-kicker">Phone remote demo</p>
-          <h1 id="presentation-demo-title">Presentation link test</h1>
-          <p className="pairing-lede">
-            Scan the code, enter the super secret password, then press a control on your phone.
-          </p>
-
-          <div className="pairing-status-row" aria-live="polite">
-            <span className={isPaired ? "pairing-dot pairing-dot--live" : "pairing-dot"} />
-            <span>{isPaired ? "Remote paired" : "Waiting for phone"}</span>
-          </div>
-
-          <div className="pairing-status-row pairing-status-row--subtle" aria-live="polite">
-            <span className={connectionMode === "Realtime live" ? "pairing-dot pairing-dot--live" : "pairing-dot"} />
-            <span>{connectionMode}</span>
-          </div>
-
-          <div className="pairing-signal">
-            <span>Last signal</span>
-            <strong>{lastSignal}</strong>
-          </div>
-
-          <div className="pairing-counter" aria-label="Signals received">
-            {signalCount}
-          </div>
+      <header className="presentation-topbar">
+        <div className="presentation-brand" aria-label="phi">
+          <svg className="presentation-phi-mark" viewBox="-10 -10 104 116" aria-hidden="true">
+            <path d="M47.4691 94.8742V67.8693L47.9534 67.8537C52.3122 67.7166 56.6259 66.839 60.8958 65.2189V65.2199C64.8929 63.6903 68.4645 61.5771 71.6146 58.882L72.2396 58.3351L72.2454 58.3302C75.575 55.4373 78.2558 51.7818 80.2845 47.3546V47.3537C82.3061 42.928 83.3226 37.9032 83.3226 32.2697C83.3226 26.9517 82.5356 22.4635 80.9818 18.7882L80.6615 18.0636L80.6605 18.0627C79.0043 14.4679 76.8897 11.4427 74.3197 8.97964L73.7991 8.49429L73.7943 8.48941C71.3117 6.17323 68.5439 4.39348 65.4896 3.14664L64.8743 2.90445L64.8724 2.90347C61.5635 1.6319 58.291 0.999176 55.0521 0.999176C53.2704 0.999176 51.3345 1.22294 49.2425 1.67398L48.3363 1.88101L48.3333 1.88199L47.8841 1.99234C45.8085 2.52369 44.0577 3.2689 42.6224 4.22086L42.3197 4.42886H42.3187C40.5189 5.69142 39.0689 7.28919 37.9661 9.22574H37.9652C36.8915 11.1217 36.3441 13.4147 36.3441 16.1242V63.8459L35.8304 63.8322C29.1364 63.6535 23.7544 61.0487 19.7269 56.0246L19.3411 55.5314V55.5304C15.2859 50.1848 13.2816 43.2011 13.2816 34.6242C13.2816 26.5123 14.5431 20.091 17.1136 15.4044C19.6172 10.8398 23.2947 7.648 28.1283 5.84195L27.3236 1.50894C18.4518 3.72283 11.836 7.6445 7.42415 13.2462H7.42317C2.93466 18.9632 0.677078 26.0783 0.677078 34.6242C0.677079 44.2236 3.85313 52.0186 10.1888 58.0539C16.5273 64.0918 25.0701 67.3717 35.8665 67.8537L36.3441 67.8752V94.8742H47.4691ZM47.4691 13.1447C47.4691 10.8408 48.1377 8.9429 49.5091 7.50113L49.7923 7.2189C51.3473 5.75275 53.2424 5.01976 55.4476 5.01968C59.9233 5.01968 63.5868 7.49382 66.4398 12.2628L66.4388 12.2638C69.3084 17.0377 70.7191 23.5482 70.7191 31.7492C70.7191 40.5992 68.9526 47.9197 65.3841 53.6779L65.0335 54.2306C61.218 60.0959 55.5202 63.2933 48.0042 63.8312L47.4691 63.8693V13.1447Z" />
+          </svg>
         </div>
 
-        <div className="pairing-qr-panel">
+        <div className="presentation-controls">
+          <span
+            className={`presentation-status-dot presentation-status-dot--${remoteStatus}`}
+            aria-label={remoteStatusLabel}
+            title={remoteStatusLabel}
+          />
+          <button
+            className={`presentation-icon-button ${qrPanelOpen ? "presentation-icon-button--active" : ""}`}
+            type="button"
+            aria-label={qrPanelOpen ? "Hide phone pairing QR code" : "Show phone pairing QR code"}
+            aria-pressed={qrPanelOpen}
+            onClick={() => setQrPanelOpen((open) => !open)}
+            title={qrPanelOpen ? "Hide QR code" : "Show QR code"}
+          >
+            <FontAwesomeIcon icon={faQrcode} />
+          </button>
+        </div>
+      </header>
+
+      <section className="presentation-slide-stage" aria-live="polite">
+        {deckStep === 0 && (
+          <section className={`presentation-slide presentation-slide--hello ${slideOneExiting ? "presentation-slide--hello-exit" : ""}`} aria-label="Hello">
+            <h1>Hello</h1>
+          </section>
+        )}
+
+        {(deckStep === 1 || deckStep === 2) && (
+          <section className="presentation-slide presentation-slide--ai" aria-label="AI introduction">
+            <h1>
+              <AnimatedLetters text={aiIntroText} />
+            </h1>
+
+            {deckStep >= 2 && (
+              <div className="presentation-ai-help">
+                <h2>Ai helps you:</h2>
+                <ul>
+                  {aiHelpItems.map((item, itemIndex) => (
+                    <li key={item} style={{ "--item-index": itemIndex } as CSSProperties}>
+                      <AnimatedLetters text={item} className="presentation-ai-help__text" />
+                      <span className="presentation-ai-check" aria-hidden="true">✓</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
+        {deckStep === 3 && (
+          <section className="presentation-slide presentation-slide--programming" aria-label="AI changed programming">
+            <h1>
+              <span>But it's also completely</span>
+              <span className="presentation-programming-emphasis">changed programming.</span>
+            </h1>
+          </section>
+        )}
+
+        {deckStep === 4 && (
+          <section className="presentation-slide presentation-slide--dad-site" aria-label="My dad built a website">
+            <h1>My DAD built a website.</h1>
+            <img src={dadSiteImageUrl} alt="Screenshot of Dad's website" />
+            <p>This would usually take a small team of devs</p>
+          </section>
+        )}
+      </section>
+
+      <aside className={`presentation-qr-drawer ${qrPanelOpen ? "presentation-qr-drawer--open" : ""}`} aria-hidden={!qrPanelOpen}>
+        <div className="presentation-qr-panel">
+          <p className="pairing-kicker">Phone pairing</p>
           <img src={qrUrl} alt="QR code for phone remote" />
           <p>{remoteUrl}</p>
           <span>Room {room}</span>
         </div>
-      </section>
+      </aside>
     </main>
   )
 }
