@@ -12,6 +12,7 @@ export type RoomState = {
   pairedAt: string | null
   lastRemoteSeenAt: string | null
   command: RemoteCommand | null
+  slideIndex: number
 }
 
 type PresentationRoomRow = {
@@ -46,6 +47,7 @@ function createState(room: string): RoomState {
     pairedAt: null,
     lastRemoteSeenAt: null,
     command: null,
+    slideIndex: 0,
   }
 }
 
@@ -62,6 +64,10 @@ function rowFromState(state: RoomState): PresentationRoomRow {
 }
 
 function stateFromRow(row: PresentationRoomRow): RoomState {
+  const slideIndex = row.command_id?.startsWith("slide:")
+    ? Number(row.command_id.split(":")[1])
+    : 0
+
   return {
     room: row.room,
     createdAt: row.created_at,
@@ -75,6 +81,7 @@ function stateFromRow(row: PresentationRoomRow): RoomState {
             at: row.command_at,
           }
         : null,
+    slideIndex: Number.isFinite(slideIndex) ? slideIndex : 0,
   }
 }
 
@@ -155,6 +162,14 @@ export function createCommand(type: RemoteCommandType): RemoteCommand {
   return {
     id: crypto.randomUUID(),
     type,
+    at: new Date().toISOString(),
+  }
+}
+
+export function createSlideSyncCommand(slideIndex: number): RemoteCommand {
+  return {
+    id: `slide:${Math.max(0, Math.floor(slideIndex))}:${crypto.randomUUID()}`,
+    type: "ping",
     at: new Date().toISOString(),
   }
 }

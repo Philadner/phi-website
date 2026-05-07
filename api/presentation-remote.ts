@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import {
   createCommand,
+  createSlideSyncCommand,
   readRoomState,
   writeRoomState,
   type RemoteCommandType,
@@ -33,14 +34,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     action?: string
     password?: string
     command?: RemoteCommandType
+    slideIndex?: number
+  }
+
+  const state = await readRoomState(room)
+  const now = new Date().toISOString()
+
+  if (body.action === "slide") {
+    if (typeof body.slideIndex !== "number" || !Number.isFinite(body.slideIndex)) {
+      return res.status(400).json({ error: "Invalid slide index" })
+    }
+
+    state.command = createSlideSyncCommand(body.slideIndex)
+    return res.status(200).json(await writeRoomState(state))
   }
 
   if (body.password !== PASSWORD) {
     return res.status(401).json({ error: "Wrong password" })
   }
-
-  const state = await readRoomState(room)
-  const now = new Date().toISOString()
 
   if (body.action === "pair") {
     state.pairedAt = state.pairedAt || now

@@ -10,6 +10,7 @@ type RoomState = {
   createdAt: string
   pairedAt: string | null
   lastRemoteSeenAt: string | null
+  slideIndex: number
   command: {
     id: string
     type: "next" | "previous" | "ping"
@@ -27,15 +28,16 @@ type PresentationRoomRow = {
   command_at: string | null
 }
 
-type DeckStep = 0 | 1 | 2 | 3 | 4
+type DeckStep = number
 
 const aiIntroText = "You've all probably used ai before."
 const aiHelpItems = [
-  "Find out about _____",
-  "Do my maths homework",
-  "Make this picture",
+  "Look things up",
+  "Do your sparx",
+  "Make pictures",
 ]
 const dadSiteImageUrl = "https://cdn.phi.me.uk/pictures/DadSite.png"
+const claudeLogoUrl = "https://cdn.worldvectorlogo.com/logos/anthropic-1.svg"
 
 function createRoomId() {
   const bytes = new Uint8Array(4)
@@ -61,11 +63,16 @@ function cleanEnv(value: string | undefined) {
 }
 
 function stateFromRow(row: PresentationRoomRow): RoomState {
+  const slideIndex = row.command_id?.startsWith("slide:")
+    ? Number(row.command_id.split(":")[1])
+    : 0
+
   return {
     room: row.room,
     createdAt: row.created_at,
     pairedAt: row.paired_at,
     lastRemoteSeenAt: row.last_remote_seen_at,
+    slideIndex: Number.isFinite(slideIndex) ? slideIndex : 0,
     command:
       row.command_id && row.command_type && row.command_at
         ? {
@@ -87,7 +94,7 @@ function AnimatedLetters({ text, className = "" }: { text: string; className?: s
           style={{ "--letter-index": index } as CSSProperties}
           aria-hidden="true"
         >
-          {letter === " " ? "\u00a0" : letter}
+          {letter === " " ? " " : letter}
         </span>
       ))}
     </span>
@@ -130,7 +137,7 @@ export default function Presentation() {
       return
     }
 
-    if (deckStepRef.current < 4) {
+    if (deckStepRef.current < 27) {
       const nextStep = (deckStepRef.current + 1) as DeckStep
       deckStepRef.current = nextStep
       setDeckStep(nextStep)
@@ -244,6 +251,18 @@ export default function Presentation() {
   }, [])
 
   useEffect(() => {
+    void fetch(`/api/presentation-remote?room=${encodeURIComponent(room)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "slide", slideIndex: deckStep }),
+    }).catch(() => {
+      // Slide sync is for the remote notes only; presentation controls still work without it.
+    })
+  }, [deckStep, room])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight" || event.key === " ") {
         event.preventDefault()
@@ -341,6 +360,126 @@ export default function Presentation() {
             <h1>My DAD built a website.</h1>
             <img src={dadSiteImageUrl} alt="Screenshot of Dad's website" />
             <p>This would usually take a small team of devs</p>
+          </section>
+        )}
+
+        {(deckStep === 5 || deckStep === 6 || deckStep === 7) && (
+          <section className="presentation-slide presentation-slide--developers" aria-label="Is AI bad for developers">
+            <h1>
+              <span>Is this bad for developers?</span>
+              {deckStep >= 6 && <span className="presentation-gold presentation-inline-reveal">Not really.</span>}
+            </h1>
+
+            {deckStep >= 7 && (
+              <p>
+                Devs have been able to work <span className="presentation-gold">55%</span> faster.
+              </p>
+            )}
+          </section>
+        )}
+
+        {deckStep === 8 && (
+          <section className="presentation-slide presentation-slide--question" aria-label="Is it all sunshine and rainbows">
+            <h1>So is it all sunshine and rainbows?</h1>
+          </section>
+        )}
+
+        {(deckStep === 9 || deckStep === 10) && (
+          <section className="presentation-slide presentation-slide--no" aria-label="No">
+            <h1>No :(</h1>
+            {deckStep >= 10 && <p>There's quite a few problems.</p>}
+          </section>
+        )}
+
+        {(deckStep === 11 || deckStep === 12) && (
+          <section className="presentation-slide presentation-slide--dad-security" aria-label="Back to my dad">
+            <p className="presentation-corner-title">Back to my dad:</p>
+            <h1>His website looked great and it worked</h1>
+            {deckStep >= 12 && (
+              <h2>
+                But was it <span className="presentation-gold">secure?</span>
+              </h2>
+            )}
+          </section>
+        )}
+
+        {deckStep === 13 && (
+          <section className="presentation-slide presentation-slide--plain-no" aria-label="No">
+            <h1>No.</h1>
+          </section>
+        )}
+
+        {deckStep === 14 && (
+          <section className="presentation-slide presentation-slide--claude" aria-label="My dad built it with Claude">
+            <h1>My dad built it all with an ai called Claude.</h1>
+            <img src={claudeLogoUrl} alt="Claude logo" />
+          </section>
+        )}
+
+        {deckStep === 15 && (
+          <section className="presentation-slide presentation-slide--claude-mistakes" aria-label="Claude made major mistakes">
+            <h1>
+              Now Claude had made <span>2</span> <span className="presentation-red">major</span> mistakes
+            </h1>
+          </section>
+        )}
+
+        {deckStep === 16 && (
+          <section className="presentation-slide presentation-slide--mistake" aria-label="Users could mark jobs as paid">
+            <h1>
+              Users could mark their own jobs as paid for <span className="presentation-red">without paying</span>
+            </h1>
+          </section>
+        )}
+
+        {(deckStep === 17 || deckStep === 18) && (
+          <section className="presentation-slide presentation-slide--mistake presentation-slide--mistake-long" aria-label="No password attempt limit">
+            <h1>
+              And there was no limit to how many passwords you can try,
+            </h1>
+
+            {deckStep >= 18 && (
+              <p>
+                So you could brute force to <span className="presentation-red">get into accounts</span>
+              </p>
+            )}
+          </section>
+        )}
+
+        {(deckStep === 19 || deckStep === 20 || deckStep === 21) && (
+          <section className="presentation-slide presentation-slide--issue-two" aria-label="Issue two">
+            <p className="presentation-corner-title">Issue #2:</p>
+            {deckStep >= 20 && <h1>Programmers don't know what their code does anymore.</h1>}
+            {deckStep >= 21 && <h2>They don't even bother to read it</h2>}
+          </section>
+        )}
+
+        {(deckStep === 22 || deckStep === 23) && (
+          <section className="presentation-slide presentation-slide--trust-stat" aria-label="Developers do not fully trust AI code">
+            <h1>96% of developers don't fully trust ai code</h1>
+            {deckStep >= 23 && (
+              <p>
+                but <span className="presentation-underlined">only 48%</span> check the code before using it
+              </p>
+            )}
+          </section>
+        )}
+
+        {(deckStep === 24 || deckStep === 25 || deckStep === 26) && (
+          <section className="presentation-slide presentation-slide--confession" aria-label="This presentation was programmed with Codex">
+            <h1>And yes, i'm guilty of this too.</h1>
+            {deckStep >= 25 && (
+              <p>
+                This presentation was programmed with chatgpt codex <span>(don't worry i still wrote all the text)</span>
+              </p>
+            )}
+            {deckStep >= 26 && <h2>I have no idea how it works</h2>}
+          </section>
+        )}
+
+        {deckStep >= 27 && (
+          <section className="presentation-slide presentation-slide--the-end" aria-label="The End">
+            <h1>The End</h1>
           </section>
         )}
       </section>
