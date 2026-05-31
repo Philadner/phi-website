@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/dylan-tightness-cron",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]
