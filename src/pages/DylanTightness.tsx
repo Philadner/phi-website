@@ -151,32 +151,45 @@ function DylanTightness() {
   }, [])
 
   const loadStatus = useCallback(async () => {
+    const requestedAt = new Date()
+    setNow(requestedAt)
     setRefreshing(true)
     try {
-      const response = await fetch('/api/dylan-tightness')
+      const response = await fetch(`/api/dylan-tightness?refresh=${requestedAt.getTime()}`, {
+        cache: 'no-store',
+      })
       const payload = (await response.json()) as DylanApiPayload
       setApiPayload(payload)
-      setLastUpdatedAt(parseApiDate(payload.now) || new Date())
+      const updatedAt = parseApiDate(payload.now) || new Date()
+      setLastUpdatedAt(updatedAt)
+      setNow(new Date())
     } catch {
       setApiPayload(null)
-      setLastUpdatedAt(new Date())
+      const failedAt = new Date()
+      setLastUpdatedAt(failedAt)
+      setNow(failedAt)
     } finally {
       setRefreshing(false)
     }
   }, [])
 
+  const refreshStatus = useCallback(async () => {
+    await markPresence()
+    await loadStatus()
+  }, [loadStatus, markPresence])
+
   useEffect(() => {
     void markPresence()
-    void loadStatus()
+    void refreshStatus()
 
     const presenceTimer = window.setInterval(() => void markPresence(), 60_000)
-    const statusTimer = window.setInterval(() => void loadStatus(), 60_000)
+    const statusTimer = window.setInterval(() => void refreshStatus(), 60_000)
 
     return () => {
       window.clearInterval(presenceTimer)
       window.clearInterval(statusTimer)
     }
-  }, [loadStatus, markPresence])
+  }, [markPresence, refreshStatus])
 
   const trackers = useMemo<LiveTracker[]>(
     () =>
@@ -257,7 +270,7 @@ function DylanTightness() {
           </div>
           <div className="dylan-panel-actions">
             <span className="dylan-updated">Updated {formatRelativeDuration(lastUpdatedAt, now)}</span>
-            <button className="dylan-refresh" disabled={refreshing} onClick={() => void loadStatus()} type="button">
+            <button className="dylan-refresh" disabled={refreshing} onClick={() => void refreshStatus()} type="button">
               {refreshing ? 'Refreshing' : 'Refresh'}
             </button>
             <span className="dylan-live-pill">
