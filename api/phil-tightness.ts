@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createDylanTightnessPayload } from "./_lib/dylanTightness"
+import { createPhilTightnessPayload } from "./_lib/philTightness"
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
-    const payload = await createDylanTightnessPayload()
+    const payload = await createPhilTightnessPayload()
     res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=120")
     return res.status(200).json(payload)
   } catch (error) {
@@ -12,8 +12,8 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       configured: false,
       source: "demo",
       now: new Date().toISOString(),
-      error: error instanceof Error ? error.message : "Dylan tightness lookup failed",
-      lastSeen: { online: null, game: null, apex: null, elden: null },
+      error: error instanceof Error ? error.message : "Phil tightness lookup failed",
+      lastSeen: { online: null, game: null, nubby: null, spicy: null, celeste: null },
       history: [],
     })
   }

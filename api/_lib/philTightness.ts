@@ -4,30 +4,30 @@ type SteamPlayer = {
   personastate?: number
   gameid?: string
   gameextrainfo?: string
-  lastlogoff?: number
   avatarfull?: string
 }
 
-type DylanSampleRow = {
+type PhilSampleRow = {
   recorded_at: string
   steam_id: string
   persona_state: number
   game_id: string | null
   game_name: string | null
-  is_game: boolean
   is_online: boolean
-  is_apex: boolean
-  is_elden: boolean
+  is_game: boolean
+  is_nubby: boolean
+  is_spicy: boolean
+  is_celeste: boolean
   tightness: number
 }
 
-type DylanMetaRow = {
+type PhilMetaRow = {
   key: string
   value: string
   updated_at: string
 }
 
-type DylanSteamStatus =
+type PhilSteamStatus =
   | {
       configured: false
       setup: string
@@ -38,17 +38,18 @@ type DylanSteamStatus =
       state: ReturnType<typeof statusFor>
     }
 
-export type DylanTightnessSample = {
+export type PhilTightnessSample = {
   at: string
   tightness: number
   online: boolean
-    apex: boolean
-    elden: boolean
-    game: boolean
-    gameName: string | null
+  game: boolean
+  nubby: boolean
+  spicy: boolean
+  celeste: boolean
+  gameName: string | null
 }
 
-export type DylanTightnessPayload = {
+export type PhilTightnessPayload = {
   ok: boolean
   configured: boolean
   now: string
@@ -60,9 +61,10 @@ export type DylanTightnessPayload = {
     name: string | null
     avatarUrl: string | null
     online: boolean
-    apex: boolean
-    elden: boolean
     game: boolean
+    nubby: boolean
+    spicy: boolean
+    celeste: boolean
     gameId: string | null
     gameName: string | null
     tightness: number
@@ -71,18 +73,23 @@ export type DylanTightnessPayload = {
   lastSeen: {
     online: string | null
     game: string | null
-    apex: string | null
-    elden: string | null
+    nubby: string | null
+    spicy: string | null
+    celeste: string | null
   }
-  history: DylanTightnessSample[]
+  history: PhilTightnessSample[]
 }
 
 const APEX_APP_ID = "1172470"
-const ELDEN_RING_APP_ID = "1245620"
+const NUBBY_APP_ID = "3191030"
+const HASTE_APP_ID = "1796470"
+const TYRONE_APP_ID = "1853200"
+const CELESTE_APP_ID = "504230"
+const SPICY_APP_IDS = new Set([HASTE_APP_ID, APEX_APP_ID, TYRONE_APP_ID])
 const HISTORY_HOURS = 24
 const ACTIVE_VIEWER_WINDOW_MS = 5 * 60 * 1000
-const localSamples: DylanSampleRow[] = []
-const localMeta = new Map<string, DylanMetaRow>()
+const localSamples: PhilSampleRow[] = []
+const localMeta = new Map<string, PhilMetaRow>()
 
 function cleanEnv(value: string | undefined) {
   const cleaned = value?.trim()
@@ -95,11 +102,11 @@ function steamKey() {
 }
 
 function configuredSteamId() {
-  return cleanEnv(process.env.DYLAN_STEAM_ID) || cleanEnv(process.env.STEAM_DYLAN_ID)
+  return cleanEnv(process.env.PHIL_STEAM_ID) || cleanEnv(process.env.STEAM_PHIL_ID)
 }
 
 function configuredSteamVanity() {
-  return cleanEnv(process.env.DYLAN_STEAM_VANITY) || cleanEnv(process.env.STEAM_DYLAN_VANITY)
+  return cleanEnv(process.env.PHIL_STEAM_VANITY) || cleanEnv(process.env.STEAM_PHIL_VANITY) || "Philander82"
 }
 
 function supabaseConfig() {
@@ -112,39 +119,44 @@ function supabaseConfig() {
 function statusFor(player: SteamPlayer) {
   const gameId = player.gameid || null
   const game = Boolean(gameId)
-  const online = (player.personastate ?? 0) > 0 || Boolean(gameId)
-  const apex = gameId === APEX_APP_ID
-  const elden = gameId === ELDEN_RING_APP_ID
+  const online = (player.personastate ?? 0) > 0 || game
+  const nubby = gameId === NUBBY_APP_ID
+  const spicy = gameId ? SPICY_APP_IDS.has(gameId) : false
+  const celeste = gameId === CELESTE_APP_ID
 
-  if (elden) return { online, game, apex, elden, tightness: 96, statusLabel: "really really tight" }
-  if (apex) return { online, game, apex, elden, tightness: 72, statusLabel: "tighter" }
-  if (game) return { online, game, apex, elden, tightness: 55, statusLabel: "playing a game" }
-  if (online) return { online, game, apex, elden, tightness: 38, statusLabel: "slightly tight" }
-  return { online, game, apex, elden, tightness: 8, statusLabel: "hella loose" }
+  if (celeste) return { online, game, nubby, spicy, celeste, tightness: 98, statusLabel: "maximum tightness" }
+  if (spicy) return { online, game, nubby, spicy, celeste, tightness: 84, statusLabel: "highly tight" }
+  if (nubby) return { online, game, nubby, spicy, celeste, tightness: 70, statusLabel: "number factory tight" }
+  if (game) return { online, game, nubby, spicy, celeste, tightness: 55, statusLabel: "playing any game" }
+  if (online) return { online, game, nubby, spicy, celeste, tightness: 38, statusLabel: "online" }
+  return { online, game, nubby, spicy, celeste, tightness: 8, statusLabel: "hella loose" }
 }
 
-function sampleFromRow(row: DylanSampleRow): DylanTightnessSample {
+function sampleFromRow(row: PhilSampleRow): PhilTightnessSample {
   return {
     at: row.recorded_at,
     tightness: row.tightness,
     online: row.is_online,
     game: row.is_game,
-    apex: row.is_apex,
-    elden: row.is_elden,
+    nubby: row.is_nubby,
+    spicy: row.is_spicy,
+    celeste: row.is_celeste,
     gameName: row.game_name,
   }
 }
 
-function currentFromRow(row: DylanSampleRow) {
-  const statusLabel = row.is_elden
-    ? "really really tight"
-    : row.is_apex
-      ? "tighter"
-      : row.is_game
-        ? "playing a game"
-      : row.is_online
-        ? "slightly tight"
-        : "hella loose"
+function currentFromRow(row: PhilSampleRow) {
+  const statusLabel = row.is_celeste
+    ? "maximum tightness"
+    : row.is_spicy
+      ? "highly tight"
+      : row.is_nubby
+        ? "number factory tight"
+        : row.is_game
+          ? "playing any game"
+          : row.is_online
+            ? "online"
+            : "hella loose"
 
   return {
     steamId: row.steam_id,
@@ -152,8 +164,9 @@ function currentFromRow(row: DylanSampleRow) {
     avatarUrl: null,
     online: row.is_online,
     game: row.is_game,
-    apex: row.is_apex,
-    elden: row.is_elden,
+    nubby: row.is_nubby,
+    spicy: row.is_spicy,
+    celeste: row.is_celeste,
     gameId: row.game_id,
     gameName: row.game_name,
     tightness: row.tightness,
@@ -161,17 +174,18 @@ function currentFromRow(row: DylanSampleRow) {
   }
 }
 
-function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>): DylanSampleRow {
+function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>): PhilSampleRow {
   return {
     recorded_at: new Date().toISOString(),
     steam_id: player.steamid,
     persona_state: player.personastate ?? 0,
     game_id: player.gameid || null,
     game_name: player.gameextrainfo || null,
-    is_game: state.game,
     is_online: state.online,
-    is_apex: state.apex,
-    is_elden: state.elden,
+    is_game: state.game,
+    is_nubby: state.nubby,
+    is_spicy: state.spicy,
+    is_celeste: state.celeste,
     tightness: state.tightness,
   }
 }
@@ -197,14 +211,11 @@ async function resolveSteamId() {
     `https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=${encodeURIComponent(key)}&vanityurl=${encodeURIComponent(vanity)}`
   )
 
-  if (payload.response?.success === 1 && payload.response.steamid) {
-    return payload.response.steamid
-  }
-
+  if (payload.response?.success === 1 && payload.response.steamid) return payload.response.steamid
   throw new Error(payload.response?.message || "Steam vanity URL could not be resolved")
 }
 
-export async function fetchDylanSteamStatus(): Promise<DylanSteamStatus> {
+export async function fetchPhilSteamStatus(): Promise<PhilSteamStatus> {
   const key = steamKey()
   if (!key) throw new Error("Missing STEAM_API_KEY")
 
@@ -212,7 +223,7 @@ export async function fetchDylanSteamStatus(): Promise<DylanSteamStatus> {
   if (!steamId) {
     return {
       configured: false,
-      setup: "Add DYLAN_STEAM_ID or DYLAN_STEAM_VANITY to Vercel production env vars.",
+      setup: "Add PHIL_STEAM_ID or PHIL_STEAM_VANITY to Vercel production env vars.",
     }
   }
 
@@ -220,7 +231,7 @@ export async function fetchDylanSteamStatus(): Promise<DylanSteamStatus> {
     `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${encodeURIComponent(key)}&steamids=${encodeURIComponent(steamId)}`
   )
   const player = payload.response?.players?.[0]
-  if (!player) throw new Error("Steam returned no player for Dylan")
+  if (!player) throw new Error("Steam returned no player for Phil")
 
   return {
     configured: true,
@@ -252,13 +263,13 @@ async function supabaseRequest<T>(path: string, init?: RequestInit) {
   return (await response.json()) as T
 }
 
-async function insertSample(row: DylanSampleRow) {
+async function insertSample(row: PhilSampleRow) {
   if (!supabaseConfig()) {
     localSamples.push(row)
     return
   }
 
-  await supabaseRequest<DylanSampleRow[]>("dylan_tightness_samples", {
+  await supabaseRequest<PhilSampleRow[]>("phil_tightness_samples", {
     method: "POST",
     headers: {
       Prefer: "return=minimal",
@@ -268,7 +279,7 @@ async function insertSample(row: DylanSampleRow) {
 }
 
 async function upsertMeta(key: string, value: string) {
-  const row: DylanMetaRow = {
+  const row: PhilMetaRow = {
     key,
     value,
     updated_at: new Date().toISOString(),
@@ -279,7 +290,7 @@ async function upsertMeta(key: string, value: string) {
     return row
   }
 
-  const rows = await supabaseRequest<DylanMetaRow[]>("dylan_tightness_meta?on_conflict=key", {
+  const rows = await supabaseRequest<PhilMetaRow[]>("phil_tightness_meta?on_conflict=key", {
     method: "POST",
     headers: {
       Prefer: "resolution=merge-duplicates,return=representation",
@@ -291,12 +302,10 @@ async function upsertMeta(key: string, value: string) {
 }
 
 async function readMeta(key: string) {
-  if (!supabaseConfig()) {
-    return localMeta.get(key) || null
-  }
+  if (!supabaseConfig()) return localMeta.get(key) || null
 
-  const rows = await supabaseRequest<DylanMetaRow[]>(
-    `dylan_tightness_meta?key=eq.${encodeURIComponent(key)}&select=*`
+  const rows = await supabaseRequest<PhilMetaRow[]>(
+    `phil_tightness_meta?key=eq.${encodeURIComponent(key)}&select=*`
   )
   return rows[0] || null
 }
@@ -311,22 +320,20 @@ async function readHistory() {
       .map(sampleFromRow)
   }
 
-  const rows = await supabaseRequest<DylanSampleRow[]>(
-    `dylan_tightness_samples?recorded_at=gte.${encodeURIComponent(since)}&select=*&order=recorded_at.asc`
+  const rows = await supabaseRequest<PhilSampleRow[]>(
+    `phil_tightness_samples?recorded_at=gte.${encodeURIComponent(since)}&select=*&order=recorded_at.asc`
   )
   return rows.map(sampleFromRow)
 }
 
-async function readLastSeen(column: "is_online" | "is_game" | "is_apex" | "is_elden") {
+async function readLastSeen(column: "is_online" | "is_game" | "is_nubby" | "is_spicy" | "is_celeste") {
   if (!supabaseConfig()) {
-    const latest = [...localSamples]
-      .reverse()
-      .find((sample) => sample[column])
+    const latest = [...localSamples].reverse().find((sample) => sample[column])
     return latest?.recorded_at || null
   }
 
   const rows = await supabaseRequest<Array<{ recorded_at: string }>>(
-    `dylan_tightness_samples?${column}=eq.true&select=recorded_at&order=recorded_at.desc&limit=1`
+    `phil_tightness_samples?${column}=eq.true&select=recorded_at&order=recorded_at.desc&limit=1`
   )
   return rows[0]?.recorded_at || null
 }
@@ -336,45 +343,46 @@ async function readLatestSample() {
     return [...localSamples].sort((a, b) => b.recorded_at.localeCompare(a.recorded_at))[0] || null
   }
 
-  const rows = await supabaseRequest<DylanSampleRow[]>(
-    "dylan_tightness_samples?select=*&order=recorded_at.desc&limit=1"
+  const rows = await supabaseRequest<PhilSampleRow[]>(
+    "phil_tightness_samples?select=*&order=recorded_at.desc&limit=1"
   )
   return rows[0] || null
 }
 
 async function getStoredState() {
   try {
-    const [history, latest, online, game, apex, elden] = await Promise.all([
+    const [history, latest, online, game, nubby, spicy, celeste] = await Promise.all([
       readHistory(),
       readLatestSample(),
       readLastSeen("is_online"),
       readLastSeen("is_game"),
-      readLastSeen("is_apex"),
-      readLastSeen("is_elden"),
+      readLastSeen("is_nubby"),
+      readLastSeen("is_spicy"),
+      readLastSeen("is_celeste"),
     ])
 
     return {
       history,
       latest,
-      lastSeen: { online, game, apex, elden },
+      lastSeen: { online, game, nubby, spicy, celeste },
       error: null,
     }
   } catch (error) {
     return {
-      history: [] as DylanTightnessSample[],
+      history: [] as PhilTightnessSample[],
       latest: null,
-      lastSeen: { online: null, game: null, apex: null, elden: null },
+      lastSeen: { online: null, game: null, nubby: null, spicy: null, celeste: null },
       error: error instanceof Error ? error.message : "History lookup failed",
     }
   }
 }
 
-export async function createDylanTightnessPayload(): Promise<DylanTightnessPayload> {
+export async function createPhilTightnessPayload(): Promise<PhilTightnessPayload> {
   const now = new Date().toISOString()
   const stored = await getStoredState()
 
   try {
-    const steam = await fetchDylanSteamStatus()
+    const steam = await fetchPhilSteamStatus()
     if (!steam.configured || !("player" in steam)) {
       return {
         ok: false,
@@ -394,7 +402,7 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
     try {
       await insertSample(row)
     } catch (error) {
-      writeError = error instanceof Error ? error.message : "Dylan sample write failed"
+      writeError = error instanceof Error ? error.message : "Phil sample write failed"
     }
 
     return {
@@ -409,8 +417,9 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
         avatarUrl: player.avatarfull || null,
         online: state.online,
         game: state.game,
-        apex: state.apex,
-        elden: state.elden,
+        nubby: state.nubby,
+        spicy: state.spicy,
+        celeste: state.celeste,
         gameId: player.gameid || null,
         gameName: player.gameextrainfo || null,
         tightness: state.tightness,
@@ -419,8 +428,9 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
       lastSeen: {
         online: state.online ? now : stored.lastSeen.online,
         game: state.game ? now : stored.lastSeen.game,
-        apex: state.apex ? now : stored.lastSeen.apex,
-        elden: state.elden ? now : stored.lastSeen.elden,
+        nubby: state.nubby ? now : stored.lastSeen.nubby,
+        spicy: state.spicy ? now : stored.lastSeen.spicy,
+        celeste: state.celeste ? now : stored.lastSeen.celeste,
       },
       history: stored.history,
     }
@@ -436,8 +446,9 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
         lastSeen: {
           online: stored.latest.is_online ? stored.latest.recorded_at : stored.lastSeen.online,
           game: stored.latest.is_game ? stored.latest.recorded_at : stored.lastSeen.game,
-          apex: stored.latest.is_apex ? stored.latest.recorded_at : stored.lastSeen.apex,
-          elden: stored.latest.is_elden ? stored.latest.recorded_at : stored.lastSeen.elden,
+          nubby: stored.latest.is_nubby ? stored.latest.recorded_at : stored.lastSeen.nubby,
+          spicy: stored.latest.is_spicy ? stored.latest.recorded_at : stored.lastSeen.spicy,
+          celeste: stored.latest.is_celeste ? stored.latest.recorded_at : stored.lastSeen.celeste,
         },
         history: stored.history,
       }
@@ -455,13 +466,13 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
   }
 }
 
-export async function markDylanPageSeen() {
+export async function markPhilPageSeen() {
   const now = new Date().toISOString()
   await upsertMeta("last_page_seen_at", now)
   return { ok: true, lastPageSeenAt: now }
 }
 
-export async function hasRecentDylanPageView() {
+export async function hasRecentPhilPageView() {
   const row = await readMeta("last_page_seen_at")
   if (!row) return { recent: false, lastPageSeenAt: null }
 
@@ -474,19 +485,19 @@ export async function hasRecentDylanPageView() {
   }
 }
 
-export async function recordDylanTightnessSample() {
-  const viewer = await hasRecentDylanPageView()
+export async function recordPhilTightnessSample() {
+  const viewer = await hasRecentPhilPageView()
   if (viewer.recent) {
     return {
       ok: true,
       configured: true,
       skipped: true,
-      reason: "Dylan tracker was loaded in the last 5 minutes; frontend checks are active",
+      reason: "Phil tracker was loaded in the last 5 minutes; frontend checks are active",
       lastPageSeenAt: viewer.lastPageSeenAt,
     }
   }
 
-  const steam = await fetchDylanSteamStatus()
+  const steam = await fetchPhilSteamStatus()
   if (!steam.configured || !("player" in steam)) {
     return {
       ok: false,

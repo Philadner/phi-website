@@ -4,6 +4,10 @@
     {
       "path": "/api/dylan-tightness-cron",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/phil-tightness-cron",
+      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [

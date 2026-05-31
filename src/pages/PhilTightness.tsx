@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import '../stylesheets/DylanTightness.css'
 
-type ActivityId = 'elden' | 'apex' | 'game' | 'online'
+type ActivityId = 'celeste' | 'spicy' | 'nubby' | 'game' | 'online'
 
-type DylanApiSample = {
+type PhilApiSample = {
   at: string
   tightness: number
   online: boolean
   game: boolean
-  apex: boolean
-  elden: boolean
+  nubby: boolean
+  spicy: boolean
+  celeste: boolean
   gameName: string | null
 }
 
-type DylanApiPayload = {
+type PhilApiPayload = {
   ok: boolean
   configured: boolean
   now: string
@@ -23,8 +24,9 @@ type DylanApiPayload = {
   current?: {
     online: boolean
     game: boolean
-    apex: boolean
-    elden: boolean
+    nubby: boolean
+    spicy: boolean
+    celeste: boolean
     gameName: string | null
     tightness: number
     statusLabel: string
@@ -32,10 +34,11 @@ type DylanApiPayload = {
   lastSeen: {
     online: string | null
     game: string | null
-    apex: string | null
-    elden: string | null
+    nubby: string | null
+    spicy: string | null
+    celeste: string | null
   }
-  history: DylanApiSample[]
+  history: PhilApiSample[]
 }
 
 type LiveTracker = {
@@ -53,13 +56,17 @@ type GraphPoint = {
 
 const minute = 60 * 1000
 const activityCopy: Record<ActivityId, { label: string; shortLabel: string }> = {
-  elden: {
-    label: 'Time since last elden ring',
-    shortLabel: 'Elden Ring',
+  celeste: {
+    label: 'Time since last celeste',
+    shortLabel: 'Celeste',
   },
-  apex: {
-    label: 'Time since last apex',
-    shortLabel: 'Apex',
+  spicy: {
+    label: 'Time since last haste/apex/tyrone',
+    shortLabel: 'Haste/Apex/Tyrone',
+  },
+  nubby: {
+    label: "Time since last nubby's number factory",
+    shortLabel: "Nubby's",
   },
   game: {
     label: 'Time since last game',
@@ -96,7 +103,7 @@ const formatTrackerDuration = (from: Date | null, to: Date) => {
   return formatRelativeDuration(from, to).replace(/ ago$/, '')
 }
 
-const buildGraphPoints = (samples: DylanApiSample[], current: DylanApiPayload['current'], updatedAt: Date | null) => {
+const buildGraphPoints = (samples: PhilApiSample[], current: PhilApiPayload['current'], updatedAt: Date | null) => {
   const sortedSamples = [...samples]
     .map((sample) => ({
       at: parseApiDate(sample.at),
@@ -121,7 +128,7 @@ const buildGraphPoints = (samples: DylanApiSample[], current: DylanApiPayload['c
 
   let smoothValue = sortedSamples[0].value
   return sortedSamples.map((sample) => {
-    const rise = sample.value >= 90 ? 0.38 : sample.value >= 70 ? 0.2 : sample.value >= 30 ? 0.08 : 0.045
+    const rise = sample.value >= 95 ? 0.42 : sample.value >= 80 ? 0.28 : sample.value >= 65 ? 0.2 : sample.value >= 30 ? 0.08 : 0.045
     smoothValue += (sample.value - smoothValue) * rise
 
     return {
@@ -131,9 +138,9 @@ const buildGraphPoints = (samples: DylanApiSample[], current: DylanApiPayload['c
   })
 }
 
-function DylanTightness() {
+function PhilTightness() {
   const [now, setNow] = useState(() => new Date())
-  const [apiPayload, setApiPayload] = useState<DylanApiPayload | null>(null)
+  const [apiPayload, setApiPayload] = useState<PhilApiPayload | null>(null)
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -144,7 +151,7 @@ function DylanTightness() {
 
   const markPresence = useCallback(async () => {
     try {
-      await fetch('/api/dylan-tightness-presence', { method: 'POST' })
+      await fetch('/api/phil-tightness-presence', { method: 'POST' })
     } catch {
       // Presence is only used to let cron back off while someone has the tracker open.
     }
@@ -153,8 +160,8 @@ function DylanTightness() {
   const loadStatus = useCallback(async () => {
     setRefreshing(true)
     try {
-      const response = await fetch('/api/dylan-tightness')
-      const payload = (await response.json()) as DylanApiPayload
+      const response = await fetch('/api/phil-tightness')
+      const payload = (await response.json()) as PhilApiPayload
       setApiPayload(payload)
       setLastUpdatedAt(parseApiDate(payload.now) || new Date())
     } catch {
@@ -180,7 +187,7 @@ function DylanTightness() {
 
   const trackers = useMemo<LiveTracker[]>(
     () =>
-      (['elden', 'apex', 'game', 'online'] as ActivityId[]).map((id) => ({
+      (['celeste', 'spicy', 'nubby', 'game', 'online'] as ActivityId[]).map((id) => ({
         id,
         ...activityCopy[id],
         active: Boolean(apiPayload?.current?.[id]),
@@ -209,10 +216,10 @@ function DylanTightness() {
 
   return (
     <main className="dylan-tightness-page">
-      <section className="dylan-hero" aria-labelledby="dylan-title">
-        <h1 id="dylan-title">
+      <section className="dylan-hero" aria-labelledby="phil-title">
+        <h1 id="phil-title">
           <span className="dylan-warning">◆</span>
-          Dylan Tightness Tracker
+          Phil Tightness Tracker
         </h1>
       </section>
 
@@ -249,11 +256,11 @@ function DylanTightness() {
         ))}
       </section>
 
-      <section className="dylan-graph-panel" aria-labelledby="dylan-graph-title">
+      <section className="dylan-graph-panel" aria-labelledby="phil-graph-title">
         <div className="dylan-panel-head">
           <div>
             <p>Timeline View</p>
-            <h2 id="dylan-graph-title">Tightness</h2>
+            <h2 id="phil-graph-title">Tightness</h2>
           </div>
           <div className="dylan-panel-actions">
             <span className="dylan-updated">Updated {formatRelativeDuration(lastUpdatedAt, now)}</span>
@@ -268,9 +275,9 @@ function DylanTightness() {
         </div>
 
         <div className="dylan-chart-wrap">
-          <svg className="dylan-chart" viewBox="0 0 1000 320" role="img" aria-label="Dylan tightness graph over the last 24 hours">
+          <svg className="dylan-chart" viewBox="0 0 1000 320" role="img" aria-label="Phil tightness graph over the last 24 hours">
             <defs>
-              <linearGradient id="dylan-tightness-area" x1="0" x2="0" y1="0" y2="1">
+              <linearGradient id="phil-tightness-area" x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
                 <stop offset="55%" stopColor="#ffffff" stopOpacity="0.06" />
                 <stop offset="100%" stopColor="#020713" stopOpacity="0" />
@@ -278,11 +285,12 @@ function DylanTightness() {
             </defs>
 
             <g className="dylan-chart-zones">
-              <rect className="dylan-zone dylan-zone--elden" x="0" y="25" width="1000" height="47" />
-              <rect className="dylan-zone dylan-zone--apex" x="0" y="72" width="1000" height="47" />
-              <rect className="dylan-zone dylan-zone--game" x="0" y="119" width="1000" height="47" />
-              <rect className="dylan-zone dylan-zone--online" x="0" y="166" width="1000" height="47" />
-              <rect className="dylan-zone dylan-zone--loose" x="0" y="213" width="1000" height="47" />
+              <rect className="dylan-zone dylan-zone--elden" x="0" y="25" width="1000" height="39.1" />
+              <rect className="dylan-zone dylan-zone--apex" x="0" y="64.1" width="1000" height="39.1" />
+              <rect className="dylan-zone dylan-zone--nubby" x="0" y="103.2" width="1000" height="39.1" />
+              <rect className="dylan-zone dylan-zone--game" x="0" y="142.3" width="1000" height="39.1" />
+              <rect className="dylan-zone dylan-zone--online" x="0" y="181.4" width="1000" height="39.1" />
+              <rect className="dylan-zone dylan-zone--loose" x="0" y="220.5" width="1000" height="39.1" />
             </g>
 
             <g className="dylan-chart-grid">
@@ -291,7 +299,7 @@ function DylanTightness() {
               ))}
             </g>
 
-            <path d={areaPath} fill="url(#dylan-tightness-area)" />
+            <path d={areaPath} fill="url(#phil-tightness-area)" />
             <path d={path} fill="none" stroke="#f6fbff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7" />
             <line className="dylan-now-line" x1="1000" x2="1000" y1="24" y2="284" />
             <circle cx="1000" cy={(260 - currentValue * 2.35).toFixed(1)} r="10" fill="#ffffff" />
@@ -299,15 +307,16 @@ function DylanTightness() {
         </div>
 
         <div className="dylan-legend">
-          <span><i className="dylan-legend__loose" /> Hella loose</span>
+          <span><i className="dylan-legend__loose" /> Loose</span>
           <span><i className="dylan-legend__online" /> Online</span>
           <span><i className="dylan-legend__game" /> Any game</span>
-          <span><i className="dylan-legend__apex" /> Apex</span>
-          <span><i className="dylan-legend__elden" /> Elden Ring</span>
+          <span><i className="dylan-legend__nubby" /> Nubby's</span>
+          <span><i className="dylan-legend__apex" /> Haste/Apex/Tyrone</span>
+          <span><i className="dylan-legend__elden" /> Celeste</span>
         </div>
       </section>
     </main>
   )
 }
 
-export default DylanTightness
+export default PhilTightness

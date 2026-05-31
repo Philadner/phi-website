@@ -22,6 +22,7 @@ import Toggle1998 from './pages/Toggle1998';
 import Presentation from './pages/Presentation';
 import Remote from './pages/Remote';
 import DylanTightness from './pages/DylanTightness';
+import PhilTightness from './pages/PhilTightness';
 const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
@@ -362,6 +363,7 @@ useEffect(() => {
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
           <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
           <Link to="/dylan" onClick={() => setSideOpen(false)}>Dylan Tightness</Link>
+          <Link to="/phil-tightness" onClick={() => setSideOpen(false)}>Phil Tightness</Link>
           <div
             className="gameshow-banner"
             role="button"
@@ -431,6 +433,8 @@ useEffect(() => {
             <Route path="/remote" element={<Remote />} />
             <Route path="/dylan" element={<DylanTightness />} />
             <Route path="/dylan-tightness" element={<DylanTightness />} />
+            <Route path="/phil" element={<PhilTightness />} />
+            <Route path="/phil-tightness" element={<PhilTightness />} />
             <Route path="/musicpl/*" element={<MusicPLRouter />} />
             <Route path="/about-musicpl" element={<AboutMusicPL />} />
 

@@ -134,7 +134,7 @@
   width: min(1100px, 100%);
   margin: 0 auto 22px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
 }
 
@@ -309,6 +309,14 @@
   fill: #ff9d24;
 }
 
+.dylan-zone--game {
+  fill: #d97bff;
+}
+
+.dylan-zone--nubby {
+  fill: #f3df59;
+}
+
 .dylan-zone--elden {
   fill: #ff304f;
 }
@@ -352,6 +360,14 @@
 
 .dylan-legend__apex {
   background: #ff9d24;
+}
+
+.dylan-legend__game {
+  background: #d97bff;
+}
+
+.dylan-legend__nubby {
+  background: #f3df59;
 }
 
 .dylan-legend__elden {
