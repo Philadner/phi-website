@@ -19,6 +19,7 @@ type DylanSampleRow = {
   is_apex: boolean
   is_elden: boolean
   tightness: number
+  projected_tightness: number
 }
 
 type DylanMetaRow = {
@@ -41,6 +42,7 @@ type DylanSteamStatus =
 export type DylanTightnessSample = {
   at: string
   tightness: number
+  projectedTightness: number
   online: boolean
     apex: boolean
     elden: boolean
@@ -66,6 +68,7 @@ export type DylanTightnessPayload = {
     gameId: string | null
     gameName: string | null
     tightness: number
+    projectedTightness: number
     statusLabel: string
   }
   lastSeen: {
@@ -116,7 +119,7 @@ function statusFor(player: SteamPlayer) {
   const apex = gameId === APEX_APP_ID
   const elden = gameId === ELDEN_RING_APP_ID
 
-  if (elden) return { online, game, apex, elden, tightness: 96, statusLabel: "really really tight" }
+  if (elden) return { online, game, apex, elden, tightness: 98, statusLabel: "really really tight" }
   if (apex) return { online, game, apex, elden, tightness: 72, statusLabel: "tighter" }
   if (game) return { online, game, apex, elden, tightness: 55, statusLabel: "playing a game" }
   if (online) return { online, game, apex, elden, tightness: 38, statusLabel: "slightly tight" }
@@ -132,6 +135,7 @@ function sampleFromRow(row: DylanSampleRow): DylanTightnessSample {
     apex: row.is_apex,
     elden: row.is_elden,
     gameName: row.game_name,
+    projectedTightness: row.projected_tightness,
   }
 }
 
@@ -157,11 +161,25 @@ function currentFromRow(row: DylanSampleRow) {
     gameId: row.game_id,
     gameName: row.game_name,
     tightness: row.tightness,
+    projectedTightness: row.projected_tightness,
     statusLabel,
   }
 }
 
-function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>): DylanSampleRow {
+function moveTowardProjected(current: number, projected: number) {
+  const distance = Math.abs(projected - current)
+  const factor = Math.min(0.72, Math.max(0.08, distance / 120))
+  return current + (projected - current) * factor
+}
+
+function rowFromSteam(
+  player: SteamPlayer,
+  state: ReturnType<typeof statusFor>,
+  previous: DylanSampleRow | null
+): DylanSampleRow {
+  const previousTightness = previous?.tightness ?? state.tightness
+  const tightness = moveTowardProjected(previousTightness, state.tightness)
+
   return {
     recorded_at: new Date().toISOString(),
     steam_id: player.steamid,
@@ -172,7 +190,8 @@ function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>):
     is_online: state.online,
     is_apex: state.apex,
     is_elden: state.elden,
-    tightness: state.tightness,
+    tightness,
+    projected_tightness: state.tightness,
   }
 }
 
@@ -389,7 +408,7 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
     }
 
     const { player, state } = steam
-    const row = rowFromSteam(player, state)
+    const row = rowFromSteam(player, state, stored.latest)
     let writeError = stored.error
     try {
       await insertSample(row)
@@ -413,7 +432,8 @@ export async function createDylanTightnessPayload(): Promise<DylanTightnessPaylo
         elden: state.elden,
         gameId: player.gameid || null,
         gameName: player.gameextrainfo || null,
-        tightness: state.tightness,
+        tightness: row.tightness,
+        projectedTightness: state.tightness,
         statusLabel: state.statusLabel,
       },
       lastSeen: {
@@ -496,7 +516,8 @@ export async function recordDylanTightnessSample() {
   }
 
   const { player, state } = steam
-  const row = rowFromSteam(player, state)
+  const latest = await readLatestSample()
+  const row = rowFromSteam(player, state, latest)
 
   await insertSample(row)
   return {

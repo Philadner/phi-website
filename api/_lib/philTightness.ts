@@ -19,6 +19,7 @@ type PhilSampleRow = {
   is_spicy: boolean
   is_celeste: boolean
   tightness: number
+  projected_tightness: number
 }
 
 type PhilMetaRow = {
@@ -41,6 +42,7 @@ type PhilSteamStatus =
 export type PhilTightnessSample = {
   at: string
   tightness: number
+  projectedTightness: number
   online: boolean
   game: boolean
   nubby: boolean
@@ -68,6 +70,7 @@ export type PhilTightnessPayload = {
     gameId: string | null
     gameName: string | null
     tightness: number
+    projectedTightness: number
     statusLabel: string
   }
   lastSeen: {
@@ -125,7 +128,7 @@ function statusFor(player: SteamPlayer) {
   const celeste = gameId === CELESTE_APP_ID
 
   if (celeste) return { online, game, nubby, spicy, celeste, tightness: 98, statusLabel: "maximum tightness" }
-  if (spicy) return { online, game, nubby, spicy, celeste, tightness: 84, statusLabel: "highly tight" }
+  if (spicy) return { online, game, nubby, spicy, celeste, tightness: 72, statusLabel: "highly tight" }
   if (nubby) return { online, game, nubby, spicy, celeste, tightness: 70, statusLabel: "number factory tight" }
   if (game) return { online, game, nubby, spicy, celeste, tightness: 55, statusLabel: "playing any game" }
   if (online) return { online, game, nubby, spicy, celeste, tightness: 38, statusLabel: "online" }
@@ -142,6 +145,7 @@ function sampleFromRow(row: PhilSampleRow): PhilTightnessSample {
     spicy: row.is_spicy,
     celeste: row.is_celeste,
     gameName: row.game_name,
+    projectedTightness: row.projected_tightness,
   }
 }
 
@@ -170,11 +174,25 @@ function currentFromRow(row: PhilSampleRow) {
     gameId: row.game_id,
     gameName: row.game_name,
     tightness: row.tightness,
+    projectedTightness: row.projected_tightness,
     statusLabel,
   }
 }
 
-function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>): PhilSampleRow {
+function moveTowardProjected(current: number, projected: number) {
+  const distance = Math.abs(projected - current)
+  const factor = Math.min(0.72, Math.max(0.08, distance / 120))
+  return current + (projected - current) * factor
+}
+
+function rowFromSteam(
+  player: SteamPlayer,
+  state: ReturnType<typeof statusFor>,
+  previous: PhilSampleRow | null
+): PhilSampleRow {
+  const previousTightness = previous?.tightness ?? state.tightness
+  const tightness = moveTowardProjected(previousTightness, state.tightness)
+
   return {
     recorded_at: new Date().toISOString(),
     steam_id: player.steamid,
@@ -186,7 +204,8 @@ function rowFromSteam(player: SteamPlayer, state: ReturnType<typeof statusFor>):
     is_nubby: state.nubby,
     is_spicy: state.spicy,
     is_celeste: state.celeste,
-    tightness: state.tightness,
+    tightness,
+    projected_tightness: state.tightness,
   }
 }
 
@@ -397,7 +416,7 @@ export async function createPhilTightnessPayload(): Promise<PhilTightnessPayload
     }
 
     const { player, state } = steam
-    const row = rowFromSteam(player, state)
+    const row = rowFromSteam(player, state, stored.latest)
     let writeError = stored.error
     try {
       await insertSample(row)
@@ -422,7 +441,8 @@ export async function createPhilTightnessPayload(): Promise<PhilTightnessPayload
         celeste: state.celeste,
         gameId: player.gameid || null,
         gameName: player.gameextrainfo || null,
-        tightness: state.tightness,
+        tightness: row.tightness,
+        projectedTightness: state.tightness,
         statusLabel: state.statusLabel,
       },
       lastSeen: {
@@ -507,7 +527,8 @@ export async function recordPhilTightnessSample() {
   }
 
   const { player, state } = steam
-  const row = rowFromSteam(player, state)
+  const latest = await readLatestSample()
+  const row = rowFromSteam(player, state, latest)
 
   await insertSample(row)
   return {

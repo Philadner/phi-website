@@ -6,6 +6,7 @@ type ActivityId = 'celeste' | 'spicy' | 'nubby' | 'game' | 'online'
 type PhilApiSample = {
   at: string
   tightness: number
+  projectedTightness: number
   online: boolean
   game: boolean
   nubby: boolean
@@ -29,6 +30,7 @@ type PhilApiPayload = {
     celeste: boolean
     gameName: string | null
     tightness: number
+    projectedTightness: number
     statusLabel: string
   }
   lastSeen: {
@@ -126,16 +128,7 @@ const buildGraphPoints = (samples: PhilApiSample[], current: PhilApiPayload['cur
     ]
   }
 
-  let smoothValue = sortedSamples[0].value
-  return sortedSamples.map((sample) => {
-    const rise = sample.value >= 95 ? 0.42 : sample.value >= 80 ? 0.28 : sample.value >= 65 ? 0.2 : sample.value >= 30 ? 0.08 : 0.045
-    smoothValue += (sample.value - smoothValue) * rise
-
-    return {
-      ...sample,
-      value: smoothValue,
-    }
-  })
+  return sortedSamples
 }
 
 function PhilTightness() {

@@ -6,6 +6,7 @@ type ActivityId = 'elden' | 'apex' | 'game' | 'online'
 type DylanApiSample = {
   at: string
   tightness: number
+  projectedTightness: number
   online: boolean
   game: boolean
   apex: boolean
@@ -27,6 +28,7 @@ type DylanApiPayload = {
     elden: boolean
     gameName: string | null
     tightness: number
+    projectedTightness: number
     statusLabel: string
   }
   lastSeen: {
@@ -119,16 +121,7 @@ const buildGraphPoints = (samples: DylanApiSample[], current: DylanApiPayload['c
     ]
   }
 
-  let smoothValue = sortedSamples[0].value
-  return sortedSamples.map((sample) => {
-    const rise = sample.value >= 90 ? 0.38 : sample.value >= 70 ? 0.2 : sample.value >= 30 ? 0.08 : 0.045
-    smoothValue += (sample.value - smoothValue) * rise
-
-    return {
-      ...sample,
-      value: smoothValue,
-    }
-  })
+  return sortedSamples
 }
 
 function DylanTightness() {
