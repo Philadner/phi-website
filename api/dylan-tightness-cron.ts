@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { recordDylanTightnessSample } from "./_lib/dylanTightness"
+import { recordDylanTightnessSample } from "./_lib/dylanTightness.js"
 
 function isAuthorized(req: VercelRequest) {
   const secret = process.env.CRON_SECRET?.trim()

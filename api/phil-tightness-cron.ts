@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { recordPhilTightnessSample } from "./_lib/philTightness"
+import { recordPhilTightnessSample } from "./_lib/philTightness.js"
 
 function isAuthorized(req: VercelRequest) {
   const secret = process.env.CRON_SECRET?.trim()

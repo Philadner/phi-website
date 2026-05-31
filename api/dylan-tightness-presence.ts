@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { markDylanPageSeen } from "./_lib/dylanTightness"
+import { markDylanPageSeen } from "./_lib/dylanTightness.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

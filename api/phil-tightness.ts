@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createPhilTightnessPayload } from "./_lib/philTightness"
+import { createPhilTightnessPayload } from "./_lib/philTightness.js"
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {

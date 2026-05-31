@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createDylanTightnessPayload } from "./_lib/dylanTightness"
+import { createDylanTightnessPayload } from "./_lib/dylanTightness.js"
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {

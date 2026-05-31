@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { markPhilPageSeen } from "./_lib/philTightness"
+import { markPhilPageSeen } from "./_lib/philTightness.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
