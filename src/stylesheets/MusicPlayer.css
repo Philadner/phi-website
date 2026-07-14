@@ -141,6 +141,20 @@
   position: relative;
 }
 
+.music-swipe-song {
+  min-width: 0;
+}
+
+.music-swipe-song__content,
+.music-swipe-song__content > .music-result-card,
+.music-swipe-song__content > .music-track-row {
+  width: 100%;
+}
+
+.music-swipe-action {
+  display: none;
+}
+
 .music-song-card-media {
   position: relative;
 }
@@ -984,6 +998,53 @@
   .music-results-grid {
     display: flex;
     flex-direction: column;
+  }
+
+  .music-swipe-song {
+    position: relative;
+    min-height: 78px;
+    overflow: hidden;
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .music-swipe-song__content {
+    position: relative;
+    z-index: 1;
+    min-height: inherit;
+    background: #121214;
+    will-change: transform;
+  }
+
+  .music-swipe-song__content > .music-result-card,
+  .music-swipe-song__content > .music-track-row {
+    min-height: inherit;
+  }
+
+  .music-swipe-action {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 104px;
+    display: grid;
+    place-items: center;
+    color: #090909;
+  }
+
+  .music-swipe-action svg {
+    width: 32px;
+    height: 32px;
+    fill: currentColor;
+  }
+
+  .music-swipe-action--play-next {
+    left: 0;
+    background: #fff;
+  }
+
+  .music-swipe-action--add-queue {
+    right: 0;
+    background: #f0ca5f;
   }
 
   .music-result-card,

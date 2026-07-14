@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react"
 import { useNavigate } from "react-router-dom"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -571,6 +572,8 @@ export default function MusicPlayer({
                             key={song.id}
                             item={song}
                             onPlay={() => void playTrack(song.track, [song.track])}
+                            onAddToQueue={() => addTrackToQueue(song.track)}
+                            onPlayNext={() => playTrackNext(song.track)}
                             onContextMenu={(event) => {
                               event.preventDefault()
                               setContextMenu({
@@ -638,33 +641,38 @@ export default function MusicPlayer({
                     const queueSeed = albumTracks.slice(index)
                     const isCurrent = currentTrack?.trackId === track.trackId
                     return (
-                      <button
-                        type="button"
+                      <SwipeableSong
                         key={track.trackId}
-                        className={`music-track-row ${isCurrent ? "is-current" : ""}`}
-                        onClick={() => void playTrack(track, queueSeed)}
-                        onContextMenu={(event) => {
-                          event.preventDefault()
-                          setContextMenu({
-                            kind: "track",
-                            x: event.clientX,
-                            y: event.clientY,
-                            track,
-                          })
-                        }}
+                        onAddToQueue={() => addTrackToQueue(track)}
+                        onPlayNext={() => playTrackNext(track)}
                       >
-                        <span className="music-track-number">{index + 1}</span>
-                        <span className="music-track-copy">
-                          <span className="music-track-title">{track.title}</span>
-                          <span className="music-track-artist">{track.artist}</span>
-                        </span>
-                        <span className="music-track-action">
-                          <FontAwesomeIcon
-                            icon={isCurrent && isPlaying ? faPause : faPlay}
-                          />
-                          Play from here
-                        </span>
-                      </button>
+                        <button
+                          type="button"
+                          className={`music-track-row ${isCurrent ? "is-current" : ""}`}
+                          onClick={() => void playTrack(track, queueSeed)}
+                          onContextMenu={(event) => {
+                            event.preventDefault()
+                            setContextMenu({
+                              kind: "track",
+                              x: event.clientX,
+                              y: event.clientY,
+                              track,
+                            })
+                          }}
+                        >
+                          <span className="music-track-number">{index + 1}</span>
+                          <span className="music-track-copy">
+                            <span className="music-track-title">{track.title}</span>
+                            <span className="music-track-artist">{track.artist}</span>
+                          </span>
+                          <span className="music-track-action">
+                            <FontAwesomeIcon
+                              icon={isCurrent && isPlaying ? faPause : faPlay}
+                            />
+                            Play from here
+                          </span>
+                        </button>
+                      </SwipeableSong>
                     )
                   })}
                 </div>
@@ -718,6 +726,8 @@ export default function MusicPlayer({
                           key={item.id}
                           item={item}
                           onPlay={() => void playTrack(item.track, [item.track])}
+                          onAddToQueue={() => addTrackToQueue(item.track)}
+                          onPlayNext={() => playTrackNext(item.track)}
                           onContextMenu={(event) => {
                             event.preventDefault()
                             setContextMenu({
@@ -1145,29 +1155,199 @@ function AlbumCard({
 function SongCard({
   item,
   onPlay,
+  onAddToQueue,
+  onPlayNext,
   onContextMenu,
 }: {
   item: MusicSongResult
   onPlay: () => void
+  onAddToQueue: () => void
+  onPlayNext: () => void
   onContextMenu: (event: ReactMouseEvent<HTMLButtonElement>) => void
 }) {
   return (
-    <button
-      type="button"
-      className="music-result-card music-result-card--song"
-      onClick={onPlay}
-      onContextMenu={onContextMenu}
+    <SwipeableSong
+      onAddToQueue={onAddToQueue}
+      onPlayNext={onPlayNext}
     >
-      <div className="music-song-card-media">
-        <img src={item.coverUrl} alt={item.title} className="music-result-cover" />
-        <span className="music-song-card-play">
-          <FontAwesomeIcon icon={faPlay} />
-        </span>
+      <button
+        type="button"
+        className="music-result-card music-result-card--song"
+        onClick={onPlay}
+        onContextMenu={onContextMenu}
+      >
+        <div className="music-song-card-media">
+          <img src={item.coverUrl} alt={item.title} className="music-result-cover" />
+          <span className="music-song-card-play">
+            <FontAwesomeIcon icon={faPlay} />
+          </span>
+        </div>
+        <span className="music-result-title">{item.title}</span>
+        <span className="music-result-artist">{item.artist}</span>
+        {item.albumTitle ? <span className="music-result-meta">{item.albumTitle}</span> : null}
+      </button>
+    </SwipeableSong>
+  )
+}
+
+function SwipeableSong({
+  children,
+  onAddToQueue,
+  onPlayNext,
+}: {
+  children: ReactNode
+  onAddToQueue: () => void
+  onPlayNext: () => void
+}) {
+  const gestureRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    horizontal: boolean
+    cancelled: boolean
+  } | null>(null)
+  const settleTimeoutRef = useRef<number | null>(null)
+  const offsetRef = useRef(0)
+  const suppressClickUntilRef = useRef(0)
+  const [offset, setOffset] = useState(0)
+  const [settling, setSettling] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (settleTimeoutRef.current) window.clearTimeout(settleTimeoutRef.current)
+    }
+  }, [])
+
+  const updateOffset = (nextOffset: number) => {
+    offsetRef.current = nextOffset
+    setOffset(nextOffset)
+  }
+
+  const settleBack = () => {
+    setSettling(true)
+    updateOffset(0)
+    if (settleTimeoutRef.current) window.clearTimeout(settleTimeoutRef.current)
+    settleTimeoutRef.current = window.setTimeout(() => {
+      setSettling(false)
+      settleTimeoutRef.current = null
+    }, 180)
+  }
+
+  const finishGesture = (element: HTMLDivElement, pointerId: number) => {
+    const gesture = gestureRef.current
+    gestureRef.current = null
+    if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId)
+    if (!gesture?.horizontal) {
+      settleBack()
+      return
+    }
+
+    suppressClickUntilRef.current = performance.now() + 320
+    const finalOffset = offsetRef.current
+    if (Math.abs(finalOffset) < 64) {
+      settleBack()
+      return
+    }
+
+    setSettling(true)
+    updateOffset(finalOffset < 0 ? -104 : 104)
+    if (finalOffset < 0) onAddToQueue()
+    else onPlayNext()
+
+    if (settleTimeoutRef.current) window.clearTimeout(settleTimeoutRef.current)
+    settleTimeoutRef.current = window.setTimeout(() => {
+      updateOffset(0)
+      settleTimeoutRef.current = window.setTimeout(() => {
+        setSettling(false)
+        settleTimeoutRef.current = null
+      }, 180)
+    }, 140)
+  }
+
+  return (
+    <div
+      className={`music-swipe-song ${offset < 0 ? "is-add-queue" : ""} ${offset > 0 ? "is-play-next" : ""}`}
+      onPointerDown={(event) => {
+        if (!window.matchMedia("(max-width: 900px)").matches) return
+        if (event.pointerType === "mouse" && event.button !== 0) return
+        if (settleTimeoutRef.current) window.clearTimeout(settleTimeoutRef.current)
+        setSettling(false)
+        updateOffset(0)
+        gestureRef.current = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          horizontal: false,
+          cancelled: false,
+        }
+        event.currentTarget.setPointerCapture(event.pointerId)
+      }}
+      onPointerMove={(event) => {
+        const gesture = gestureRef.current
+        if (!gesture || gesture.pointerId !== event.pointerId || gesture.cancelled) return
+        const deltaX = event.clientX - gesture.startX
+        const deltaY = event.clientY - gesture.startY
+
+        if (!gesture.horizontal) {
+          if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return
+          if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+            gesture.cancelled = true
+            settleBack()
+            return
+          }
+          gesture.horizontal = true
+        }
+
+        event.preventDefault()
+        updateOffset(Math.max(-104, Math.min(104, deltaX)))
+      }}
+      onPointerUp={(event) => finishGesture(event.currentTarget, event.pointerId)}
+      onPointerCancel={(event) => {
+        gestureRef.current = null
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
+        settleBack()
+      }}
+      onClickCapture={(event) => {
+        if (performance.now() < suppressClickUntilRef.current) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+      }}
+    >
+      <span className="music-swipe-action music-swipe-action--play-next" aria-hidden="true">
+        <YouTubePlayNextIcon />
+      </span>
+      <span className="music-swipe-action music-swipe-action--add-queue" aria-hidden="true">
+        <YouTubeAddQueueIcon />
+      </span>
+      <div
+        className="music-swipe-song__content"
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: settling ? "transform 180ms ease-out" : "none",
+        }}
+      >
+        {children}
       </div>
-      <span className="music-result-title">{item.title}</span>
-      <span className="music-result-artist">{item.artist}</span>
-      {item.albumTitle ? <span className="music-result-meta">{item.albumTitle}</span> : null}
-    </button>
+    </div>
+  )
+}
+
+function YouTubeAddQueueIcon() {
+  return (
+    <svg viewBox="0 0 24 24" role="presentation">
+      <path d="M14 10H3v2h11v-2zm0-4H3v2h11V6zM3 16h7v-2H3v2zm13-2v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2z" />
+    </svg>
+  )
+}
+
+function YouTubePlayNextIcon() {
+  return (
+    <svg viewBox="0 0 24 24" role="presentation">
+      <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v-2H3V5h18v7h2V5c0-1.1-.9-2-2-2zm-5 7-4 4 4 4v-3h8v-2h-8v-3z" />
+    </svg>
   )
 }
 
