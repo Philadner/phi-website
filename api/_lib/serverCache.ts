@@ -9,18 +9,22 @@ type LocalValue = {
 const localCache = new Map<string, LocalValue>()
 const localSets = new Map<string, Set<string>>()
 
+const upstashRestUrl =
+  process.env.UPSTASH_REDIS_KV_REST_API_URL ||
+  process.env.UPSTASH_REDIS_REST_URL ||
+  process.env.KV_REST_API_URL
+const upstashRestToken =
+  process.env.UPSTASH_REDIS_KV_REST_API_TOKEN ||
+  process.env.UPSTASH_REDIS_REST_TOKEN ||
+  process.env.KV_REST_API_TOKEN
+
 const upstashRedis =
-  process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  upstashRestUrl && upstashRestToken
     ? new Redis({
-        url: process.env.KV_REST_API_URL,
-        token: process.env.KV_REST_API_TOKEN,
+        url: upstashRestUrl,
+        token: upstashRestToken,
       })
-    : process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-      ? new Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        })
-      : null
+    : null
 
 const redisUrl = process.env.REDIS_URL?.trim()
 const directRedisClient: RedisClientType | null = redisUrl
