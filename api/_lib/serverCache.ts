@@ -82,9 +82,9 @@ async function getDirectRedis() {
 export async function getCachedJson<T>(key: string) {
   try {
     if (upstashRedis) {
-      const value = await upstashRedis.get<string>(key)
-      if (!value) return null
-      return JSON.parse(value) as T
+      const value = await upstashRedis.get<unknown>(key)
+      if (value === null || value === undefined) return null
+      return (typeof value === "string" ? JSON.parse(value) : value) as T
     }
 
     const directRedis = await getDirectRedis()

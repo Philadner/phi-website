@@ -1,7 +1,16 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import type { TrackResolveRequest, TrackResolveResponse } from "../src/lib/musicTypes.js"
+import { getCachedJson } from "./_lib/serverCache.js"
 
 const DEFAULT_YTDL_SERVICE_URL = "https://yt.phi.me.uk/api/ytdl"
+
+type CachedPlayback = {
+  video_id: string
+  playback_url: string
+  pathname?: string | null
+  mime_type: string
+  cached_at: string
+}
 
 function isTrackResolveRequest(value: unknown): value is TrackResolveRequest {
   if (!value || typeof value !== "object") return false
@@ -58,6 +67,18 @@ async function resolveViaService(videoId: string) {
   }
 }
 
+async function resolveFromCache(videoId: string) {
+  const cached = await getCachedJson<CachedPlayback>(`music:ytdl:video:${videoId}`)
+  if (!cached?.playback_url || !cached.mime_type || !cached.cached_at) return null
+
+  return {
+    videoId,
+    playbackUrl: cached.playback_url,
+    mimeType: cached.mime_type,
+    cachedAt: cached.cached_at,
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST")
@@ -82,6 +103,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const cached = await resolveFromCache(videoId)
+    if (cached) {
+      return res.status(200).json({
+        status: "ready",
+        playbackUrl: cached.playbackUrl,
+        mimeType: cached.mimeType,
+        cachedAt: cached.cachedAt,
+      } satisfies TrackResolveResponse)
+    }
+
     const resolved = await resolveViaService(videoId)
     if (!resolved) {
       return res.status(200).json({
