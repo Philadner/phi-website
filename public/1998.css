@@ -15,8 +15,8 @@ html[data-1998="true"] * {
   transition: none !important;
 }
 
-/* Keep things static, but allow our retro ticker to animate. */
-html[data-1998="true"] *:not(.ticker-track) {
+/* Keep things static, but allow specific retro animations. */
+html[data-1998="true"] *:not(.ticker-track):not(.retro-loader-anim) {
   animation: none !important;
 }
 

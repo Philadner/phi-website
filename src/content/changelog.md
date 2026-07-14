@@ -3,6 +3,20 @@ Most recent changes first
 
 ---
 
+## The new new music player
+Added:
+- queue
+- searching for songs (not just albums anymore, and it can actually find stuff)
+- artist pages
+- the songs keep playing while you browse songs
+- the ui is quicker and a lot more useful, less fancy tho.
+
+[Click here](https://labs.phi.me.uk/about-musicpl) To find out how it works. It's pretty boring though, you have better things to do.
+It doesn't work at all with the "new design" 
+I'll also add back downloading songs soon, I was going to then i ran out of ai slop usage.
+
+---
+
 ## Ultra modern redesign
 The current wbesite was looking dated and sad, so I redesigned it in ultra smooth liquid glass   
 Turn it on with the button in the top bar on pc, and it should be in the sidebar on mobile.  

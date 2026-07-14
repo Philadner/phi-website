@@ -22,6 +22,10 @@ body.loaded {
   overflow-y: auto;
 }
 
+body.loaded.body--music-lock {
+  overflow: hidden;
+}
+
 #root {
   display: flex;
   flex-direction: column;
@@ -199,6 +203,10 @@ body.loaded {
   flex-grow: 1;
 }
 
+.loaded #main-site.music-main-shell {
+  padding: 0 0 132px;
+}
+
 /* ===== Collapsing Titlebar Variables & Base ===== */
 /* Full height 80px → 20px (¼) over 0–50px */
 .site-header {
@@ -244,6 +252,16 @@ body.loaded {
   align-items: center;
   gap: 16px;
   padding: 0 16px;
+}
+
+.site-header--music .site-header__inner {
+  max-width: 1400px;
+}
+
+.site-header--music {
+  --p: 0 !important;
+  --squish: 0 !important;
+  --fade: 0 !important;
 }
 
 .header-actions {
@@ -306,6 +324,33 @@ body.loaded {
   opacity: 1;
 }
 
+.site-header .topnav .topnav__add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.topnav__add-icon {
+  display: inline-block;
+  font-size: 1.35em;
+  font-weight: inherit;
+  line-height: inherit;
+  animation: topnav-add-spin 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes topnav-add-spin {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  60% {
+    transform: rotate(200deg) scale(1.15);
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
 .site-header .menu-btn {
   background: transparent;
   border: none;
@@ -316,13 +361,117 @@ body.loaded {
   padding: 6px 8px;
 }
 
+.music-header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.music-header-search__icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.music-header-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: white;
+  font-size: 1rem;
+}
+
+.music-header-search input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.music-header-search button {
+  border: none;
+  background: gold;
+  color: #141414;
+  border-radius: 14px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.music-header-search-trigger,
+.music-brand__mark {
+  display: none;
+}
+
+.music-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.music-brand__back {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.music-brand__back:hover {
+  color: gold;
+}
+
 /* Responsive: collapse nav to burger on small screens if you want */
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .site-header__inner {
     grid-template-columns: auto 1fr auto;
   }
   .site-header .topnav {
     display: none; /* you already have a sidebar */
+  }
+  .site-header--music .site-header__inner {
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 0 12px;
+  }
+  .music-header-search {
+    display: none;
+  }
+  .music-header-search-trigger {
+    grid-column: 2;
+    justify-self: end;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-radius: 999px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .music-brand__wordmark {
+    display: none;
+  }
+  .music-brand__mark {
+    display: block;
+    width: 34px;
+    height: 42px;
+    filter: drop-shadow(0 0 7px rgba(246, 202, 69, 0.56));
+  }
+  .music-brand__mark path {
+    fill: none;
+    stroke: #f6ca45;
+    stroke-width: 2;
+  }
+  .music-brand .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .header-actions {
     grid-column: 3;
@@ -337,6 +486,11 @@ body.loaded {
   }
   .titlebar-content {
     transition: none;
+  }
+  .site-header .topnav .topnav__add-button,
+  .topnav__add-icon {
+    transition: none;
+    animation: none;
   }
 }
 
@@ -535,6 +689,14 @@ nav a:hover::after {
     border: none;
     color: gold;
     cursor: pointer;
+  }
+
+  .music-header-search {
+    padding: 8px 12px;
+  }
+
+  .music-header-search button {
+    display: none;
   }
 }
 
