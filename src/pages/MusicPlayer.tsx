@@ -226,6 +226,7 @@ export default function MusicPlayer({
 
   useEffect(() => {
     if (!mobileSearchOpen) return
+    setMobileVolumeOpen(false)
     mainPaneRef.current?.scrollTo({ top: 0 })
     const frame = window.requestAnimationFrame(() => mobileSearchInputRef.current?.focus())
     return () => window.cancelAnimationFrame(frame)
@@ -476,6 +477,7 @@ export default function MusicPlayer({
                 className="music-mobile-search-form"
                 onSubmit={(event) => {
                   event.preventDefault()
+                  setMobileSearchOpen(false)
                   submitSearch()
                 }}
               >
