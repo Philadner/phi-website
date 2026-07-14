@@ -181,8 +181,32 @@ function getTrackResolveUrl() {
   return "/api/track-resolve"
 }
 
-function getTrackPrepareMessage(_track: QueueTrack) {
+function getTrackPrepareMessage() {
   return "loading"
+}
+
+function waitForMediaReady(
+  media: HTMLMediaElement,
+  eventName: "loadedmetadata" | "canplay",
+  timeoutMs = 5000
+) {
+  const requiredReadyState = eventName === "loadedmetadata" ? 1 : 3
+  if (media.readyState >= requiredReadyState) return Promise.resolve()
+
+  return new Promise<void>((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timeoutId)
+      media.removeEventListener(eventName, finish)
+      media.removeEventListener("error", finish)
+      resolve()
+    }
+    const timeoutId = window.setTimeout(finish, timeoutMs)
+    media.addEventListener(eventName, finish, { once: true })
+    media.addEventListener("error", finish, { once: true })
+  })
 }
 
 function moveIndex(current: number | null, from: number, to: number) {
@@ -798,9 +822,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const requestId = playbackRequestRef.current + 1
     playbackRequestRef.current = requestId
     setCurrentPlaybackStatus("preparing")
-    setCurrentPlaybackMessage(getTrackPrepareMessage(currentTrack))
+    setCurrentPlaybackMessage(getTrackPrepareMessage())
 
-    const applyResolvedUrl = async (playbackUrl: string) => {
+    const applyResolvedUrl = async (playbackUrl: string, autoplay = shouldAutoplayRef.current) => {
       if (playbackRequestRef.current !== requestId) return
       if (audio.currentSrc === playbackUrl) {
         setCurrentPlaybackStatus("ready")
@@ -815,7 +839,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setCurrentPlaybackStatus("ready")
       setCurrentPlaybackMessage(null)
 
-      if (!shouldAutoplayRef.current) {
+      if (!autoplay) {
         setIsPlaying(false)
         return
       }
@@ -829,6 +853,50 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    const handoffToResolvedUrl = async (playbackUrl: string, autoplayRequested: boolean) => {
+      if (playbackRequestRef.current !== requestId || audio.currentSrc === playbackUrl) return
+
+      const preloadAudio = preloadAudioRef.current
+      if (preloadAudio) {
+        preloadAudio.src = playbackUrl
+        preloadAudio.load()
+        await waitForMediaReady(preloadAudio, "canplay")
+      }
+      if (playbackRequestRef.current !== requestId) return
+
+      const resumeAt = audio.currentTime
+      const shouldResume = autoplayRequested || !audio.paused
+      audio.pause()
+      audio.src = playbackUrl
+      audio.load()
+      await waitForMediaReady(audio, "loadedmetadata")
+      if (playbackRequestRef.current !== requestId) return
+
+      if (resumeAt > 0) {
+        const latestSeek = Number.isFinite(audio.duration)
+          ? Math.max(0, audio.duration - 0.25)
+          : resumeAt
+        audio.currentTime = Math.min(resumeAt, latestSeek)
+        setCurrentTime(audio.currentTime)
+      }
+
+      if (preloadAudio) {
+        preloadAudio.pause()
+        preloadAudio.removeAttribute("src")
+        preloadAudio.load()
+      }
+
+      setCurrentPlaybackStatus("ready")
+      setCurrentPlaybackMessage(null)
+      if (!shouldResume) return
+
+      try {
+        await audio.play()
+      } catch {
+        setIsPlaying(false)
+      }
+    }
+
     const cachedPreloadUrl =
       preloadTrackIdRef.current === currentTrack.trackId ? preloadUrlRef.current : null
 
@@ -838,10 +906,30 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    void waitForTrackPlayback(currentTrack, "play")
+    void requestTrackPlayback(currentTrack, "play")
       .then((payload) => {
-        if (payload.status !== "ready") return
-        return applyResolvedUrl(payload.playbackUrl)
+        if (payload.status === "ready") {
+          playbackUrlCacheRef.current.set(currentTrack.trackId, payload.playbackUrl)
+          return applyResolvedUrl(payload.playbackUrl)
+        }
+
+        if (payload.status === "error") {
+          throw new Error(payload.message)
+        }
+
+        if (payload.status === "starter") {
+          const autoplayRequested = shouldAutoplayRef.current
+          void applyResolvedUrl(payload.playbackUrl, autoplayRequested)
+          return waitForTrackPlayback(currentTrack, "preload").then((resolved) => {
+            if (resolved.status !== "ready") return
+            return handoffToResolvedUrl(resolved.playbackUrl, autoplayRequested)
+          })
+        }
+
+        return waitForTrackPlayback(currentTrack, "preload").then((resolved) => {
+          if (resolved.status !== "ready") return
+          return applyResolvedUrl(resolved.playbackUrl)
+        })
       })
       .catch((error: unknown) => {
         if (playbackRequestRef.current !== requestId) return

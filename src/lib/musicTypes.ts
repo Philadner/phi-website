@@ -37,6 +37,11 @@ export type TrackResolveResponse =
       mode: "loading" | "compressing"
     }
   | {
+      status: "starter"
+      playbackUrl: string
+      expiresAt: number
+    }
+  | {
       status: "error"
       message: string
     }

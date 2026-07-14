@@ -1,8 +1,10 @@
+import { createHmac } from "node:crypto"
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 import type { TrackResolveRequest, TrackResolveResponse } from "../src/lib/musicTypes.js"
 import { getCachedJson } from "./_lib/serverCache.js"
 
 const DEFAULT_YTDL_SERVICE_URL = "https://yt.phi.me.uk/api/ytdl"
+const STARTER_URL_TTL_SECONDS = 2 * 60
 
 type CachedPlayback = {
   video_id: string
@@ -26,9 +28,33 @@ function getServiceUrl() {
   return new URL(`${configured.replace(/\/+$/, "")}/api/ytdl`)
 }
 
-async function resolveViaService(videoId: string) {
+function getServiceSecret() {
   const serviceSecret = process.env.YTDL_SERVICE_SECRET?.trim() || process.env.YTDL_SECRET?.trim()
   if (!serviceSecret) throw new Error("YTDL service secret missing")
+  return serviceSecret
+}
+
+function createStarterUrl(videoId: string) {
+  const serviceSecret = getServiceSecret()
+  const expiresAt = Math.floor(Date.now() / 1000) + STARTER_URL_TTL_SECONDS
+  const signature = createHmac("sha256", serviceSecret)
+    .update(`${videoId}:${expiresAt}`)
+    .digest("hex")
+  const url = getServiceUrl()
+  url.pathname = url.pathname.replace(/\/api\/ytdl\/?$/, "/api/ytdl-stream")
+  url.search = ""
+  url.searchParams.set("videoId", videoId)
+  url.searchParams.set("expires", String(expiresAt))
+  url.searchParams.set("signature", signature)
+
+  return {
+    playbackUrl: url.toString(),
+    expiresAt,
+  }
+}
+
+async function resolveViaService(videoId: string) {
+  const serviceSecret = getServiceSecret()
 
   const url = getServiceUrl()
   url.searchParams.set("videoId", videoId)
@@ -110,6 +136,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         playbackUrl: cached.playbackUrl,
         mimeType: cached.mimeType,
         cachedAt: cached.cachedAt,
+      } satisfies TrackResolveResponse)
+    }
+
+    if (body.intent === "play") {
+      const starter = createStarterUrl(videoId)
+      return res.status(200).json({
+        status: "starter",
+        playbackUrl: starter.playbackUrl,
+        expiresAt: starter.expiresAt,
       } satisfies TrackResolveResponse)
     }
 
