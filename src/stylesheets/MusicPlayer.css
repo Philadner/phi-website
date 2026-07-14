@@ -723,20 +723,25 @@
 .music-volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  background: transparent;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--music-accent) 0 var(--music-range-progress, 0%),
+    rgba(255, 255, 255, 0.26) var(--music-range-progress, 0%) 100%
+  );
 }
 
 .music-progress-slider::-webkit-slider-runnable-track,
 .music-volume-slider::-webkit-slider-runnable-track {
   height: var(--music-progress-height);
-  background: rgba(255, 255, 255, 0.85);
+  background: transparent;
   border-radius: 999px;
 }
 
 .music-progress-slider::-moz-range-track,
 .music-volume-slider::-moz-range-track {
   height: var(--music-progress-height);
-  background: rgba(255, 255, 255, 0.85);
+  background: transparent;
   border-radius: 999px;
 }
 
@@ -1150,39 +1155,46 @@
   }
 
   .music-mobile-volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
     width: 100%;
-    height: 34px;
-    accent-color: #f0ca5f;
+    height: 20px;
+    border: 0;
+    border-radius: 10px;
+    outline: 0;
+    background: linear-gradient(
+      to right,
+      #f0ca5f 0 var(--music-range-progress, 0%),
+      rgba(255, 255, 255, 0.22) var(--music-range-progress, 0%) 100%
+    );
   }
 
   .music-mobile-volume-slider::-webkit-slider-runnable-track {
-    height: 12px;
+    height: 20px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.26);
+    background: transparent;
   }
 
   .music-mobile-volume-slider::-webkit-slider-thumb {
-    width: 30px;
-    height: 30px;
-    margin-top: -9px;
-    border: 3px solid #111;
-    border-radius: 50%;
-    background: #f0ca5f;
     -webkit-appearance: none;
+    appearance: none;
+    width: 0;
+    height: 0;
+    border: 0;
+    background: transparent;
   }
 
   .music-mobile-volume-slider::-moz-range-track {
-    height: 12px;
+    height: 20px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.26);
+    background: transparent;
   }
 
   .music-mobile-volume-slider::-moz-range-thumb {
-    width: 26px;
-    height: 26px;
-    border: 3px solid #111;
-    border-radius: 50%;
-    background: #f0ca5f;
+    width: 0;
+    height: 0;
+    border: 0;
+    background: transparent;
   }
 }
 

@@ -57,6 +57,12 @@ function formatTime(seconds: number) {
   return `${minutes}:${String(remainder).padStart(2, "0")}`
 }
 
+function getRangeFillStyle(percent: number): CSSProperties & { "--music-range-progress": string } {
+  return {
+    "--music-range-progress": `${Math.max(0, Math.min(100, percent))}%`,
+  }
+}
+
 function getLoadingState(label: string) {
   if (label === "Checking what we can actually play...") {
     return {
@@ -980,6 +986,17 @@ export default function MusicPlayer({
           <div className="music-control-buttons">
             <button
               type="button"
+              className="music-icon-button music-mobile-control"
+              aria-label="Open queue"
+              onClick={() => {
+                setMobileVolumeOpen(false)
+                setQueueDrawerOpen(true)
+              }}
+            >
+              <FontAwesomeIcon icon={faBarsStaggered} />
+            </button>
+            <button
+              type="button"
               className="music-icon-button"
               aria-label="Previous track"
               onClick={() => void playPrevious()}
@@ -1014,17 +1031,6 @@ export default function MusicPlayer({
             >
               <FontAwesomeIcon icon={volume <= 0.001 ? faVolumeXmark : faVolumeHigh} />
             </button>
-            <button
-              type="button"
-              className="music-icon-button music-mobile-control"
-              aria-label="Open queue"
-              onClick={() => {
-                setMobileVolumeOpen(false)
-                setQueueDrawerOpen(true)
-              }}
-            >
-              <FontAwesomeIcon icon={faBarsStaggered} />
-            </button>
           </div>
 
           <div className="music-progress">
@@ -1035,6 +1041,7 @@ export default function MusicPlayer({
               min={0}
               max={duration || 0}
               value={Math.min(currentTime, duration || 0)}
+              style={getRangeFillStyle(duration > 0 ? (currentTime / duration) * 100 : 0)}
               step={0.1}
               onChange={(event) => seek(Number(event.target.value))}
               disabled={!currentTrack}
@@ -1052,6 +1059,7 @@ export default function MusicPlayer({
             max={1}
             step={0.01}
             value={volume}
+            style={getRangeFillStyle(volume * 100)}
             onChange={(event) => setVolume(Number(event.target.value))}
           />
         </div>
@@ -1070,6 +1078,7 @@ export default function MusicPlayer({
               max={1}
               step={0.01}
               value={volume}
+              style={getRangeFillStyle(volume * 100)}
               onChange={(event) => setVolume(Number(event.target.value))}
             />
           </div>
