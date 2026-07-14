@@ -27,6 +27,7 @@ const ChangelogCommits = React.lazy(() => import('./pages/ChangelogCommits'));
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
+import { PhiMark } from './components/PhiMark';
 import './App.css';
 
 function ModernLoader() {
@@ -154,7 +155,14 @@ function AppShell() {
   const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
   const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
-  const { searchQuery, setSearchQuery, submitSearch, resetSession, goToMusicHome } = useMusicPlayer();
+  const {
+    searchQuery,
+    setSearchQuery,
+    submitSearch,
+    resetSession,
+    goToMusicHome,
+    setMobileSearchOpen,
+  } = useMusicPlayer();
   const toggleModeWithRefresh = () => {
     const next = !mode1998;
     set1998ModeEnabled(next);
@@ -286,7 +294,8 @@ useEffect(() => {
                   setSideOpen(false);
                 }}
               >
-                phi(music)
+                <span className="music-brand__wordmark">phi(music)</span>
+                <PhiMark className="music-brand__mark" />
               </Link>
             </div>
           ) : (
@@ -294,23 +303,33 @@ useEffect(() => {
           )}
 
           {isMusicMode ? (
-            <form
-              className="music-header-search titlebar-content"
-              onSubmit={(event) => {
-                event.preventDefault();
-                submitSearch();
-              }}
-            >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="music-header-search__icon" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search songs, albums, or artists..."
-                aria-label="Search music"
-              />
-              <button type="submit">Search</button>
-            </form>
+            <>
+              <form
+                className="music-header-search titlebar-content"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitSearch();
+                }}
+              >
+                <FontAwesomeIcon icon={faMagnifyingGlass} className="music-header-search__icon" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search songs, albums, or artists..."
+                  aria-label="Search music"
+                />
+                <button type="submit">Search</button>
+              </form>
+              <button
+                type="button"
+                className="music-header-search-trigger titlebar-content"
+                aria-label="Open music search"
+                onClick={() => setMobileSearchOpen(true)}
+              >
+                <FontAwesomeIcon icon={faMagnifyingGlass} />
+              </button>
+            </>
           ) : (
             <nav className="topnav titlebar-content">
               <Link to="/musicpl">Music</Link>

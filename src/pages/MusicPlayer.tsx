@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react"
 import { useNavigate } from "react-router-dom"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
@@ -13,6 +20,7 @@ import {
   faSpinner,
   faVolumeHigh,
   faVolumeXmark,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons"
 import { useMusicPlayer } from "../components/MusicPlayerContext"
 import type { MusicAlbumResult, MusicArtistResult, MusicSongResult, QueueTrack } from "../lib/musicTypes"
@@ -36,10 +44,8 @@ type ContextMenuState =
   | null
 
 type CoverTransitionState = {
-  previousSrc: string
-  previousAlt: string
-  currentSrc: string
-  currentAlt: string
+  previousTrack: QueueTrack
+  currentTrack: QueueTrack
   direction: "next" | "previous"
 }
 
@@ -89,6 +95,7 @@ export default function MusicPlayer({
   const navigate = useNavigate()
   const {
     searchQuery,
+    setSearchQuery,
     submitSearch,
     lookHarderSearch,
     searchResults,
@@ -123,6 +130,8 @@ export default function MusicPlayer({
     currentPlaybackMessage,
     queueDrawerOpen,
     setQueueDrawerOpen,
+    mobileSearchOpen,
+    setMobileSearchOpen,
     playTrack,
     togglePlayPause,
     playNext,
@@ -136,11 +145,24 @@ export default function MusicPlayer({
     setActiveQueueIndex,
   } = useMusicPlayer()
   const mainPaneRef = useRef<HTMLElement | null>(null)
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
   const coverTimeoutRef = useRef<number | null>(null)
+  const swipeTimeoutRef = useRef<number | null>(null)
+  const swipeStartRef = useRef<{
+    x: number
+    y: number
+    lastX: number
+    dragging: boolean
+  } | null>(null)
+  const suppressNextTrackTransitionRef = useRef(false)
   const previousTrackRef = useRef<QueueTrack | null>(null)
   const previousIndexRef = useRef<number | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
   const [coverTransition, setCoverTransition] = useState<CoverTransitionState | null>(null)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [swipeTransitioning, setSwipeTransitioning] = useState(false)
+  const [swipeActive, setSwipeActive] = useState(false)
+  const [mobileVolumeOpen, setMobileVolumeOpen] = useState(false)
   const showInitialSearchLoading = searchLoading && searchResults.length === 0
   const loadingState = getLoadingState(searchLoadingLabel)
 
@@ -203,6 +225,13 @@ export default function MusicPlayer({
   }, [contextMenu])
 
   useEffect(() => {
+    if (!mobileSearchOpen) return
+    mainPaneRef.current?.scrollTo({ top: 0 })
+    const frame = window.requestAnimationFrame(() => mobileSearchInputRef.current?.focus())
+    return () => window.cancelAnimationFrame(frame)
+  }, [mobileSearchOpen])
+
+  useEffect(() => {
     const previousTrack = previousTrackRef.current
     const previousIndex = previousIndexRef.current
 
@@ -217,22 +246,16 @@ export default function MusicPlayer({
       return
     }
 
-    if (
-      previousTrack &&
-      previousTrack.trackId !== currentTrack.trackId &&
-      previousTrack.coverUrl !== currentTrack.coverUrl
-    ) {
+    if (previousTrack && previousTrack.trackId !== currentTrack.trackId) {
       const direction = getCoverDirection(previousIndex, activeQueueIndex, queue.length)
-      if (direction) {
+      if (direction && !suppressNextTrackTransitionRef.current) {
         if (coverTimeoutRef.current) {
           window.clearTimeout(coverTimeoutRef.current)
         }
 
         setCoverTransition({
-          previousSrc: previousTrack.coverUrl,
-          previousAlt: previousTrack.albumTitle,
-          currentSrc: currentTrack.coverUrl,
-          currentAlt: currentTrack.albumTitle,
+          previousTrack,
+          currentTrack,
           direction,
         })
 
@@ -243,6 +266,7 @@ export default function MusicPlayer({
       } else {
         setCoverTransition(null)
       }
+      suppressNextTrackTransitionRef.current = false
     } else {
       setCoverTransition(null)
     }
@@ -256,8 +280,117 @@ export default function MusicPlayer({
       if (coverTimeoutRef.current) {
         window.clearTimeout(coverTimeoutRef.current)
       }
+      if (swipeTimeoutRef.current) {
+        window.clearTimeout(swipeTimeoutRef.current)
+      }
     }
   }, [])
+
+  const previousQueueTrack =
+    activeQueueIndex !== null && queue.length > 1
+      ? queue[(activeQueueIndex - 1 + queue.length) % queue.length]
+      : null
+  const nextQueueTrack =
+    activeQueueIndex !== null && queue.length > 1
+      ? queue[(activeQueueIndex + 1) % queue.length]
+      : null
+
+  const swipeStyle = (offset: string): CSSProperties => ({
+    transform: `translateX(${offset})`,
+    transition: swipeTransitioning ? "transform 180ms ease-out" : "none",
+  })
+
+  const resetSwipe = () => {
+    if (swipeTimeoutRef.current) window.clearTimeout(swipeTimeoutRef.current)
+    setSwipeTransitioning(true)
+    setSwipeOffset(0)
+    swipeTimeoutRef.current = window.setTimeout(() => {
+      setSwipeTransitioning(false)
+      setSwipeActive(false)
+      swipeTimeoutRef.current = null
+    }, 180)
+  }
+
+  const onTrackPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!currentTrack || queue.length <= 1 || coverTransition) return
+    if (swipeTimeoutRef.current) window.clearTimeout(swipeTimeoutRef.current)
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      lastX: event.clientX,
+      dragging: false,
+    }
+    setSwipeTransitioning(false)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const onTrackPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current
+    if (!start) return
+    const deltaX = event.clientX - start.x
+    const deltaY = event.clientY - start.y
+    start.lastX = event.clientX
+
+    if (!start.dragging) {
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        swipeStartRef.current = null
+        return
+      }
+      start.dragging = true
+      setSwipeActive(true)
+    }
+
+    event.preventDefault()
+    const width = event.currentTarget.clientWidth
+    setSwipeOffset(Math.max(-width, Math.min(width, deltaX)))
+  }
+
+  const onTrackPointerEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current
+    swipeStartRef.current = null
+    if (!start?.dragging) {
+      setSwipeActive(false)
+      return
+    }
+
+    const width = event.currentTarget.clientWidth
+    const deltaX = start.lastX - start.x
+    const threshold = Math.min(96, width * 0.22)
+    if (Math.abs(deltaX) < threshold) {
+      resetSwipe()
+      return
+    }
+
+    const direction = deltaX < 0 ? "next" : "previous"
+    setSwipeTransitioning(true)
+    setSwipeOffset(direction === "next" ? -width : width)
+    swipeTimeoutRef.current = window.setTimeout(() => {
+      suppressNextTrackTransitionRef.current = true
+      setSwipeTransitioning(false)
+      setSwipeOffset(0)
+      setSwipeActive(false)
+      swipeTimeoutRef.current = null
+      if (direction === "next") {
+        void playNext()
+      } else {
+        void playPrevious()
+      }
+    }, 180)
+  }
+
+  const onTrackPointerCancel = () => {
+    swipeStartRef.current = null
+    resetSwipe()
+  }
+
+  const currentTrackSubtitle = currentTrack
+    ? currentPlaybackStatus === "preparing"
+      ? "Preparing this track..."
+      : currentPlaybackStatus === "error"
+        ? currentPlaybackMessage || "Track unavailable"
+        : currentTrack.artist
+    : ""
 
   useEffect(() => {
     if (selectedAlbum || selectedArtist) return
@@ -323,26 +456,47 @@ export default function MusicPlayer({
         </aside>
 
         <section className="music-main-pane" ref={mainPaneRef}>
-          <div className="music-mobile-toolbar">
-            <button
-              type="button"
-              className="music-mobile-queue-toggle"
-              onClick={() => setQueueDrawerOpen(true)}
-            >
-              <FontAwesomeIcon icon={faBarsStaggered} />
-              Queue
-            </button>
-            {searchQuery.trim() ? (
-              <button
-                type="button"
-                className="music-mobile-search-button"
-                onClick={() => submitSearch()}
+          {mobileSearchOpen ? (
+            <section className="music-mobile-search-page" aria-labelledby="music-mobile-search-title">
+              <div className="music-mobile-search-page__header">
+                <div>
+                  <p className="music-kicker">Find something to play</p>
+                  <h1 id="music-mobile-search-title">Search</h1>
+                </div>
+                <button
+                  type="button"
+                  className="music-mobile-search-page__close"
+                  aria-label="Close search"
+                  onClick={() => setMobileSearchOpen(false)}
+                >
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
+              </div>
+              <form
+                className="music-mobile-search-form"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  submitSearch()
+                }}
               >
-                <FontAwesomeIcon icon={faMagnifyingGlass} />
-                Search now
-              </button>
-            ) : null}
-          </div>
+                <label htmlFor="music-mobile-search-input">Songs, albums, or artists</label>
+                <div className="music-mobile-search-form__row">
+                  <span className="music-mobile-search-form__input">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} />
+                    <input
+                      ref={mobileSearchInputRef}
+                      id="music-mobile-search-input"
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="What do you want to hear?"
+                    />
+                  </span>
+                  <button type="submit">Search</button>
+                </div>
+              </form>
+            </section>
+          ) : null}
 
           {selectedArtist ? (
             <section className="music-artist-view">
@@ -511,14 +665,11 @@ export default function MusicPlayer({
           ) : (
             <section className="music-results-view">
               <div className="music-results-header">
-                <div>
-                  <h1 className="music-results-title">Search Music</h1>
-                  <p className="music-results-subtitle">
-                    {searchQuery.trim()
-                      ? `Found ${numFound.toLocaleString()} results for "${searchQuery.trim()}"`
-                      : "Start typing in the header to search for songs, albums, or artists."}
-                  </p>
-                </div>
+                <p className="music-results-subtitle music-results-count">
+                  {searchQuery.trim()
+                    ? `${numFound.toLocaleString()} results`
+                    : "Search for songs, albums, or artists."}
+                </p>
               </div>
 
               {showInitialSearchLoading ? (
@@ -771,41 +922,52 @@ export default function MusicPlayer({
       ) : null}
 
       <footer className="music-bottom-bar">
-        <div className="music-bottom-track">
+        <div
+          className={`music-bottom-track ${swipeActive ? "is-swiping" : ""}`}
+          onPointerDown={onTrackPointerDown}
+          onPointerMove={onTrackPointerMove}
+          onPointerUp={onTrackPointerEnd}
+          onPointerCancel={onTrackPointerCancel}
+        >
           {currentTrack ? (
             <>
-              <div className="music-bottom-cover-stage">
-                {coverTransition ? (
-                  <>
-                    <img
-                      src={coverTransition.previousSrc}
-                      alt={coverTransition.previousAlt}
-                      className={`music-bottom-cover music-bottom-cover--previous music-bottom-cover--dir-${coverTransition.direction}`}
-                    />
-                    <img
-                      src={coverTransition.currentSrc}
-                      alt={coverTransition.currentAlt}
-                      className={`music-bottom-cover music-bottom-cover--incoming music-bottom-cover--dir-${coverTransition.direction}`}
-                    />
-                  </>
-                ) : (
-                  <img
-                    src={currentTrack.coverUrl}
-                    alt={currentTrack.albumTitle}
-                    className="music-bottom-cover"
+              {!coverTransition && previousQueueTrack ? (
+                <BottomTrackTile
+                  track={previousQueueTrack}
+                  ariaHidden
+                  className="music-bottom-track-tile--swipe-preview music-bottom-track-tile--swipe-previous"
+                  style={swipeStyle(`calc(-100% + ${swipeOffset}px)`)}
+                />
+              ) : null}
+              {!coverTransition && nextQueueTrack ? (
+                <BottomTrackTile
+                  track={nextQueueTrack}
+                  ariaHidden
+                  className="music-bottom-track-tile--swipe-preview music-bottom-track-tile--swipe-next"
+                  style={swipeStyle(`calc(100% + ${swipeOffset}px)`)}
+                />
+              ) : null}
+              {coverTransition ? (
+                <>
+                  <BottomTrackTile
+                    track={coverTransition.previousTrack}
+                    ariaHidden
+                    className={`music-bottom-track-tile--previous music-bottom-track-tile--dir-${coverTransition.direction}`}
                   />
-                )}
-              </div>
-              <div className="music-bottom-copy">
-                <p className="music-bottom-title">{currentTrack.title}</p>
-                <p className="music-bottom-artist">
-                  {currentPlaybackStatus === "preparing"
-                    ? "Preparing this track..."
-                    : currentPlaybackStatus === "error"
-                      ? currentPlaybackMessage || "Track unavailable"
-                      : currentTrack.artist}
-                </p>
-              </div>
+                  <BottomTrackTile
+                    track={coverTransition.currentTrack}
+                    subtitle={currentTrackSubtitle}
+                    className={`music-bottom-track-tile--incoming music-bottom-track-tile--dir-${coverTransition.direction}`}
+                  />
+                </>
+              ) : (
+                <BottomTrackTile
+                  track={currentTrack}
+                  subtitle={currentTrackSubtitle}
+                  className="music-bottom-track-tile--current"
+                  style={swipeStyle(`${swipeOffset}px`)}
+                />
+              )}
             </>
           ) : (
             <div className="music-bottom-placeholder">Pick a track to start playing</div>
@@ -817,6 +979,7 @@ export default function MusicPlayer({
             <button
               type="button"
               className="music-icon-button"
+              aria-label="Previous track"
               onClick={() => void playPrevious()}
               disabled={!queue.length}
             >
@@ -825,6 +988,7 @@ export default function MusicPlayer({
             <button
               type="button"
               className="music-icon-button music-icon-button--primary"
+              aria-label={isPlaying ? "Pause" : "Play"}
               onClick={() => void togglePlayPause()}
               disabled={!queue.length}
             >
@@ -833,10 +997,31 @@ export default function MusicPlayer({
             <button
               type="button"
               className="music-icon-button"
+              aria-label="Next track"
               onClick={() => void playNext()}
               disabled={!queue.length}
             >
               <FontAwesomeIcon icon={faForwardStep} />
+            </button>
+            <button
+              type="button"
+              className="music-icon-button music-mobile-control"
+              aria-label={mobileVolumeOpen ? "Close volume control" : "Open volume control"}
+              aria-expanded={mobileVolumeOpen}
+              onClick={() => setMobileVolumeOpen((open) => !open)}
+            >
+              <FontAwesomeIcon icon={volume <= 0.001 ? faVolumeXmark : faVolumeHigh} />
+            </button>
+            <button
+              type="button"
+              className="music-icon-button music-mobile-control"
+              aria-label="Open queue"
+              onClick={() => {
+                setMobileVolumeOpen(false)
+                setQueueDrawerOpen(true)
+              }}
+            >
+              <FontAwesomeIcon icon={faBarsStaggered} />
             </button>
           </div>
 
@@ -868,8 +1053,60 @@ export default function MusicPlayer({
             onChange={(event) => setVolume(Number(event.target.value))}
           />
         </div>
+
+        {mobileVolumeOpen ? (
+          <div className="music-mobile-volume-panel">
+            <div className="music-mobile-volume-panel__label">
+              <span>Volume</span>
+              <strong>{Math.round(volume * 100)}%</strong>
+            </div>
+            <input
+              className="music-mobile-volume-slider"
+              aria-label="Volume"
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(event) => setVolume(Number(event.target.value))}
+            />
+          </div>
+        ) : null}
       </footer>
     </main>
+  )
+}
+
+function BottomTrackTile({
+  track,
+  subtitle = track.artist,
+  className = "",
+  style,
+  ariaHidden = false,
+}: {
+  track: QueueTrack
+  subtitle?: string
+  className?: string
+  style?: CSSProperties
+  ariaHidden?: boolean
+}) {
+  return (
+    <div
+      className={`music-bottom-track-tile ${className}`}
+      style={style}
+      aria-hidden={ariaHidden || undefined}
+    >
+      <img
+        src={track.coverUrl}
+        alt={track.albumTitle}
+        className="music-bottom-cover"
+        draggable={false}
+      />
+      <div className="music-bottom-copy">
+        <p className="music-bottom-title">{track.title}</p>
+        <p className="music-bottom-artist">{subtitle}</p>
+      </div>
+    </div>
   )
 }
 

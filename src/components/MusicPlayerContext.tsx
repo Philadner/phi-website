@@ -90,6 +90,8 @@ interface MusicPlayerContextValue {
   currentPlaybackMessage: string | null
   queueDrawerOpen: boolean
   setQueueDrawerOpen: (open: boolean) => void
+  mobileSearchOpen: boolean
+  setMobileSearchOpen: (open: boolean) => void
   playTrack: (track: QueueTrack, queueSeed?: QueueTrack[]) => Promise<void>
   togglePlayPause: () => Promise<void>
   playNext: () => Promise<void>
@@ -246,6 +248,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [currentPlaybackStatus, setCurrentPlaybackStatus] = useState<"idle" | "preparing" | "ready" | "error">("idle")
   const [currentPlaybackMessage, setCurrentPlaybackMessage] = useState<string | null>(null)
   const [queueDrawerOpen, setQueueDrawerOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const preloadAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -581,6 +584,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setQueue(nextQueue)
     setActiveQueueIndexState(index)
     setQueueDrawerOpen(false)
+    setMobileSearchOpen(false)
   }, [])
 
   const playTrack = useCallback(
@@ -725,6 +729,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const goToMusicHome = useCallback(() => {
     searchControllerRef.current?.abort()
+    setMobileSearchOpen(false)
     setSearchQuery("")
     setSearchResults([])
     setNumFound(0)
@@ -755,6 +760,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentPlaybackStatus("idle")
     setCurrentPlaybackMessage(null)
     setQueueDrawerOpen(false)
+    setMobileSearchOpen(false)
     setSearchLoading(false)
     setSearchLoadingMore(false)
     setSearchLoadingLabel("Searching YouTube Music first...")
@@ -1019,6 +1025,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     const nextPage = 1
+    setMobileSearchOpen(false)
     setSearchPage(nextPage)
     setSearchHarder(false)
     clearSelectedAlbum()
@@ -1084,6 +1091,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       currentPlaybackMessage,
       queueDrawerOpen,
       setQueueDrawerOpen,
+      mobileSearchOpen,
+      setMobileSearchOpen,
       playTrack,
       togglePlayPause,
       playNext,
@@ -1115,7 +1124,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       hasMoreSearch,
       isPlaying,
       loadMoreSearch,
+      lookHarderSearch,
       moveQueueItem,
+      mobileSearchOpen,
       numFound,
       playNext,
       playPrevious,

@@ -402,6 +402,11 @@ body.loaded.body--music-lock {
   cursor: pointer;
 }
 
+.music-header-search-trigger,
+.music-brand__mark {
+  display: none;
+}
+
 .music-brand {
   display: flex;
   align-items: center;
@@ -419,15 +424,54 @@ body.loaded.body--music-lock {
 }
 
 /* Responsive: collapse nav to burger on small screens if you want */
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .site-header__inner {
     grid-template-columns: auto 1fr auto;
   }
   .site-header .topnav {
     display: none; /* you already have a sidebar */
   }
+  .site-header--music .site-header__inner {
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 0 12px;
+  }
   .music-header-search {
-    width: 100%;
+    display: none;
+  }
+  .music-header-search-trigger {
+    grid-column: 2;
+    justify-self: end;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border-radius: 999px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .music-brand__wordmark {
+    display: none;
+  }
+  .music-brand__mark {
+    display: block;
+    width: 34px;
+    height: 42px;
+    filter: drop-shadow(0 0 7px rgba(246, 202, 69, 0.56));
+  }
+  .music-brand__mark path {
+    fill: none;
+    stroke: #f6ca45;
+    stroke-width: 2;
+  }
+  .music-brand .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .header-actions {
     grid-column: 3;
