@@ -1,0 +1,987 @@
+.dating-game {
+  --dg-active: #ffe66f;
+  position: relative;
+  min-height: calc(100vh - var(--header-height, 0px));
+  overflow: hidden;
+  color: #fffaf0;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(255, 83, 137, 0.14), transparent 26rem),
+    radial-gradient(circle at 85% 75%, rgba(92, 130, 255, 0.13), transparent 28rem),
+    #07070b;
+  font-family: "Lucida Console", "Courier New", monospace;
+  isolation: isolate;
+}
+
+.dating-game *,
+.dating-game *::before,
+.dating-game *::after {
+  box-sizing: border-box;
+}
+
+.dating-game button,
+.dating-game input {
+  font: inherit;
+}
+
+.dating-game button {
+  color: inherit;
+}
+
+.dating-game__noise {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.17;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 4px 4px;
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+.dating-game__frame {
+  width: min(1180px, calc(100% - 32px));
+  min-height: calc(100vh - 88px);
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+
+.dating-game__masthead {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 72px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dating-game__brand,
+.dating-game__restart {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  letter-spacing: inherit;
+}
+
+.dating-game__brand {
+  justify-self: start;
+  padding: 12px 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.dating-game__brand span {
+  margin-right: 0.65rem;
+  color: #07070b;
+  background: #ffe66f;
+  padding: 0.32rem 0.42rem;
+  box-shadow: 3px 3px 0 #f14b80;
+}
+
+.dating-game__status {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+.dating-game__status-light {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: #70efa7;
+  box-shadow: 0 0 12px #70efa7;
+  animation: dating-status-blink 2.2s steps(2, jump-none) infinite;
+}
+
+.dating-game__restart {
+  justify-self: end;
+  padding: 10px 0 10px 20px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.7rem;
+}
+
+.dating-game__restart:hover,
+.dating-game__brand:hover {
+  color: #fff;
+}
+
+.dating-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(740px, calc(100vh - 150px));
+  padding: 68px 16px;
+  text-align: center;
+}
+
+.dating-title__kicker,
+.dating-hub__kicker,
+.dating-ending__kicker {
+  margin: 0 0 1.5rem;
+  color: #ff6f9f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.23em;
+  text-transform: uppercase;
+}
+
+.dating-title h1 {
+  position: relative;
+  margin: 0;
+  color: #fff;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(5.2rem, 17vw, 12.5rem);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.69;
+  text-shadow:
+    5px 5px 0 #f14b80,
+    -5px -5px 0 #5f80ff;
+  transform: skewY(-3deg);
+}
+
+.dating-title h1 span {
+  display: block;
+  color: #ffe66f;
+  font-size: 0.72em;
+  letter-spacing: 0.19em;
+  transform: translateX(0.08em);
+}
+
+.dating-title__warning {
+  margin: 2.4rem 0 0;
+  padding: 0.5rem 0.75rem;
+  color: #07070b;
+  background: #ffe66f;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  transform: rotate(-1deg);
+}
+
+.dating-title__intro {
+  max-width: 660px;
+  margin: 2rem auto;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  line-height: 1.7;
+}
+
+.dating-title__start {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #ffe66f;
+  padding: 1rem 1.45rem;
+  color: #07070b;
+  background: #ffe66f;
+  box-shadow: 7px 7px 0 #f14b80;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.dating-title__start:hover {
+  box-shadow: 3px 3px 0 #f14b80;
+  transform: translate(4px, 4px);
+}
+
+.dating-title__controls {
+  margin-top: 2.2rem;
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+}
+
+.dating-name-card {
+  width: min(760px, 100%);
+  margin: clamp(70px, 12vh, 130px) auto;
+  border: 1px solid rgba(255, 230, 111, 0.55);
+  padding: clamp(28px, 6vw, 64px);
+  background:
+    linear-gradient(135deg, rgba(255, 230, 111, 0.07), transparent 45%),
+    #0e0e15;
+  box-shadow: 12px 12px 0 rgba(241, 75, 128, 0.32);
+}
+
+.dating-name-card__speaker {
+  display: inline-block;
+  margin: 0;
+  padding: 0.4rem 0.55rem;
+  color: #09090d;
+  background: #ffe66f;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.dating-name-card h1 {
+  margin: 1.5rem 0 2.4rem;
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 1.05;
+}
+
+.dating-name-card form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0;
+}
+
+.dating-name-card label {
+  grid-column: 1 / -1;
+  margin-bottom: 0.65rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dating-name-card input {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-right: 0;
+  border-radius: 0;
+  padding: 1rem 1.1rem;
+  color: #fff;
+  outline: 0;
+  background: #07070b;
+}
+
+.dating-name-card input:focus {
+  border-color: #ffe66f;
+  box-shadow: inset 0 0 0 1px #ffe66f;
+}
+
+.dating-name-card form button {
+  border: 1px solid #ffe66f;
+  padding: 0.9rem 1.2rem;
+  color: #08080d;
+  background: #ffe66f;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dating-dialogue {
+  display: grid;
+  grid-template-rows: auto minmax(245px, 1fr) auto auto;
+  min-height: min(720px, calc(100vh - 120px));
+  padding-top: 24px;
+  cursor: pointer;
+}
+
+.dating-dialogue__scene {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px 16px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.64rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.dating-dialogue__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: 0;
+  background:
+    linear-gradient(transparent 97%, rgba(255, 255, 255, 0.07) 97%),
+    linear-gradient(90deg, transparent 97%, rgba(255, 255, 255, 0.07) 97%),
+    radial-gradient(circle at center, color-mix(in srgb, var(--dg-active) 13%, transparent), transparent 44%),
+    #0b0b11;
+  background-size: 100% 32px, 32px 100%, auto, auto;
+}
+
+.dating-dialogue__character {
+  position: absolute;
+  inset: 12px 0 0;
+  width: 100%;
+  height: calc(100% - 12px);
+  object-fit: contain;
+  object-position: center bottom;
+  filter:
+    drop-shadow(0 0 30px color-mix(in srgb, var(--dg-active) 35%, transparent))
+    drop-shadow(10px 12px 0 rgba(0, 0, 0, 0.22));
+}
+
+.dating-orbit {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border: 1px solid color-mix(in srgb, var(--dg-active) 36%, transparent);
+  border-radius: 50%;
+  animation: dating-orbit-spin 14s linear infinite;
+}
+
+.dating-orbit::before,
+.dating-orbit::after {
+  position: absolute;
+  inset: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  content: "";
+}
+
+.dating-orbit::after {
+  inset: 64px;
+  background: var(--dg-active);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--dg-active) 60%, transparent);
+}
+
+.dating-orbit span {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dg-active);
+}
+
+.dating-orbit span:nth-child(1) { top: -5px; left: 50%; }
+.dating-orbit span:nth-child(2) { right: 8px; bottom: 28px; }
+.dating-orbit span:nth-child(3) { left: 8px; bottom: 28px; }
+
+.dating-heart {
+  color: #ff3f65;
+  font-family: Arial, sans-serif;
+  font-size: clamp(8rem, 22vw, 15rem);
+  line-height: 1;
+  text-shadow:
+    0 0 25px rgba(255, 63, 101, 0.8),
+    0 0 100px rgba(255, 63, 101, 0.4);
+  animation: dating-heartbeat 0.78s ease-in-out infinite;
+}
+
+.dating-glitch {
+  position: relative;
+  color: #ff416e;
+  font-family: Impact, sans-serif;
+  font-size: clamp(2rem, 8vw, 6rem);
+  letter-spacing: 0.07em;
+  text-shadow: 5px 0 #33d9ff, -5px 0 #ffe66f;
+  animation: dating-glitch 150ms steps(2) infinite;
+}
+
+.dating-dialogue--location .dating-dialogue__stage::after {
+  color: #ffe66f;
+  content: "◆  ◆  ◆";
+  font-size: clamp(2rem, 8vw, 5rem);
+  letter-spacing: 0.7em;
+  text-shadow: 0 0 25px rgba(255, 230, 111, 0.48);
+}
+
+.dating-dialogue--location .dating-orbit {
+  display: none;
+}
+
+.dating-dialogue__box {
+  position: relative;
+  min-height: 190px;
+  border: 2px solid var(--dg-active);
+  padding: 26px 90px 28px 30px;
+  background: rgba(5, 5, 9, 0.98);
+  box-shadow:
+    6px 6px 0 color-mix(in srgb, var(--dg-active) 35%, transparent),
+    inset 0 0 36px rgba(255, 255, 255, 0.018);
+}
+
+.dating-dialogue__speaker {
+  display: inline-block;
+  margin: 0 0 0.85rem;
+  padding: 0.3rem 0.45rem;
+  color: #08080d;
+  background: var(--dg-active);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.dating-dialogue__line {
+  min-height: 2.6em;
+  margin: 0;
+  color: #fff;
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(1.15rem, 2.7vw, 1.8rem);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.dating-dialogue__cursor {
+  color: var(--dg-active);
+  animation: dating-cursor 0.65s steps(2, jump-none) infinite;
+}
+
+.dating-dialogue__advance {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  border: 0;
+  padding: 0.5rem;
+  color: var(--dg-active);
+  background: transparent;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.dating-choices {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  cursor: default;
+}
+
+.dating-choices button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 15px 18px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.035);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.dating-choices button:hover,
+.dating-choices button:focus-visible {
+  border-color: var(--dg-active);
+  outline: 0;
+  background: color-mix(in srgb, var(--dg-active) 9%, transparent);
+  transform: translateX(5px);
+}
+
+.dating-choices__number {
+  color: var(--dg-active);
+  font-size: 0.65rem;
+}
+
+.dating-choices strong,
+.dating-choices small {
+  display: block;
+}
+
+.dating-choices strong {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 0.96rem;
+}
+
+.dating-choices small {
+  margin-top: 0.3rem;
+  color: rgba(255, 255, 255, 0.47);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 0.76rem;
+}
+
+.dating-choices__arrow {
+  color: var(--dg-active);
+  font-size: 1.3rem;
+}
+
+.dating-hub {
+  padding: clamp(40px, 8vw, 84px) 0;
+}
+
+.dating-hub__intro {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: end;
+  margin-bottom: 34px;
+}
+
+.dating-hub__intro h1 {
+  margin: 0.3rem 0 0.8rem;
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+}
+
+.dating-hub__intro > div > p:last-child {
+  max-width: 650px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: Inter, Arial, sans-serif;
+  line-height: 1.6;
+}
+
+.dating-hub__kicker {
+  margin-bottom: 0.7rem;
+}
+
+.dating-hub__counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  border-right: 3px solid #ffe66f;
+  padding-right: 1rem;
+  text-align: right;
+}
+
+.dating-hub__counter strong {
+  color: #ffe66f;
+  font-family: Impact, sans-serif;
+  font-size: 3.5rem;
+  line-height: 0.9;
+}
+
+.dating-hub__counter span {
+  margin-top: 0.4rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+}
+
+.dating-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dating-route-card {
+  --route-colour: #ffe66f;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 72px 1fr;
+  gap: 16px;
+  min-height: 210px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 22px;
+  color: #fff;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--route-colour) 10%, transparent), transparent 55%),
+    #0d0d13;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.dating-route-card:last-child {
+  grid-column: 1 / -1;
+}
+
+.dating-route-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--route-colour);
+  content: "";
+  transform: scaleY(0.18);
+  transform-origin: bottom;
+  transition: transform 180ms ease;
+}
+
+.dating-route-card:hover:not(:disabled),
+.dating-route-card:focus-visible:not(:disabled) {
+  border-color: var(--route-colour);
+  outline: 0;
+  transform: translateY(-3px);
+}
+
+.dating-route-card:hover:not(:disabled)::after {
+  transform: scaleY(1);
+}
+
+.dating-route-card:disabled {
+  cursor: default;
+}
+
+.dating-route-card--complete {
+  opacity: 0.64;
+}
+
+.dating-route-card__index {
+  color: color-mix(in srgb, var(--route-colour) 72%, white);
+  font-size: 0.63rem;
+}
+
+.dating-route-card__portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--route-colour);
+  color: #09090d;
+  background: var(--route-colour);
+  font-family: Impact, sans-serif;
+  font-size: 2.8rem;
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--route-colour) 25%, transparent);
+}
+
+.dating-route-card__portrait--photo {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--route-colour) 64%, white), var(--route-colour));
+}
+
+.dating-route-card__portrait--photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.22));
+}
+
+.dating-route-card__copy strong,
+.dating-route-card__copy small,
+.dating-route-card__copy em {
+  display: block;
+}
+
+.dating-route-card__copy strong {
+  margin-bottom: 0.55rem;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 1.25rem;
+}
+
+.dating-route-card__copy small {
+  color: rgba(255, 255, 255, 0.52);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.dating-route-card__copy em {
+  margin-top: 0.75rem;
+  color: var(--route-colour);
+  font-size: 0.65rem;
+  font-style: normal;
+}
+
+.dating-route-card__footer {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: end;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 13px;
+  color: rgba(255, 255, 255, 0.47);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dating-route-card__pips {
+  display: flex;
+  gap: 5px;
+}
+
+.dating-route-card__pips i {
+  display: block;
+  width: 14px;
+  height: 5px;
+  border: 1px solid var(--route-colour);
+}
+
+.dating-route-card__pips i.is-filled {
+  background: var(--route-colour);
+}
+
+.dating-hub__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  margin-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 22px;
+}
+
+.dating-hub__footer p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.64rem;
+  line-height: 1.5;
+}
+
+.dating-hub__footer p span {
+  color: #ff6f9f;
+}
+
+.dating-hub__footer button,
+.dating-ending > button {
+  border: 1px solid #ffe66f;
+  padding: 0.9rem 1.1rem;
+  color: #08080d;
+  background: #ffe66f;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.dating-hub__footer button:disabled {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.32);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.dating-hub__credits {
+  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.58rem;
+  line-height: 1.65;
+}
+
+.dating-hub__credits summary {
+  width: fit-content;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dating-hub__credits p {
+  max-width: 900px;
+  margin: 8px 0 0;
+}
+
+.dating-hub__credits a {
+  color: rgba(255, 230, 111, 0.72);
+  text-underline-offset: 2px;
+}
+
+.dating-hub__credits a:hover,
+.dating-hub__credits a:focus-visible {
+  color: #ffe66f;
+}
+
+.dating-ending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(780px, calc(100vh - 120px));
+  padding: 72px 0;
+  text-align: center;
+}
+
+.dating-ending__kicker {
+  margin-bottom: 0.7rem;
+}
+
+.dating-ending__heart {
+  color: #ff4f7a;
+  font-family: Arial, sans-serif;
+  font-size: 5rem;
+  text-shadow: 0 0 35px rgba(255, 79, 122, 0.6);
+  animation: dating-heartbeat 1s ease-in-out infinite;
+}
+
+.dating-ending h1 {
+  max-width: 900px;
+  margin: 0.3rem auto 1.2rem;
+  font-family: Impact, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(3.2rem, 10vw, 7rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.dating-ending > p:not(.dating-ending__kicker) {
+  max-width: 760px;
+  margin: 0 auto 2.4rem;
+  color: rgba(255, 255, 255, 0.66);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.dating-ending__rollcall {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.dating-ending__rollcall div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  align-items: center;
+  min-width: 190px;
+  border: 1px solid color-mix(in srgb, var(--route-colour) 55%, transparent);
+  padding: 10px;
+  background: color-mix(in srgb, var(--route-colour) 7%, transparent);
+  text-align: left;
+}
+
+.dating-ending__rollcall div > span {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #08080d;
+  background: var(--route-colour);
+  font-weight: 900;
+}
+
+.dating-ending__rollcall strong {
+  font-family: Inter, Arial, sans-serif;
+  font-size: 0.76rem;
+}
+
+.dating-ending__rollcall small {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.58rem;
+}
+
+@keyframes dating-status-blink {
+  50% { opacity: 0.35; }
+}
+
+@keyframes dating-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dating-heartbeat {
+  0%, 100% { transform: scale(0.86); }
+  15% { transform: scale(1); }
+  28% { transform: scale(0.9); }
+  42% { transform: scale(1.08); }
+}
+
+@keyframes dating-glitch {
+  0% { transform: translate(0); clip-path: inset(0 0 10% 0); }
+  33% { transform: translate(7px, -2px); clip-path: inset(24% 0 45% 0); }
+  66% { transform: translate(-5px, 3px); clip-path: inset(62% 0 8% 0); }
+}
+
+@keyframes dating-cursor {
+  50% { opacity: 0; }
+}
+
+@media (max-width: 760px) {
+  .dating-game__frame {
+    width: min(100% - 22px, 1180px);
+  }
+
+  .dating-game__masthead {
+    grid-template-columns: 1fr auto;
+    min-height: 60px;
+  }
+
+  .dating-game__status {
+    display: none;
+  }
+
+  .dating-title {
+    min-height: calc(100vh - 130px);
+    padding: 52px 8px;
+  }
+
+  .dating-title h1 {
+    font-size: clamp(4.4rem, 24vw, 8rem);
+  }
+
+  .dating-name-card {
+    margin-top: 48px;
+  }
+
+  .dating-name-card form {
+    grid-template-columns: 1fr;
+  }
+
+  .dating-name-card input {
+    border-right: 1px solid rgba(255, 255, 255, 0.28);
+  }
+
+  .dating-dialogue {
+    grid-template-rows: auto minmax(210px, 34vh) auto auto;
+    min-height: calc(100vh - 90px);
+  }
+
+  .dating-dialogue__character {
+    inset: 8px 0 0;
+    height: calc(100% - 8px);
+  }
+
+  .dating-dialogue__box {
+    min-height: 210px;
+    padding: 24px 22px 56px;
+  }
+
+  .dating-dialogue__advance {
+    right: 14px;
+    bottom: 12px;
+  }
+
+  .dating-choices button {
+    gap: 11px;
+    padding: 13px 12px;
+  }
+
+  .dating-hub__intro {
+    grid-template-columns: 1fr;
+  }
+
+  .dating-hub__counter {
+    display: none;
+  }
+
+  .dating-hub__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dating-route-card:last-child {
+    grid-column: auto;
+  }
+
+  .dating-route-card {
+    grid-template-columns: auto 54px 1fr;
+    min-height: 200px;
+    padding: 17px;
+  }
+
+  .dating-route-card__portrait {
+    width: 54px;
+    height: 54px;
+    font-size: 2.1rem;
+  }
+
+  .dating-hub__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dating-ending__rollcall div {
+    min-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dating-game *,
+  .dating-game *::before,
+  .dating-game *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
