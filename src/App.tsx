@@ -18,6 +18,7 @@ import AboutMusicPL from './pages/AboutMusicPlayer';
 import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
+import DatingGame from './pages/DatingGame';
 import Toggle1998 from './pages/Toggle1998';
 import Presentation from './pages/Presentation';
 import Remote from './pages/Remote';
@@ -448,6 +449,7 @@ useEffect(() => {
             <Route path="/wp-admin" element={<Wpadmin />} />
             <Route path="/news" element={<News />} />
             <Route path="/jay" element={<JayGame />} />
+            <Route path="/dating" element={<DatingGame />} />
             <Route path="/presentation" element={<Presentation />} />
             <Route path="/remote" element={<Remote />} />
             <Route path="/dylan" element={<DylanTightness />} />
