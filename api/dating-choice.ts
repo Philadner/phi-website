@@ -11,6 +11,7 @@ const QUESTION_OPTIONS = {
   "intro:oscar:tree": ["slowly", "quickly", "what-to"],
   "intro:oscar:artist": ["write-it-down", "leave"],
   "intro:phil:placeholder": ["continue"],
+  "intro:phil:dorm": ["okay", "crush", "obsessed"],
   "intro:dylan:placeholder": ["continue"],
   "intro:dylan:car": ["save", "leave", "join"],
   "intro:benjamin:direction": ["left", "right", "rebuke"],

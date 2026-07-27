@@ -103,7 +103,7 @@ type Ending = {
 const CHARACTER_ORDER: CharacterId[] = ["jay", "phil", "dylan", "oscar", "benjamin"];
 const INTRODUCTION_TITLES: Record<CharacterId, string> = {
   jay: "Jay · Scratching therapy",
-  phil: "Phil · Introduction placeholder",
+  phil: "Phil · Dorm hall disaster",
   dylan: "Dylan · Red light rescue",
   oscar: "Oscar · In the tree",
   benjamin: "Bibi · Ice cream interrogation",
@@ -956,6 +956,76 @@ export default function DatingGame() {
     );
   };
 
+  const finishPhilIntroductionBranch = (choice: "okay" | "crush" | "obsessed", branchLines: Line[]) => {
+    recordSilently("intro:phil:dorm", choice);
+    finishIntroduction("phil", [
+      ...branchLines,
+      { speaker: playerName, text: "Sure." },
+      { text: "You pick up the posters." },
+      { text: "Each one is Jay in a different position. Weird.", portraitImage: PHIL_IMAGE_URLS.default },
+      { speaker: playerName, text: "So you REALLY like Jay." },
+      { speaker: "Phil", text: "PLEEASE don't tell him." },
+      { speaker: playerName, text: "Oookayyyy, sure." },
+      { speaker: "Phil", text: "That didn't sound convincing." },
+      { speaker: "Phil", text: "Well, you know what? If it's gonna get out, it's gonna get out with a bang." },
+      { speaker: "Phil", text: "Meet me tomorrow, in the bushes outside Jay's house." },
+      { text: "The door slams shut. Five seconds later, frantic clapping begins." },
+    ]);
+  };
+
+  const startPhilIntroduction = () => {
+    const label = INTRODUCTION_TITLES.phil;
+    play(
+      label,
+      [
+        {
+          text: "You're walking through the dorm halls and see Phil stumbling through his doorway, making out with a cardboard cutout of Jay.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        {
+          text: "His backpack is full of posters with AI-generated Jay nudes made with Dola AI. You hear him murmuring.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        { speaker: "Phil", text: "Oh fuck yes, mm, JAY—oh my gooood.", portraitImage: PHIL_IMAGE_URLS.floor },
+        {
+          text: "He falls down, making the entire building shake a considerable amount.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        { text: "You run up to him.", portraitImage: PHIL_IMAGE_URLS.floor },
+      ],
+      () =>
+        showChoices(label, { text: "Phil looks up from the floor." }, [
+          {
+            label: "Are you okay??",
+            action: () =>
+              finishPhilIntroductionBranch("okay", [
+                { speaker: "Phil", text: "Yeah, I'm… fine." },
+                { speaker: "Phil", text: "Can you help me pick up these posters, please?" },
+              ]),
+          },
+          {
+            label: "So who's your crush?",
+            action: () =>
+              finishPhilIntroductionBranch("crush", [
+                { speaker: "Phil", text: "…" },
+                { speaker: "Phil", text: "Funny." },
+                { speaker: "Phil", text: "Anyway, can you help me pick up these posters, please?" },
+              ]),
+          },
+          {
+            label: "You're a bit obsessed.",
+            action: () =>
+              finishPhilIntroductionBranch("obsessed", [
+                { speaker: "Phil", text: "And grass is fucking green." },
+                { speaker: "Phil", text: "YES, I'M OBSESSED.", portraitImage: PHIL_IMAGE_URLS.shocked },
+                { text: "You stand there in shock. Phil has gotten right up in your face.", portraitImage: PHIL_IMAGE_URLS.shocked },
+                { speaker: "Phil", text: "Can you help me pick up these posters, please?", portraitImage: PHIL_IMAGE_URLS.shocked },
+              ]),
+          },
+        ]),
+    );
+  };
+
   const startOscarIntroduction = () => {
     const label = INTRODUCTION_TITLES.oscar;
     play(
@@ -1268,38 +1338,13 @@ export default function DatingGame() {
     );
   };
 
-  const startPlaceholderIntroduction = (id: "phil") => {
-    const character = cast[id];
-    const flavour = "For now, imagine I arrived with suspiciously bad hot chocolate.";
-    const question = `intro:${id}:placeholder`;
-    const label = INTRODUCTION_TITLES[id];
-
-    play(
-      label,
-      [
-        { text: `PLACEHOLDER: ${character.name}'s proper introduction has not been written yet.`, effect: "location" },
-        { speaker: character.name, text: flavour },
-      ],
-      () =>
-        showChoices(label, { text: "This placeholder still counts as meeting them." }, [
-          {
-            label: `Meet ${character.name} (placeholder)`,
-            action: () => {
-              recordSilently(question, "continue");
-              finishIntroduction(id, [{ text: `${character.name}'s finished introduction will replace this scene later.` }]);
-            },
-          },
-        ]),
-    );
-  };
-
   const startIntroduction = (id: CharacterId) => {
     if (metCharacters.includes(id)) return;
     if (id === "jay") return startJayIntroduction();
+    if (id === "phil") return startPhilIntroduction();
     if (id === "dylan") return startDylanIntroduction();
     if (id === "oscar") return startOscarIntroduction();
-    if (id === "benjamin") return startBibiIntroduction();
-    return startPlaceholderIntroduction(id);
+    return startBibiIntroduction();
   };
 
   const submitName = (event: FormEvent<HTMLFormElement>) => {
@@ -1872,7 +1917,7 @@ export default function DatingGame() {
                 <span>◆</span>{" "}
                 {introductionsComplete
                   ? "Feelings are tracked privately. Dialogue choices are tallied anonymously."
-                  : "Meet everybody first. Phil currently uses a clearly marked placeholder."}
+                  : "Meet everybody first. Every introduction is now fully playable."}
               </p>
               <button
                 type="button"
