@@ -783,6 +783,7 @@ export default function DatingGame() {
   const introductionsComplete = metCharacters.length === CHARACTER_ORDER.length;
   const morseDecodedText = MORSE_MESSAGE.slice(0, morseCharacterIndex).trimEnd();
   const morseUnlocked = morseDecodedText.startsWith(MORSE_UNLOCK_TEXT);
+  const morseComplete = morseCharacterIndex >= MORSE_MESSAGE.length;
 
   const play = useCallback((label: string, nextLines: Line[], after?: () => void) => {
     setSceneLabel(label);
@@ -1157,7 +1158,7 @@ export default function DatingGame() {
   };
 
   const submitMorseSymbol = (symbol: "." | "-") => {
-    if (morseUnlocked || morseCharacterIndex >= MORSE_MESSAGE.length) return;
+    if (morseComplete) return;
     const currentCharacter = MORSE_MESSAGE[morseCharacterIndex];
     const expectedCode = MORSE_CODE[currentCharacter];
 
@@ -1185,7 +1186,7 @@ export default function DatingGame() {
   };
 
   const startMorsePress = () => {
-    if (morseUnlocked || morsePressStartedAtRef.current !== null) return;
+    if (morseComplete || morsePressStartedAtRef.current !== null) return;
     morsePressStartedAtRef.current = performance.now();
     setMorseButtonPressed(true);
     setMorseMistake("");
@@ -1652,7 +1653,7 @@ export default function DatingGame() {
                     className={`dating-morse__pulse-button ${morseButtonPressed ? "is-pressed" : ""}`}
                     type="button"
                     aria-label="Morse pulse: tap for dot, hold for dash"
-                    disabled={morseUnlocked}
+                    disabled={morseComplete}
                     onContextMenu={(event) => event.preventDefault()}
                     onPointerDown={(event) => {
                       event.preventDefault();
@@ -1688,9 +1689,11 @@ export default function DatingGame() {
                 </div>
 
                 <p className={`dating-morse__feedback ${morseMistake ? "is-error" : ""}`} aria-live="polite">
-                  {morseMistake || (morseUnlocked
-                    ? "SOS HE decoded. You know enough."
-                    : "Match Dylan's short and long blinks with the triangle.")}
+                  {morseMistake || (morseComplete
+                    ? "FULL MESSAGE DECODED. Dylan's fate is in your hands."
+                    : morseUnlocked
+                      ? "SOS HE decoded. You can act now or keep translating."
+                      : "Match Dylan's short and long blinks with the triangle.")}
                 </p>
                 <div className="dating-morse__device-actions">
                   <button type="button" onClick={resetMorseDecoder}>Clear translator</button>
