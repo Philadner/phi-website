@@ -12,6 +12,7 @@ const QUESTION_OPTIONS = {
   "intro:oscar:artist": ["write-it-down", "leave"],
   "intro:phil:placeholder": ["continue"],
   "intro:dylan:placeholder": ["continue"],
+  "intro:dylan:car": ["save", "leave", "join"],
   "intro:benjamin:direction": ["left", "right", "rebuke"],
   "route:jay-invite": ["1", "2"],
   "route:jay-date": ["1", "2", "3"],

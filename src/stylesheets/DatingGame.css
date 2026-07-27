@@ -271,6 +271,449 @@
   cursor: pointer;
 }
 
+.dating-morse {
+  min-height: min(780px, calc(100vh - 90px));
+  padding: clamp(34px, 5vw, 66px) 0 72px;
+}
+
+.dating-morse__heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+  gap: 36px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.dating-morse__kicker {
+  margin: 0 0 0.65rem;
+  color: #68d7ff;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.dating-morse__heading h1 {
+  margin: 0;
+  color: #fff;
+  font-family: Inter, Arial, sans-serif;
+  font-size: clamp(2.2rem, 6vw, 5.4rem);
+  line-height: 0.94;
+  letter-spacing: -0.07em;
+}
+
+.dating-morse__heading > p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: Inter, Arial, sans-serif;
+  line-height: 1.6;
+}
+
+.dating-morse__heading strong {
+  color: #fff;
+}
+
+.dating-morse__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  gap: clamp(20px, 4vw, 54px);
+  align-items: start;
+}
+
+.dating-morse__dylan {
+  position: relative;
+  overflow: hidden;
+  min-height: 610px;
+  border: 1px solid rgba(104, 215, 255, 0.22);
+  background:
+    linear-gradient(90deg, transparent 49.8%, rgba(104, 215, 255, 0.12) 50%, transparent 50.2%),
+    linear-gradient(transparent 49.8%, rgba(104, 215, 255, 0.12) 50%, transparent 50.2%),
+    radial-gradient(circle at 50% 35%, rgba(104, 215, 255, 0.13), transparent 48%),
+    #090d13;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.5);
+}
+
+.dating-morse__dylan::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border: 8px solid rgba(5, 7, 10, 0.44);
+  content: "";
+  pointer-events: none;
+}
+
+.dating-morse__dylan img {
+  position: absolute;
+  inset: 14px 14px 118px;
+  width: calc(100% - 28px);
+  height: calc(100% - 132px);
+  object-fit: contain;
+  object-position: center bottom;
+  filter:
+    saturate(0.86)
+    drop-shadow(0 0 28px rgba(104, 215, 255, 0.22))
+    drop-shadow(15px 18px 0 rgba(0, 0, 0, 0.25));
+}
+
+.dating-morse__dylan.is-blinking {
+  border-color: #68d7ff;
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.5),
+    0 0 36px rgba(104, 215, 255, 0.18);
+}
+
+.dating-morse__signal-badge {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(5, 7, 10, 0.86);
+  font-size: 0.61rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.dating-morse__signal-badge span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #43505a;
+}
+
+.dating-morse__signal-badge span.is-live {
+  background: #5dff8a;
+  box-shadow: 0 0 16px #5dff8a;
+}
+
+.dating-morse__incoming {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 52px;
+  left: 18px;
+  min-height: 70px;
+  border: 1px solid rgba(104, 215, 255, 0.28);
+  padding: 12px 14px;
+  background: rgba(4, 8, 13, 0.94);
+}
+
+.dating-morse__incoming span,
+.dating-morse__pulse-readout span,
+.dating-morse__readout span {
+  display: block;
+  margin-bottom: 7px;
+  color: #68d7ff;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.dating-morse__incoming code {
+  display: block;
+  overflow: hidden;
+  max-height: 2.8em;
+  color: #fff;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.dating-morse__replay {
+  position: absolute;
+  z-index: 4;
+  right: 18px;
+  bottom: 15px;
+  border: 0;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.56);
+  background: transparent;
+  font-size: 0.64rem;
+  cursor: pointer;
+}
+
+.dating-morse__replay:hover,
+.dating-morse__replay:focus-visible {
+  color: #68d7ff;
+  outline: 0;
+}
+
+.dating-morse__device-shell {
+  width: min(100%, 390px);
+  justify-self: center;
+}
+
+.dating-morse__device {
+  position: relative;
+  overflow: hidden;
+  min-height: 590px;
+  border: 4px solid #79909b;
+  border-radius: 28px;
+  padding: 54px 25px 28px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(47, 142, 160, 0.13), transparent 42%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.045), transparent 36%),
+    #061522;
+  box-shadow:
+    inset 0 0 0 3px #1d3441,
+    inset 0 0 45px rgba(0, 0, 0, 0.72),
+    9px 12px 0 rgba(0, 0, 0, 0.3),
+    0 0 38px rgba(104, 215, 255, 0.12);
+}
+
+.dating-morse__device::after {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(190, 223, 225, 0.16);
+  border-radius: 19px;
+  content: "";
+  pointer-events: none;
+}
+
+.dating-morse__screw {
+  position: absolute;
+  z-index: 4;
+  top: 16px;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #b7c5c8;
+  border-radius: 50%;
+  background: #4a291c;
+  box-shadow: inset 3px 3px 0 rgba(255, 255, 255, 0.14);
+}
+
+.dating-morse__screw--left { left: 18px; }
+.dating-morse__screw--right { right: 18px; }
+
+.dating-morse__device-title {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  right: 55px;
+  left: 55px;
+  display: flex;
+  justify-content: space-between;
+  color: #adc0c8;
+  font-size: clamp(1rem, 3vw, 1.3rem);
+  letter-spacing: 0.08em;
+}
+
+.dating-morse__circuit {
+  position: absolute;
+  z-index: 0;
+  inset: 70px 18px 38px;
+  width: calc(100% - 36px);
+  height: calc(100% - 108px);
+  fill: #173142;
+  stroke: #7d9fab;
+  stroke-width: 4;
+  opacity: 0.72;
+}
+
+.dating-morse__readout {
+  position: relative;
+  z-index: 2;
+  min-height: 118px;
+  border: 1px solid rgba(124, 209, 213, 0.34);
+  padding: 13px 14px;
+  background: rgba(2, 12, 18, 0.88);
+  box-shadow: inset 0 0 22px rgba(55, 255, 196, 0.055);
+}
+
+.dating-morse__readout strong {
+  display: block;
+  min-height: 1.4em;
+  color: #65ff91;
+  font-family: "Courier New", monospace;
+  font-size: 1.2rem;
+  line-height: 1.35;
+  text-shadow: 0 0 12px rgba(101, 255, 145, 0.45);
+}
+
+.dating-morse__readout small {
+  display: block;
+  margin-top: 9px;
+  color: rgba(173, 192, 200, 0.42);
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dating-morse__pulse-readout {
+  position: absolute;
+  z-index: 2;
+  right: 28px;
+  bottom: 145px;
+  left: 28px;
+  border: 1px solid rgba(124, 209, 213, 0.25);
+  padding: 10px 12px;
+  background: rgba(2, 12, 18, 0.86);
+}
+
+.dating-morse__pulse-readout code {
+  color: #fff;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+}
+
+.dating-morse__pulse-button {
+  position: absolute;
+  z-index: 3;
+  top: 44%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 122px;
+  height: 108px;
+  border: 1px solid rgba(104, 215, 255, 0.22);
+  border-radius: 50%;
+  padding: 0;
+  color: #d8eef0;
+  outline: 0;
+  background: rgba(3, 15, 22, 0.92);
+  box-shadow:
+    0 0 0 8px rgba(104, 215, 255, 0.04),
+    inset 0 0 24px rgba(104, 215, 255, 0.08);
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.dating-morse__pulse-button span {
+  color: #bcd2d8;
+  font-size: 5.2rem;
+  line-height: 0.8;
+  transform: translateY(-5px);
+}
+
+.dating-morse__pulse-button:hover,
+.dating-morse__pulse-button:focus-visible,
+.dating-morse__pulse-button.is-pressed {
+  border-color: #65ff91;
+  color: #65ff91;
+  box-shadow:
+    0 0 0 8px rgba(101, 255, 145, 0.08),
+    0 0 36px rgba(101, 255, 145, 0.28),
+    inset 0 0 30px rgba(101, 255, 145, 0.13);
+}
+
+.dating-morse__pulse-button.is-pressed {
+  transform: translate(-50%, -50%) scale(0.93);
+}
+
+.dating-morse__pulse-button:disabled {
+  border-color: #65ff91;
+  opacity: 0.78;
+  cursor: default;
+}
+
+.dating-morse__legend {
+  position: absolute;
+  z-index: 2;
+  right: 28px;
+  bottom: 102px;
+  left: 28px;
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.55rem;
+  font-weight: 900;
+}
+
+.dating-morse__legend span {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dating-morse__legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #68d7ff;
+}
+
+.dating-morse__legend span:last-child i {
+  width: 16px;
+  border-radius: 2px;
+}
+
+.dating-morse__lights {
+  position: absolute;
+  z-index: 3;
+  right: 28px;
+  bottom: 32px;
+  left: 28px;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+}
+
+.dating-morse__lights i {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #75919a;
+  border-radius: 50%;
+  background: #173142;
+}
+
+.dating-morse__lights i:first-child,
+.dating-morse__lights.is-unlocked i {
+  background: #25d85f;
+  box-shadow: 0 0 16px rgba(37, 216, 95, 0.72);
+}
+
+.dating-morse__feedback {
+  min-height: 3.2em;
+  margin: 15px 0 10px;
+  color: rgba(255, 255, 255, 0.62);
+  font-family: Inter, Arial, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.dating-morse__feedback.is-error {
+  color: #ff6e8b;
+}
+
+.dating-morse__device-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.dating-morse__device-actions button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 12px 14px;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.dating-morse__device-actions button:hover,
+.dating-morse__device-actions button:focus-visible {
+  border-color: #68d7ff;
+  color: #fff;
+  outline: 0;
+}
+
+.dating-morse__device-actions .dating-morse__intervene {
+  border-color: #65ff91;
+  color: #06110a;
+  background: #65ff91;
+  font-size: 0.82rem;
+  box-shadow: 5px 5px 0 rgba(101, 255, 145, 0.16);
+}
+
 .dating-dialogue {
   display: grid;
   grid-template-rows: auto minmax(245px, 1fr) auto auto;
@@ -943,6 +1386,31 @@
 
   .dating-name-card input {
     border-right: 1px solid rgba(255, 255, 255, 0.28);
+  }
+
+  .dating-morse__heading,
+  .dating-morse__workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .dating-morse__heading {
+    gap: 16px;
+  }
+
+  .dating-morse__dylan {
+    min-height: 500px;
+  }
+
+  .dating-morse__device-shell {
+    width: min(100%, 350px);
+  }
+
+  .dating-morse__device {
+    min-height: 550px;
+  }
+
+  .dating-morse__pulse-button {
+    top: 43%;
   }
 
   .dating-dialogue {

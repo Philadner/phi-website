@@ -7,7 +7,7 @@ const JAY_CONFUSED_IMAGE_URL = "https://cdn.phi.me.uk/pictures/jay/jay-confused.
 const AIRPORT_IMAGE_URL = "https://cdn.phi.me.uk/pictures/locations/ben-gurion-airport.png";
 
 type CharacterId = "jay" | "phil" | "dylan" | "oscar" | "benjamin";
-type Phase = "title" | "name" | "dialogue" | "hub" | "ending";
+type Phase = "title" | "name" | "dialogue" | "morse" | "hub" | "ending";
 type LineEffect = "location" | "heartbeat" | "creepy";
 
 const PHIL_IMAGE_URLS = {
@@ -23,7 +23,8 @@ const DYLAN_IMAGE_URLS = {
   default: "https://cdn.phi.me.uk/pictures/dylan/dylan-default.jpg",
   allegiance: "https://cdn.phi.me.uk/pictures/dylan/dylan-allegiance.jpg",
   headset: "https://cdn.phi.me.uk/pictures/dylan/dylan-headset.jpg",
-  sad: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad.jpg",
+  sad: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad.png",
+  sadBlinking: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad-blinking.png",
   serious: "https://cdn.phi.me.uk/pictures/dylan/dylan-dead-serious.jpg",
   tree: "https://cdn.phi.me.uk/pictures/dylan/dylan-tree.jpg",
   withOscar: "https://cdn.phi.me.uk/pictures/dylan/dylan-oscar-couple.jpg",
@@ -49,6 +50,7 @@ type Line = {
   text: string;
   effect?: LineEffect;
   backgroundImage?: string;
+  portraitImage?: string;
 };
 
 type CharacterState = {
@@ -102,10 +104,78 @@ const CHARACTER_ORDER: CharacterId[] = ["jay", "phil", "dylan", "oscar", "benjam
 const INTRODUCTION_TITLES: Record<CharacterId, string> = {
   jay: "Jay · Scratching therapy",
   phil: "Phil · Introduction placeholder",
-  dylan: "Dylan · Introduction placeholder",
+  dylan: "Dylan · Red light rescue",
   oscar: "Oscar · In the tree",
   benjamin: "Bibi · Ice cream interrogation",
 };
+
+const MORSE_MESSAGE = "SOS HE TAKING ME TO THE AMAZING DIGITAL CIRCUS FINAL PREMIERE";
+const MORSE_UNLOCK_TEXT = "SOS HE";
+const MORSE_CODE: Record<string, string> = {
+  A: ".-",
+  B: "-...",
+  C: "-.-.",
+  D: "-..",
+  E: ".",
+  F: "..-.",
+  G: "--.",
+  H: "....",
+  I: "..",
+  J: ".---",
+  K: "-.-",
+  L: ".-..",
+  M: "--",
+  N: "-.",
+  O: "---",
+  P: ".--.",
+  Q: "--.-",
+  R: ".-.",
+  S: "...",
+  T: "-",
+  U: "..-",
+  V: "...-",
+  W: ".--",
+  X: "-..-",
+  Y: "-.--",
+  Z: "--..",
+};
+
+type MorseSignalToken =
+  | { kind: "pulse"; symbol: "." | "-"; duration: number }
+  | { kind: "separator"; text: string; duration: number };
+
+function makeMorseSignal(message: string): MorseSignalToken[] {
+  const tokens: MorseSignalToken[] = [];
+
+  Array.from(message).forEach((character, characterIndex) => {
+    if (character === " ") {
+      tokens.push({ kind: "separator", text: " / ", duration: 420 });
+      return;
+    }
+
+    Array.from(MORSE_CODE[character]).forEach((symbol) => {
+      tokens.push({
+        kind: "pulse",
+        symbol: symbol as "." | "-",
+        duration: symbol === "." ? 150 : 460,
+      });
+    });
+
+    if (message[characterIndex + 1] && message[characterIndex + 1] !== " ") {
+      tokens.push({ kind: "separator", text: " ", duration: 230 });
+    }
+  });
+
+  return tokens;
+}
+
+function nextMorseCharacterIndex(startIndex: number) {
+  let nextIndex = startIndex;
+  while (MORSE_MESSAGE[nextIndex] === " ") nextIndex += 1;
+  return nextIndex;
+}
+
+const MORSE_SIGNAL = makeMorseSignal(MORSE_MESSAGE);
 
 type ChoiceStats = {
   question: string;
@@ -695,12 +765,24 @@ export default function DatingGame() {
   const [visibleCharacters, setVisibleCharacters] = useState(0);
   const [choices, setChoices] = useState<ChoiceButton[]>([]);
   const [ending, setEnding] = useState<Ending | null>(null);
+  const [morseCharacterIndex, setMorseCharacterIndex] = useState(0);
+  const [morsePulseIndex, setMorsePulseIndex] = useState(0);
+  const [morseEnteredCode, setMorseEnteredCode] = useState("");
+  const [morseMistake, setMorseMistake] = useState("");
+  const [morseButtonPressed, setMorseButtonPressed] = useState(false);
+  const [morseBlinking, setMorseBlinking] = useState(false);
+  const [morseSignalTrail, setMorseSignalTrail] = useState("");
+  const [morseSignalStatus, setMorseSignalStatus] = useState("WAITING FOR DYLAN");
+  const [morseReplayKey, setMorseReplayKey] = useState(0);
   const afterLinesRef = useRef<() => void>(() => undefined);
+  const morsePressStartedAtRef = useRef<number | null>(null);
 
   const activeLine = lines[lineIndex];
   const lineIsComplete = !activeLine || visibleCharacters >= activeLine.text.length;
   const scenesPlayed = completedScenes.length;
   const introductionsComplete = metCharacters.length === CHARACTER_ORDER.length;
+  const morseDecodedText = MORSE_MESSAGE.slice(0, morseCharacterIndex).trimEnd();
+  const morseUnlocked = morseDecodedText.startsWith(MORSE_UNLOCK_TEXT);
 
   const play = useCallback((label: string, nextLines: Line[], after?: () => void) => {
     setSceneLabel(label);
@@ -752,6 +834,48 @@ export default function DatingGame() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [advanceDialogue, choices.length, phase]);
+
+  useEffect(() => {
+    if (phase !== "morse") return;
+
+    let timer: number | undefined;
+    let cancelled = false;
+    setMorseSignalTrail("");
+    setMorseSignalStatus("DYLAN IS BLINKING");
+    setMorseBlinking(false);
+
+    const runToken = (tokenIndex: number) => {
+      if (cancelled) return;
+      const token = MORSE_SIGNAL[tokenIndex];
+
+      if (!token) {
+        setMorseBlinking(false);
+        setMorseSignalStatus("TRANSMISSION COMPLETE — REPLAY AVAILABLE");
+        return;
+      }
+
+      if (token.kind === "separator") {
+        setMorseSignalTrail((current) => `${current}${token.text}`);
+        timer = window.setTimeout(() => runToken(tokenIndex + 1), token.duration);
+        return;
+      }
+
+      setMorseSignalStatus(token.symbol === "." ? "SHORT BLINK · DOT" : "LONG BLINK · DASH");
+      setMorseBlinking(true);
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        setMorseBlinking(false);
+        setMorseSignalTrail((current) => `${current}${token.symbol}`);
+        timer = window.setTimeout(() => runToken(tokenIndex + 1), 115);
+      }, token.duration);
+    };
+
+    timer = window.setTimeout(() => runToken(0), 650);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [morseReplayKey, phase]);
 
   const recordSilently = (question: string, option: string) => {
     void recordDatingChoice(question, option).catch((error) => {
@@ -909,6 +1033,177 @@ export default function DatingGame() {
     );
   };
 
+  const resetMorseDecoder = () => {
+    setMorseCharacterIndex(0);
+    setMorsePulseIndex(0);
+    setMorseEnteredCode("");
+    setMorseMistake("");
+    setMorseButtonPressed(false);
+    morsePressStartedAtRef.current = null;
+  };
+
+  const startDylanIntroduction = () => {
+    const label = INTRODUCTION_TITLES.dylan;
+    const driverName = metCharacters.includes("benjamin") ? "Bibi" : "Netanyahu";
+
+    play(
+      label,
+      [
+        {
+          text: `You walk up to a car stopped at a red light and see Dylan and ${driverName} in there.`,
+          portraitImage: DYLAN_IMAGE_URLS.sad,
+        },
+        {
+          text: `Dylan has his face smushed against the window, and ${driverName} is driving.`,
+          portraitImage: DYLAN_IMAGE_URLS.sad,
+        },
+        { speaker: playerName, text: "Hey Dylan, are you alright?", portraitImage: DYLAN_IMAGE_URLS.sad },
+        {
+          text: "Dylan blinks in Morse code, and you whip out your Morse code translator from TikTok Shop to translate it.",
+          portraitImage: DYLAN_IMAGE_URLS.sadBlinking,
+        },
+      ],
+      () => {
+        resetMorseDecoder();
+        setMorseReplayKey((current) => current + 1);
+        setPhase("morse");
+      },
+    );
+  };
+
+  const changeDylanIntroductionStats = (
+    stats: Partial<Pick<CharacterState, "affection" | "trust" | "weirdness">>,
+    status: string,
+  ) => {
+    setCast((current) => ({
+      ...current,
+      dylan: {
+        ...current.dylan,
+        affection: current.dylan.affection + (stats.affection ?? 0),
+        trust: current.dylan.trust + (stats.trust ?? 0),
+        weirdness: current.dylan.weirdness + (stats.weirdness ?? 0),
+        status,
+      },
+    }));
+  };
+
+  const showDylanRescueChoices = () => {
+    const label = INTRODUCTION_TITLES.dylan;
+    showChoices(`${label} · SOS intercepted`, { text: "You have decoded enough. Dylan needs you to DO SOMETHING." }, [
+      {
+        label: "Open the child-locked door and save him",
+        detail: "Grab Dylan and run.",
+        action: () => {
+          recordSilently("intro:dylan:car", "save");
+          changeDylanIntroductionStats(
+            { affection: 3, trust: 2 },
+            "Safe from the Digital Circus finale",
+          );
+          finishIntroduction("dylan", [
+            { text: "You open the door, grab Dylan, and run away with him." },
+            { speaker: "Dylan", text: "Oh my GOD, thank you." },
+            { speaker: "Dylan", text: "I did NOT wanna go to The Amazing Digital Circus final premiere." },
+            { speaker: "Dylan", text: "Like, I love Bibi, but I did NOT want to go to that shit." },
+          ]);
+        },
+      },
+      {
+        label: "Leave him there to accept his fate",
+        detail: "The premiere waits for no man.",
+        action: () => {
+          recordSilently("intro:dylan:car", "leave");
+          changeDylanIntroductionStats(
+            { affection: -4, trust: -2 },
+            "Devastated and en route to the final premiere",
+          );
+          finishIntroduction("dylan", [
+            { text: "You stand there pulling a nice smug face as you watch his ass get driven to the premiere." },
+            { text: "Dylan looks at you, devastated.", portraitImage: DYLAN_IMAGE_URLS.sad },
+          ]);
+        },
+      },
+      {
+        label: "Get in the car with him",
+        detail: "An exclusive, deeply regrettable route.",
+        action: () => {
+          recordSilently("intro:dylan:car", "join");
+          changeDylanIntroductionStats(
+            { weirdness: 3 },
+            "Trapped at The Amazing Digital Circus final premiere",
+          );
+          play(
+            "Dylan · Full steam ahead",
+            [
+              { text: "You get in the car." },
+              { speaker: playerName, text: "OH MY GOD, I am so excited. I LOVE The Amazing Digital Circus!!!" },
+              {
+                speaker: "Dylan",
+                text: "Bro, what the FUCK? You were supposed to help me. You're a fan of this shit??",
+              },
+              { speaker: "Bibi", text: "Full steam ahead!! I wanna see this premiere." },
+            ],
+            () =>
+              finishIntroduction("dylan", [
+                {
+                  text: "EXCLUSIVE SCENE PLACEHOLDER: The Amazing Digital Circus final premiere starts here. This path is only reachable by getting into the car.",
+                  effect: "location",
+                },
+              ]),
+          );
+        },
+      },
+    ]);
+  };
+
+  const submitMorseSymbol = (symbol: "." | "-") => {
+    if (morseUnlocked || morseCharacterIndex >= MORSE_MESSAGE.length) return;
+    const currentCharacter = MORSE_MESSAGE[morseCharacterIndex];
+    const expectedCode = MORSE_CODE[currentCharacter];
+
+    if (!expectedCode || expectedCode[morsePulseIndex] !== symbol) {
+      setMorseMistake("SIGNAL MISMATCH — that letter has reset. Watch Dylan and try it again.");
+      setMorsePulseIndex(0);
+      setMorseEnteredCode("");
+      navigator.vibrate?.([45, 35, 45]);
+      return;
+    }
+
+    const nextEnteredCode = `${morseEnteredCode}${symbol}`;
+    setMorseMistake("");
+    navigator.vibrate?.(symbol === "." ? 18 : [25, 18, 35]);
+
+    if (morsePulseIndex + 1 === expectedCode.length) {
+      setMorseCharacterIndex(nextMorseCharacterIndex(morseCharacterIndex + 1));
+      setMorsePulseIndex(0);
+      setMorseEnteredCode("");
+      return;
+    }
+
+    setMorseEnteredCode(nextEnteredCode);
+    setMorsePulseIndex((current) => current + 1);
+  };
+
+  const startMorsePress = () => {
+    if (morseUnlocked || morsePressStartedAtRef.current !== null) return;
+    morsePressStartedAtRef.current = performance.now();
+    setMorseButtonPressed(true);
+    setMorseMistake("");
+  };
+
+  const finishMorsePress = () => {
+    const startedAt = morsePressStartedAtRef.current;
+    if (startedAt === null) return;
+    const duration = performance.now() - startedAt;
+    morsePressStartedAtRef.current = null;
+    setMorseButtonPressed(false);
+    submitMorseSymbol(duration >= 340 ? "-" : ".");
+  };
+
+  const cancelMorsePress = () => {
+    morsePressStartedAtRef.current = null;
+    setMorseButtonPressed(false);
+  };
+
   const chooseBibiDirection = async (direction: "left" | "right") => {
     const label = INTRODUCTION_TITLES.benjamin;
     play(`${label} · Live results`, [{ speaker: "Bibi", text: "One moment. I'm consulting the figures." }], () => undefined);
@@ -971,11 +1266,9 @@ export default function DatingGame() {
     );
   };
 
-  const startPlaceholderIntroduction = (id: "phil" | "dylan") => {
+  const startPlaceholderIntroduction = (id: "phil") => {
     const character = cast[id];
-    const flavour = id === "phil"
-      ? "For now, imagine I arrived with suspiciously bad hot chocolate."
-      : "For now, imagine a judgemental pigeon introduced us.";
+    const flavour = "For now, imagine I arrived with suspiciously bad hot chocolate.";
     const question = `intro:${id}:placeholder`;
     const label = INTRODUCTION_TITLES[id];
 
@@ -1001,6 +1294,7 @@ export default function DatingGame() {
   const startIntroduction = (id: CharacterId) => {
     if (metCharacters.includes(id)) return;
     if (id === "jay") return startJayIntroduction();
+    if (id === "dylan") return startDylanIntroduction();
     if (id === "oscar") return startOscarIntroduction();
     if (id === "benjamin") return startBibiIntroduction();
     return startPlaceholderIntroduction(id);
@@ -1160,6 +1454,10 @@ export default function DatingGame() {
     setVisibleCharacters(0);
     setChoices([]);
     setEnding(null);
+    resetMorseDecoder();
+    setMorseSignalTrail("");
+    setMorseSignalStatus("WAITING FOR DYLAN");
+    setMorseBlinking(false);
   };
 
   const activeColour = useMemo(() => {
@@ -1170,6 +1468,7 @@ export default function DatingGame() {
   }, [activeLine?.speaker, cast]);
 
   const activePortraitUrl = useMemo(() => {
+    if (activeLine?.portraitImage) return activeLine.portraitImage;
     if (activeLine?.speaker === "Jay") {
       if (/no idea|quite a lot|mean—wow|lesson learned|everybody\?/i.test(activeLine.text)) {
         return JAY_CONFUSED_IMAGE_URL;
@@ -1223,7 +1522,13 @@ export default function DatingGame() {
           </button>
           <div className="dating-game__status">
             <span className="dating-game__status-light" />{" "}
-            {phase === "hub" ? (introductionsComplete ? "FREE ROAM" : "ORIENTATION") : sceneLabel.toUpperCase()}
+            {phase === "hub"
+              ? introductionsComplete
+                ? "FREE ROAM"
+                : "ORIENTATION"
+              : phase === "morse"
+                ? "MORSE INTERCEPT"
+                : sceneLabel.toUpperCase()}
           </div>
           {phase !== "title" && (
             <button className="dating-game__restart" type="button" onClick={resetGame}>Restart</button>
@@ -1262,6 +1567,140 @@ export default function DatingGame() {
               />
               <button type="submit">That's me →</button>
             </form>
+          </section>
+        )}
+
+        {phase === "morse" && (
+          <section className="dating-morse">
+            <div className="dating-morse__heading">
+              <div>
+                <p className="dating-morse__kicker">TIKTOK SHOP EMERGENCY EQUIPMENT</p>
+                <h1>Translate Dylan's blinks.</h1>
+              </div>
+              <p>
+                Tap the triangle for a dot. Hold it for a dash. Decode through <strong>SOS HE</strong> and you can
+                intervene.
+              </p>
+            </div>
+
+            <div className="dating-morse__workspace">
+              <div className={`dating-morse__dylan ${morseBlinking ? "is-blinking" : ""}`}>
+                <img
+                  src={morseBlinking ? DYLAN_IMAGE_URLS.sadBlinking : DYLAN_IMAGE_URLS.sad}
+                  alt={morseBlinking ? "Dylan blinking a Morse-code pulse" : "Dylan looking devastated in the car"}
+                />
+                <div className="dating-morse__signal-badge">
+                  <span className={morseBlinking ? "is-live" : ""} />
+                  {morseSignalStatus}
+                </div>
+                <div className="dating-morse__incoming" aria-live="polite">
+                  <span>INCOMING MORSE</span>
+                  <code>{morseSignalTrail || "Signal begins in a moment…"}</code>
+                </div>
+                <button
+                  className="dating-morse__replay"
+                  type="button"
+                  onClick={() => setMorseReplayKey((current) => current + 1)}
+                >
+                  ↻ Replay Dylan's blinks
+                </button>
+              </div>
+
+              <div className="dating-morse__device-shell">
+                <div className="dating-morse__device">
+                  <span className="dating-morse__screw dating-morse__screw--left" aria-hidden="true" />
+                  <span className="dating-morse__screw dating-morse__screw--right" aria-hidden="true" />
+                  <div className="dating-morse__device-title">
+                    <span>MORSE</span>
+                    <span>CODE</span>
+                  </div>
+
+                  <svg className="dating-morse__circuit" viewBox="0 0 300 430" aria-hidden="true">
+                    <path d="M36 72H112V132H70V208H128V316H72" />
+                    <path d="M264 72H188V132H230V208H172V316H228" />
+                    <path d="M112 132H150V242H128" />
+                    <path d="M188 132H150V242H172" />
+                    <path d="M72 316H112V382H150V338H188V382H228V316" />
+                    <circle cx="36" cy="72" r="12" />
+                    <circle cx="70" cy="132" r="12" />
+                    <circle cx="70" cy="208" r="12" />
+                    <circle cx="128" cy="208" r="12" />
+                    <circle cx="128" cy="316" r="12" />
+                    <circle cx="264" cy="72" r="12" />
+                    <circle cx="230" cy="132" r="12" />
+                    <circle cx="230" cy="208" r="12" />
+                    <circle cx="172" cy="208" r="12" />
+                    <circle cx="172" cy="316" r="12" />
+                    <rect x="61" y="304" width="22" height="24" />
+                    <rect x="217" y="304" width="22" height="24" />
+                    <rect x="139" y="326" width="22" height="26" />
+                  </svg>
+
+                  <div className="dating-morse__readout">
+                    <span>TRANSLATION</span>
+                    <strong>{morseDecodedText || "…"}</strong>
+                    <small>{MORSE_MESSAGE.replace(/[A-Z]/g, "_")}</small>
+                  </div>
+
+                  <div className="dating-morse__pulse-readout">
+                    <span>CURRENT LETTER</span>
+                    <code>{morseEnteredCode || "READY"}</code>
+                  </div>
+
+                  <button
+                    className={`dating-morse__pulse-button ${morseButtonPressed ? "is-pressed" : ""}`}
+                    type="button"
+                    aria-label="Morse pulse: tap for dot, hold for dash"
+                    disabled={morseUnlocked}
+                    onContextMenu={(event) => event.preventDefault()}
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startMorsePress();
+                    }}
+                    onPointerUp={(event) => {
+                      event.preventDefault();
+                      finishMorsePress();
+                    }}
+                    onPointerCancel={cancelMorsePress}
+                    onKeyDown={(event) => {
+                      if (event.key !== " " && event.key !== "Enter") return;
+                      event.preventDefault();
+                      if (!event.repeat) startMorsePress();
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key !== " " && event.key !== "Enter") return;
+                      event.preventDefault();
+                      finishMorsePress();
+                    }}
+                  >
+                    <span aria-hidden="true">▽</span>
+                  </button>
+
+                  <div className="dating-morse__legend">
+                    <span><i /> SHORT = DOT</span>
+                    <span><i /> LONG = DASH</span>
+                  </div>
+                  <div className={`dating-morse__lights ${morseUnlocked ? "is-unlocked" : ""}`} aria-hidden="true">
+                    <i /><i /><i />
+                  </div>
+                </div>
+
+                <p className={`dating-morse__feedback ${morseMistake ? "is-error" : ""}`} aria-live="polite">
+                  {morseMistake || (morseUnlocked
+                    ? "SOS HE decoded. You know enough."
+                    : "Match Dylan's short and long blinks with the triangle.")}
+                </p>
+                <div className="dating-morse__device-actions">
+                  <button type="button" onClick={resetMorseDecoder}>Clear translator</button>
+                  {morseUnlocked && (
+                    <button className="dating-morse__intervene" type="button" onClick={showDylanRescueChoices}>
+                      DO SOMETHING →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
@@ -1429,7 +1868,7 @@ export default function DatingGame() {
                 <span>◆</span>{" "}
                 {introductionsComplete
                   ? "Feelings are tracked privately. Dialogue choices are tallied anonymously."
-                  : "Meet everybody first. Phil and Dylan currently use clearly marked placeholders."}
+                  : "Meet everybody first. Phil currently uses a clearly marked placeholder."}
               </p>
               <button
                 type="button"
