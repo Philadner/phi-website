@@ -932,6 +932,17 @@ export default function DatingGame() {
             label: "I'm watching. Hard. As fuck.",
             action: () => {
               recordSilently("intro:jay:scratching", "watching");
+              setCast((current) => ({
+                ...current,
+                jay: {
+                  ...current.jay,
+                  progress: 1,
+                  status: "Waiting for you at Arby's",
+                },
+              }));
+              setCompletedScenes((current) => (
+                current.includes("jay-invite") ? current : [...current, "jay-invite"]
+              ));
               finishIntroduction("jay", [
                 { speaker: "Jay", text: "YO, YOU ALSO HAVE A KINK FOR THIS?" },
                 { speaker: "Jay", text: "OH MY GOD. OH—OH MY GOD, I AM ACTUALLY—" },
