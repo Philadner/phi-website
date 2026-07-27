@@ -877,7 +877,7 @@ export default function DatingGame() {
                 [
                   { speaker: playerName, text: "So, like, what to?" },
                   { speaker: "Oscar", text: "Okay, it's like this really niche artist on Twitter." },
-                  { speaker: "Oscar", text: "Like, the way they animate these Fortnite skins." },
+                  { speaker: "Oscar", text: "Like, the way they animate these Marvel Rivals skins." },
                   { speaker: "Oscar", text: "Fucking radical." },
                 ],
                 () =>
