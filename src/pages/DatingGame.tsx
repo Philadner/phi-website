@@ -897,7 +897,8 @@ export default function DatingGame() {
       [
         { text: "Jay is in Bob Scratchit's scratching therapy." },
         { text: "You walk through the door and see… uhhh." },
-        { text: "Jay is lying tummy-down on a bed, with Bob Scratchit vigorously itching his back." },
+        { text: "Jay is lying tummy-down on a bed, with Bob Scratchit vigorously itching his butt." },
+        { text: "Bob Scratchit is getting DEEP in there. Like, disturbingly committed." },
         { text: "Jay has a whip in one hand, and there's a table piled with small gold coins in front of him." },
         { text: "You stand there in silence." },
         { text: "Two agonising minutes pass. Then Jay looks at you." },
