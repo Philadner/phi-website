@@ -4,6 +4,7 @@ import "../stylesheets/DatingGame.css";
 
 const JAY_IMAGE_URL = "https://cdn.phi.me.uk/pictures/Jay.png";
 const JAY_CONFUSED_IMAGE_URL = "https://cdn.phi.me.uk/pictures/jay/jay-confused.jpg";
+const AIRPORT_IMAGE_URL = "https://cdn.phi.me.uk/pictures/locations/ben-gurion-airport.png";
 
 type CharacterId = "jay" | "phil" | "dylan" | "oscar" | "benjamin";
 type Phase = "title" | "name" | "dialogue" | "hub" | "ending";
@@ -47,6 +48,7 @@ type Line = {
   speaker?: string;
   text: string;
   effect?: LineEffect;
+  backgroundImage?: string;
 };
 
 type CharacterState = {
@@ -97,19 +99,88 @@ type Ending = {
 };
 
 const CHARACTER_ORDER: CharacterId[] = ["jay", "phil", "dylan", "oscar", "benjamin"];
+const INTRODUCTION_TITLES: Record<CharacterId, string> = {
+  jay: "Jay · Scratching therapy",
+  phil: "Phil · Introduction placeholder",
+  dylan: "Dylan · Introduction placeholder",
+  oscar: "Oscar · In the tree",
+  benjamin: "Bibi · Ice cream interrogation",
+};
+
+type ChoiceStats = {
+  question: string;
+  total: number;
+  options: Record<string, { votes: number; percent: number }>;
+};
+
+async function recordDatingChoice(question: string, option: string) {
+  const response = await fetch("/api/dating-choice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, option }),
+  });
+  const payload = (await response.json()) as ChoiceStats & { error?: string };
+  if (!response.ok) throw new Error(payload.error || "Choice tally failed");
+  return payload;
+}
+
+function bibiPollReaction(direction: "left" | "right", stats: ChoiceStats): Line[] {
+  const leftVotes = stats.options.left?.votes ?? 0;
+  const rightVotes = stats.options.right?.votes ?? 0;
+  const directionVotes = leftVotes + rightVotes;
+  const leftPercent = directionVotes === 0 ? 0 : Math.round((leftVotes / directionVotes) * 100);
+  const rightPercent = directionVotes === 0 ? 0 : 100 - leftPercent;
+  const selectedPercent = direction === "left" ? leftPercent : rightPercent;
+  const otherDirection = direction === "left" ? "right" : "left";
+  const selectedPeople = direction === "left" ? "lefties" : "righties";
+  const response: Line[] = [];
+
+  if (direction === "left") {
+    response.push({ speaker: "Bibi", text: "ME TOO!" });
+  }
+
+  if (selectedPercent >= 90) {
+    response.push({
+      speaker: "Bibi",
+      text: `Literally everyone who has played this has said ${direction}.`,
+    });
+  } else if (selectedPercent >= 75) {
+    response.push({
+      speaker: "Bibi",
+      text: `I know, like who the hell has a ${otherDirection}-bending dick? ${selectedPercent}% of people who played have ${selectedPeople}.`,
+    });
+  } else if (selectedPercent >= 50) {
+    response.push({
+      speaker: "Bibi",
+      text: `Oh really? Cool! I mean it's half and half, to be fair. ${leftPercent}% left and ${rightPercent}% right.`,
+    });
+  } else if (selectedPercent >= 25) {
+    response.push({
+      speaker: "Bibi",
+      text: `Man, you're kinda in the minority here. Like, the ${selectedPeople} are under threat. Only ${selectedPercent}% of people have 'em.`,
+    });
+  } else {
+    response.push({
+      speaker: "Bibi",
+      text: `Okay, you're kinda on your own here. Only ${selectedPercent}% of people have ${selectedPeople}.`,
+    });
+  }
+
+  return response;
+}
 
 const INITIAL_CAST: Record<CharacterId, CharacterState> = {
   jay: {
     id: "jay",
     name: "Jay",
-    description: "Heartthrob. Average guy. Terrifyingly committed to Arby's.",
+    description: "Heartthrob. Average guy, kinda a degenerate? But come on. He's kinda cute :3",
     colour: "#ffcf4a",
-    affection: 0,
+    affection: 2,
     trust: 0,
     weirdness: 0,
     jealousy: 0,
     progress: 0,
-    status: "Pretending not to look at you",
+    status: "Sneaking glances at you 👀",
   },
   phil: {
     id: "phil",
@@ -138,14 +209,14 @@ const INITIAL_CAST: Record<CharacterId, CharacterState> = {
   oscar: {
     id: "oscar",
     name: "Oscar",
-    description: "Quietly magnetic. Also allegedly somebody else's soulmate.",
+    description: "Aura farmer. Also allegedly somebody else's soulmate.",
     colour: "#9f8cff",
     affection: 0,
     trust: 0,
     weirdness: 0,
     jealousy: 0,
     progress: 0,
-    status: "Drawing something suspiciously romantic",
+    status: "Scribbling something in a small orange notebook",
   },
   benjamin: {
     id: "benjamin",
@@ -616,6 +687,7 @@ export default function DatingGame() {
   const [draftName, setDraftName] = useState("");
   const [playerName, setPlayerName] = useState("Mystery Legend");
   const [cast, setCast] = useState(cloneInitialCast);
+  const [metCharacters, setMetCharacters] = useState<CharacterId[]>([]);
   const [completedScenes, setCompletedScenes] = useState<string[]>([]);
   const [sceneLabel, setSceneLabel] = useState("Opening");
   const [lines, setLines] = useState<Line[]>([]);
@@ -628,6 +700,7 @@ export default function DatingGame() {
   const activeLine = lines[lineIndex];
   const lineIsComplete = !activeLine || visibleCharacters >= activeLine.text.length;
   const scenesPlayed = completedScenes.length;
+  const introductionsComplete = metCharacters.length === CHARACTER_ORDER.length;
 
   const play = useCallback((label: string, nextLines: Line[], after?: () => void) => {
     setSceneLabel(label);
@@ -680,26 +753,291 @@ export default function DatingGame() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [advanceDialogue, choices.length, phase]);
 
+  const recordSilently = (question: string, option: string) => {
+    void recordDatingChoice(question, option).catch((error) => {
+      console.warn("Dating choice tally failed", error);
+    });
+  };
+
+  const finishIntroduction = (id: CharacterId, outcome: Line[]) => {
+    play(`${INTRODUCTION_TITLES[id]} · Complete`, outcome, () => {
+      setMetCharacters((current) => (current.includes(id) ? current : [...current, id]));
+      setPhase("hub");
+    });
+  };
+
+  const startJayIntroduction = () => {
+    const label = INTRODUCTION_TITLES.jay;
+    play(
+      label,
+      [
+        { text: "Jay is in Bob Scratchit's scratching therapy." },
+        { text: "You walk through the door and see… uhhh." },
+        { text: "Jay is lying tummy-down on a bed, with Bob Scratchit vigorously itching his back." },
+        { text: "Jay has a whip in one hand, and there's a table piled with small gold coins in front of him." },
+        { text: "You stand there in silence." },
+        { text: "Two agonising minutes pass. Then Jay looks at you." },
+        { speaker: "Jay", text: "Oh hey! What's your name?" },
+        { speaker: playerName, text: `Oh! My name is ${playerName}.` },
+        { speaker: "Jay", text: "So, like, why are you in my private scratching session?" },
+      ],
+      () =>
+        showChoices(label, { text: "Choose how to respond." }, [
+          {
+            label: "I'm just… confused.",
+            action: () => {
+              recordSilently("intro:jay:scratching", "confused");
+              finishIntroduction("jay", [
+                { speaker: "Jay", text: "So this is just kinda standard scratching therapy." },
+                {
+                  speaker: "Jay",
+                  text: "But I'm a VIP customer, so I get a deluxe roleplay scratch—and I chose A Christmas Carol roleplay.",
+                },
+                {
+                  speaker: "Jay",
+                  text: "Basically, Bob Scratchit scratches me, and if it's good, I flick him a coin. He's gotta catch it to, like, feed his family.",
+                },
+                { speaker: "Jay", text: "And if it's a bad scratch, I whip him." },
+                { speaker: playerName, text: "Ohhh, okay. Yeah, that makes total sense." },
+              ]);
+            },
+          },
+          {
+            label: "I'm watching. Hard. As fuck.",
+            action: () => {
+              recordSilently("intro:jay:scratching", "watching");
+              finishIntroduction("jay", [
+                { speaker: "Jay", text: "YO, YOU ALSO HAVE A KINK FOR THIS?" },
+                { speaker: "Jay", text: "OH MY GOD. OH—OH MY GOD, I AM ACTUALLY—" },
+                {
+                  speaker: "Jay",
+                  text: "Okay, wait. Genuinely, have my fucking number. TAKE IT. TAKE IT. TAKE IT.",
+                },
+                {
+                  speaker: playerName,
+                  text: "Okay, YES. Oh my God, this is actually so hot. Like, can—",
+                },
+                { speaker: playerName, text: "…Can WE do this?" },
+                {
+                  speaker: "Jay",
+                  text: "I just, like, wanna get to know you, man. I've never met a soul who finds this hot too.",
+                },
+                { speaker: "Jay", text: "Just—oh my God. Meet me at Arby's. PLEASE." },
+              ]);
+            },
+          },
+        ]),
+    );
+  };
+
+  const startOscarIntroduction = () => {
+    const label = INTRODUCTION_TITLES.oscar;
+    play(
+      label,
+      [
+        {
+          text: "You walk up to a tree and look up to see what you presume is Oscar, sitting in the branches, covered by a blanket.",
+        },
+        { speaker: playerName, text: "Hey, what you doing?" },
+        { speaker: "Oscar", text: "Hi, yeah, I'm just having a wank." },
+      ],
+      () =>
+        showChoices(label, { text: "Choose how to respond." }, [
+          {
+            label: "Back away slowly",
+            action: () => {
+              recordSilently("intro:oscar:tree", "slowly");
+              finishIntroduction("oscar", [
+                { text: "You start walking backwards." },
+                { speaker: "Oscar", text: "Honestly, you should try it sometime. It's so calming." },
+                { speaker: "Oscar", text: "The tree wood. My wood. All in synergy." },
+                { text: "Only to bump into someone." },
+                { speaker: "Dylan", text: "Oh hey! Sorry, didn't see you there." },
+                {
+                  speaker: "Dylan",
+                  text: "Anyway, I'll be off. My friend's told me to meet him in, like, a tree or something. I don't know—I think he meant under one.",
+                },
+                { speaker: playerName, text: "Oh, it's completely fine. Uhh, I'll be off then!" },
+              ]);
+            },
+          },
+          {
+            label: "Back away quickly",
+            action: () => {
+              recordSilently("intro:oscar:tree", "quickly");
+              finishIntroduction("oscar", [{ text: "You get the fuck out of there." }]);
+            },
+          },
+          {
+            label: "What to?",
+            action: () => {
+              recordSilently("intro:oscar:tree", "what-to");
+              play(
+                `${label} · What to?`,
+                [
+                  { speaker: playerName, text: "So, like, what to?" },
+                  { speaker: "Oscar", text: "Okay, it's like this really niche artist on Twitter." },
+                  { speaker: "Oscar", text: "Like, the way they animate these Fortnite skins." },
+                  { speaker: "Oscar", text: "Fucking radical." },
+                ],
+                () =>
+                  showChoices(`${label} · Follow-up`, { text: "This information changes everything." }, [
+                    {
+                      label: "Write that shit down",
+                      action: () => {
+                        recordSilently("intro:oscar:artist", "write-it-down");
+                        finishIntroduction("oscar", [
+                          {
+                            text: "You open your notes app and start questioning Oscar about his taste for a good ten minutes.",
+                          },
+                          { text: "Your eyes are opened to a whole new world in your phone." },
+                        ]);
+                      },
+                    },
+                    {
+                      label: "Leave",
+                      action: () => {
+                        recordSilently("intro:oscar:artist", "leave");
+                        finishIntroduction("oscar", [{ text: "You leave." }]);
+                      },
+                    },
+                  ]),
+              );
+            },
+          },
+        ]),
+    );
+  };
+
+  const chooseBibiDirection = async (direction: "left" | "right") => {
+    const label = INTRODUCTION_TITLES.benjamin;
+    play(`${label} · Live results`, [{ speaker: "Bibi", text: "One moment. I'm consulting the figures." }], () => undefined);
+
+    try {
+      const stats = await recordDatingChoice("intro:benjamin:direction", direction);
+      finishIntroduction("benjamin", bibiPollReaction(direction, stats));
+    } catch (error) {
+      console.warn("Bibi poll failed", error);
+      finishIntroduction("benjamin", [
+        { speaker: "Bibi", text: "The national penis-direction figures are temporarily unavailable." },
+        { speaker: "Bibi", text: `Your answer was ${direction}. I will remember this spiritually.` },
+      ]);
+    }
+  };
+
+  const startBibiIntroduction = () => {
+    const label = INTRODUCTION_TITLES.benjamin;
+    play(
+      label,
+      [
+        { text: "You walk up to Benjamin Netanyahu. He's sitting on a bench, eating some ice cream." },
+        { speaker: playerName, text: "Hello, Benjamin Netanyahu!" },
+        {
+          speaker: "Bibi",
+          text: "Hello, fellow Israeli! I must implore that you do not call me Netanyahu. It is only needed of you to call me Bibi.",
+        },
+        { speaker: playerName, text: "Okay." },
+        { speaker: "Bibi", text: "So, does your penis bend to the left or to the right?" },
+      ],
+      () =>
+        showChoices(label, { text: "Bibi waits for an answer." }, [
+          {
+            label: "Left",
+            detail: "Compare your answer with the live player poll.",
+            action: () => {
+              void chooseBibiDirection("left");
+            },
+          },
+          {
+            label: "Right",
+            detail: "Compare your answer with the live player poll.",
+            action: () => {
+              void chooseBibiDirection("right");
+            },
+          },
+          {
+            label: "Who the fuck starts a conversation like that?",
+            action: () => {
+              recordSilently("intro:benjamin:direction", "rebuke");
+              finishIntroduction("benjamin", [
+                { speaker: "Bibi", text: "Well FUCK YOU TOO!" },
+                { speaker: "Bibi", text: "It's just like a question, like I'm just asking you." },
+                { speaker: "Bibi", text: "It's like a reasonable question." },
+                { speaker: playerName, text: "My dick is none of your business." },
+              ]);
+            },
+          },
+        ]),
+    );
+  };
+
+  const startPlaceholderIntroduction = (id: "phil" | "dylan") => {
+    const character = cast[id];
+    const flavour = id === "phil"
+      ? "For now, imagine I arrived with suspiciously bad hot chocolate."
+      : "For now, imagine a judgemental pigeon introduced us.";
+    const question = `intro:${id}:placeholder`;
+    const label = INTRODUCTION_TITLES[id];
+
+    play(
+      label,
+      [
+        { text: `PLACEHOLDER: ${character.name}'s proper introduction has not been written yet.`, effect: "location" },
+        { speaker: character.name, text: flavour },
+      ],
+      () =>
+        showChoices(label, { text: "This placeholder still counts as meeting them." }, [
+          {
+            label: `Meet ${character.name} (placeholder)`,
+            action: () => {
+              recordSilently(question, "continue");
+              finishIntroduction(id, [{ text: `${character.name}'s finished introduction will replace this scene later.` }]);
+            },
+          },
+        ]),
+    );
+  };
+
+  const startIntroduction = (id: CharacterId) => {
+    if (metCharacters.includes(id)) return;
+    if (id === "jay") return startJayIntroduction();
+    if (id === "oscar") return startOscarIntroduction();
+    if (id === "benjamin") return startBibiIntroduction();
+    return startPlaceholderIntroduction(id);
+  };
+
   const submitName = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const chosenName = draftName.trim() || "Mystery Legend";
     setPlayerName(chosenName);
     play(
-      "Scratchit's scratching therapy",
+      "Arrival · Ben Gurion Airport",
       [
-        { text: "LOCATION: Tel Aviv, Israel", effect: "location" },
-        { text: "SCENE: Jay is in Bob Scratchit's scratching therapy." },
-        { text: "You're sitting in a nearby chair, for some reason. You catch Jay's eye." },
-        { speaker: "Jay", text: "Oh hey! What's your name?" },
-        { speaker: chosenName, text: `Oh! My name is ${chosenName}.` },
-        { text: "Five people are currently dateable. Nobody knows who approved this." },
+        {
+          text: "LOCATION: Ben Gurion Airport, Tel Aviv",
+          effect: "location",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        {
+          text: "Welcome to Tel Aviv, Israel.",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        {
+          text: "Life is exciting all of a sudden. You're in a new place, and you're getting ready for your new place at Streamer University.",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        { text: "All the doors are open.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "But your heart feels so closed.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "Right now, you need to make some friends.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "Or maybe something more.", backgroundImage: AIRPORT_IMAGE_URL },
       ],
       () => setPhase("hub"),
     );
   };
 
-  const chooseScene = (scene: Scene, choice: StoryChoice) => {
+  const chooseScene = (scene: Scene, choice: StoryChoice, choiceIndex: number) => {
     const context = { playerName, cast };
+    recordSilently(`route:${scene.id}`, String(choiceIndex + 1));
     setCast((current) => ({
       ...current,
       [scene.character]: {
@@ -717,6 +1055,7 @@ export default function DatingGame() {
   };
 
   const startRoute = (id: CharacterId) => {
+    if (!introductionsComplete) return;
     const progress = cast[id].progress;
     if (progress >= 2) return;
     const scene = SCENES[id][progress];
@@ -725,10 +1064,10 @@ export default function DatingGame() {
       showChoices(
         scene.title,
         scene.prompt,
-        scene.choices.map((choice) => ({
+        scene.choices.map((choice, choiceIndex) => ({
           label: choice.label,
           detail: choice.detail,
-          action: () => chooseScene(scene, choice),
+          action: () => chooseScene(scene, choice, choiceIndex),
         })),
       ),
     );
@@ -813,6 +1152,7 @@ export default function DatingGame() {
     setDraftName("");
     setPlayerName("Mystery Legend");
     setCast(cloneInitialCast());
+    setMetCharacters([]);
     setCompletedScenes([]);
     setSceneLabel("Opening");
     setLines([]);
@@ -823,7 +1163,9 @@ export default function DatingGame() {
   };
 
   const activeColour = useMemo(() => {
-    const speakerMatch = CHARACTER_ORDER.find((id) => cast[id].name === activeLine?.speaker);
+    const speakerMatch = activeLine?.speaker === "Bibi"
+      ? "benjamin"
+      : CHARACTER_ORDER.find((id) => cast[id].name === activeLine?.speaker);
     return speakerMatch ? cast[speakerMatch].colour : "#ffe66f";
   }, [activeLine?.speaker, cast]);
 
@@ -862,7 +1204,7 @@ export default function DatingGame() {
       if (/honest|asking|Dylan/i.test(activeLine.text)) return OSCAR_IMAGE_URLS.serious;
       return OSCAR_IMAGE_URLS.default;
     }
-    if (activeLine?.speaker === "Benjamin Netanyahu") {
+    if (activeLine?.speaker === "Benjamin Netanyahu" || activeLine?.speaker === "Bibi") {
       if (/funny|heartwarming/i.test(activeLine.text)) return BIBI_IMAGE_URLS.smile;
       if (/placeholder|explain|answered nothing/i.test(activeLine.text)) return BIBI_IMAGE_URLS.shrug;
       if (/mine|motorcade|vehicle/i.test(activeLine.text)) return BIBI_IMAGE_URLS.lecture;
@@ -880,7 +1222,8 @@ export default function DatingGame() {
             <span>PHI</span> HEARTWARE
           </button>
           <div className="dating-game__status">
-            <span className="dating-game__status-light" /> {phase === "hub" ? "FREE ROAM" : sceneLabel.toUpperCase()}
+            <span className="dating-game__status-light" />{" "}
+            {phase === "hub" ? (introductionsComplete ? "FREE ROAM" : "ORIENTATION") : sceneLabel.toUpperCase()}
           </div>
           {phase !== "title" && (
             <button className="dating-game__restart" type="button" onClick={resetGame}>Restart</button>
@@ -893,8 +1236,8 @@ export default function DatingGame() {
             <h1>DATING<span>SIM</span></h1>
             <p className="dating-title__warning">WARNING: GETS STEAMY. CONTAINS ARBY'S.</p>
             <p className="dating-title__intro">
-              Five questionable romance routes. Ten encounters. One judgemental pigeon. Your choices are remembered,
-              even when everyone wishes they weren't.
+              Five mandatory introductions. Ten questionable romance encounters. One judgemental pigeon. Every answer
+              joins the anonymous stats, even when everyone wishes it hadn't.
             </p>
             <button className="dating-title__start" type="button" onClick={() => setPhase("name")}>
               <span>▶</span> Start making mistakes
@@ -905,8 +1248,8 @@ export default function DatingGame() {
 
         {phase === "name" && (
           <section className="dating-name-card">
-            <p className="dating-name-card__speaker">JAY</p>
-            <h1>Oh hey! What's your name?</h1>
+            <p className="dating-name-card__speaker">STREAMER UNIVERSITY</p>
+            <h1>Before you land—what's your name?</h1>
             <form onSubmit={submitName}>
               <label htmlFor="dating-player-name">Tell the truth, probably</label>
               <input
@@ -931,10 +1274,16 @@ export default function DatingGame() {
               <span>{sceneLabel}</span>
               <span>{lineIndex + 1} / {lines.length}</span>
             </div>
-            <div className="dating-dialogue__stage" aria-hidden="true">
+            <div
+              className={`dating-dialogue__stage ${activeLine.backgroundImage ? "dating-dialogue__stage--image" : ""}`}
+              aria-hidden="true"
+            >
+              {activeLine.backgroundImage && (
+                <img className="dating-dialogue__background" src={activeLine.backgroundImage} alt="" />
+              )}
               {activeLine.effect === "heartbeat" && <div className="dating-heart">♥</div>}
               {activeLine.effect === "creepy" && <div className="dating-glitch">ERROR / FEELINGS / ERROR</div>}
-              {!activeLine.effect && <div className="dating-orbit"><span /><span /><span /></div>}
+              {!activeLine.effect && !activeLine.backgroundImage && <div className="dating-orbit"><span /><span /><span /></div>}
               {activePortraitUrl && (
                 <img
                   className="dating-dialogue__character"
@@ -987,17 +1336,24 @@ export default function DatingGame() {
             <div className="dating-hub__intro">
               <div>
                 <p className="dating-hub__kicker">SOCIAL HUB · {playerName}</p>
-                <h1>Who do you want to find?</h1>
-                <p>Routes stay open. Date one person, several people, or create a preventable group-chat disaster.</p>
+                <h1>{introductionsComplete ? "Who do you want to find?" : "You should probably meet everyone."}</h1>
+                <p>
+                  {introductionsComplete
+                    ? "Routes stay open. Date one person, several people, or create a preventable group-chat disaster."
+                    : "Introductions first. Meet all five people, then their romance routes unlock on this same menu."}
+                </p>
               </div>
               <div className="dating-hub__counter">
-                <strong>{scenesPlayed}</strong><span>encounters complete</span>
+                <strong>{introductionsComplete ? scenesPlayed : `${metCharacters.length}/5`}</strong>
+                <span>{introductionsComplete ? "encounters complete" : "people met"}</span>
               </div>
             </div>
             <div className="dating-hub__grid">
               {CHARACTER_ORDER.map((id, index) => {
                 const character = cast[id];
+                const introductionComplete = metCharacters.includes(id);
                 const routeComplete = character.progress >= 2;
+                const cardComplete = introductionsComplete ? routeComplete : introductionComplete;
                 const portraitUrl = id === "jay"
                   ? JAY_IMAGE_URL
                   : id === "phil"
@@ -1009,12 +1365,12 @@ export default function DatingGame() {
                         : BIBI_IMAGE_URLS.serious;
                 return (
                   <button
-                    className={`dating-route-card ${routeComplete ? "dating-route-card--complete" : ""}`}
+                    className={`dating-route-card ${cardComplete ? "dating-route-card--complete" : ""}`}
                     style={{ "--route-colour": character.colour } as CSSProperties}
                     key={id}
                     type="button"
-                    onClick={() => startRoute(id)}
-                    disabled={routeComplete}
+                    onClick={() => (introductionsComplete ? startRoute(id) : startIntroduction(id))}
+                    disabled={cardComplete}
                   >
                     <span className="dating-route-card__index">0{index + 1}</span>
                     <span className={`dating-route-card__portrait ${portraitUrl ? "dating-route-card__portrait--photo" : ""}`}>
@@ -1035,22 +1391,58 @@ export default function DatingGame() {
                       <em>{character.status}</em>
                     </span>
                     <span className="dating-route-card__footer">
-                      <span className="dating-route-card__pips" aria-label={`${character.progress} of 2 encounters complete`}>
-                        <i className={character.progress >= 1 ? "is-filled" : ""} />
-                        <i className={character.progress >= 2 ? "is-filled" : ""} />
+                      <span
+                        className="dating-route-card__pips"
+                        aria-label={
+                          introductionsComplete
+                            ? `${character.progress} of 2 encounters complete`
+                            : introductionComplete
+                              ? "Introduction complete"
+                              : "Introduction not complete"
+                        }
+                      >
+                        {introductionsComplete ? (
+                          <>
+                            <i className={character.progress >= 1 ? "is-filled" : ""} />
+                            <i className={character.progress >= 2 ? "is-filled" : ""} />
+                          </>
+                        ) : (
+                          <i className={introductionComplete ? "is-filled" : ""} />
+                        )}
                       </span>
-                      <span>{routeComplete ? "ROUTE COMPLETE" : SCENES[id][character.progress].title}</span>
+                      <span>
+                        {introductionsComplete
+                          ? routeComplete
+                            ? "ROUTE COMPLETE"
+                            : SCENES[id][character.progress].title
+                          : introductionComplete
+                            ? "INTRODUCTION COMPLETE"
+                            : INTRODUCTION_TITLES[id]}
+                      </span>
                     </span>
                   </button>
                 );
               })}
             </div>
             <div className="dating-hub__footer">
-              <p><span>◆</span> Feelings are tracked privately. No affection spreadsheet will save you.</p>
-              <button type="button" onClick={endNight} disabled={scenesPlayed < 4}>
-                {scenesPlayed < 4
-                  ? `Meet ${4 - scenesPlayed} more time${4 - scenesPlayed === 1 ? "" : "s"}`
-                  : "End the night →"}
+              <p>
+                <span>◆</span>{" "}
+                {introductionsComplete
+                  ? "Feelings are tracked privately. Dialogue choices are tallied anonymously."
+                  : "Meet everybody first. Phil and Dylan currently use clearly marked placeholders."}
+              </p>
+              <button
+                type="button"
+                onClick={endNight}
+                disabled={!introductionsComplete || scenesPlayed < 4}
+              >
+                {!introductionsComplete
+                  ? `Meet ${CHARACTER_ORDER.length - metCharacters.length} more ${
+                      CHARACTER_ORDER.length - metCharacters.length === 1 ? "person" : "people"
+                    }`
+                  : scenesPlayed < 4
+                    ? `Complete ${4 - scenesPlayed} more encounter${4 - scenesPlayed === 1 ? "" : "s"}`
+                    : "End the night →"}
               </button>
             </div>
             <details className="dating-hub__credits">
