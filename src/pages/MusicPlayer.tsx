@@ -170,6 +170,7 @@ export default function MusicPlayer({
   const [swipeTransitioning, setSwipeTransitioning] = useState(false)
   const [swipeActive, setSwipeActive] = useState(false)
   const [mobileVolumeOpen, setMobileVolumeOpen] = useState(false)
+  const [desktopQueueOpen, setDesktopQueueOpen] = useState(true)
   const showInitialSearchLoading = searchLoading && searchResults.length === 0
   const loadingState = getLoadingState(searchLoadingLabel)
 
@@ -440,9 +441,16 @@ export default function MusicPlayer({
   ])
 
   return (
-    <main id="main-site" className="music-main-shell">
+    <main
+      id="main-site"
+      className={desktopQueueOpen ? "music-main-shell" : "music-main-shell is-queue-collapsed"}
+    >
       <div className="music-layout">
-        <aside className="music-queue-sidebar">
+        <aside
+          id="music-desktop-queue"
+          className="music-queue-sidebar"
+          aria-hidden={!desktopQueueOpen}
+        >
           <QueuePanel
             queue={queue}
             activeQueueIndex={activeQueueIndex}
@@ -1061,6 +1069,16 @@ export default function MusicPlayer({
         </div>
 
         <div className="music-volume">
+          <button
+            type="button"
+            className="music-icon-button music-desktop-control"
+            aria-label={desktopQueueOpen ? "Hide queue" : "Show queue"}
+            aria-controls="music-desktop-queue"
+            aria-expanded={desktopQueueOpen}
+            onClick={() => setDesktopQueueOpen((open) => !open)}
+          >
+            <FontAwesomeIcon icon={faBarsStaggered} />
+          </button>
           <FontAwesomeIcon icon={volume <= 0.001 ? faVolumeXmark : faVolumeHigh} />
           <input
             className="music-volume-slider"
