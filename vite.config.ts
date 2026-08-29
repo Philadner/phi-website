@@ -8,6 +8,18 @@ import {
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const sourceName = assetInfo.names?.[0] ?? assetInfo.name ?? ''
+          return sourceName.endsWith('.mjs')
+            ? 'assets/[name][extname]'
+            : 'assets/[name]-[hash][extname]'
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/archive-api': {

@@ -3,8 +3,13 @@ import type { FormEvent } from "react"
 import { Link } from "react-router-dom"
 import * as maplibregl from "maplibre-gl"
 import type { Map as MapLibreMap, Marker, StyleSpecification } from "maplibre-gl"
+import mapLibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url&no-inline"
+import mapLibreSharedUrl from "maplibre-gl/dist/maplibre-gl-shared.mjs?url&no-inline"
 import "maplibre-gl/dist/maplibre-gl.css"
 import "../stylesheets/FilterMap.css"
+
+maplibregl.setWorkerUrl(mapLibreWorkerUrl)
+void mapLibreSharedUrl
 
 const layerGroups = {
   buildings: ["buildings"],
