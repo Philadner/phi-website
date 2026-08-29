@@ -25,6 +25,7 @@ import Remote from './pages/Remote';
 import DylanTightness from './pages/DylanTightness';
 import PhilTightness from './pages/PhilTightness';
 import ChangelogCommits from './pages/ChangelogCommits';
+import FilterMap from './pages/FilterMap';
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
@@ -458,6 +459,7 @@ useEffect(() => {
             <Route path="/phil-tightness" element={<PhilTightness />} />
             <Route path="/musicpl/*" element={<MusicPLRouter />} />
             <Route path="/about-musicpl" element={<AboutMusicPL />} />
+            <Route path="/filtermap" element={<FilterMap />} />
 
           </Routes>
         </>
