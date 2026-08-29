@@ -42,7 +42,7 @@ function createMapStyle(apiKey: string): StyleSpecification {
     sources: {
       openmaptiles: {
         type: "vector",
-        url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${key}`,
+        url: `https://api.maptiler.com/tiles/v4/tiles.json?key=${key}`,
       },
     },
     layers: [
@@ -388,7 +388,13 @@ export default function FilterMap() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: cleanCommand }),
       })
-      const payload = await response.json()
+      const responseText = await response.text()
+      let payload: { error?: string; layers?: unknown; message?: string }
+      try {
+        payload = JSON.parse(responseText) as { error?: string; layers?: unknown; message?: string }
+      } catch {
+        throw new Error("The neural link returned static")
+      }
       if (!response.ok) throw new Error(payload?.error || "Unknown signal failure")
 
       const groups = Array.isArray(payload.layers)

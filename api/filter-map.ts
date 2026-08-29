@@ -95,9 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 layers: {
                   type: "array",
                   items: { type: "string", enum: LAYERS },
-                  uniqueItems: true,
                 },
-                message: { type: "string", maxLength: 60 },
+                message: { type: "string" },
               },
               required: ["layers", "message"],
               additionalProperties: false,
