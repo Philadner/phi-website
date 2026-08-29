@@ -24,6 +24,78 @@ const layerGroups = {
 
 type LayerGroup = keyof typeof layerGroups
 
+type MarkerTarget = {
+  targetType: "address" | "coordinates"
+  address: string
+  longitude: number
+  latitude: number
+  label: string
+}
+
+type MarkerRecord = {
+  id: string
+  address: string
+  longitude: number
+  latitude: number
+  label: string
+}
+
+type MapActionPlan = {
+  error?: string
+  filters?: { change: boolean; layers: unknown }
+  camera?: {
+    targetType: "none" | "address" | "coordinates" | "current"
+    address: string
+    longitude: number
+    latitude: number
+    zoom: number
+  }
+  pins?: MarkerTarget[]
+  pings?: MarkerTarget[]
+  clearPins?: boolean
+  clearPings?: boolean
+  message?: string
+}
+
+type GeocodingFeature = {
+  center?: [number, number]
+  geometry?: { coordinates?: [number, number] }
+  place_name?: string
+  text?: string
+}
+
+async function geocodeAddress(address: string, apiKey: string, proximity: [number, number]) {
+  const params = new URLSearchParams({
+    key: apiKey,
+    limit: "1",
+    language: "en",
+    proximity: proximity.join(","),
+  })
+  const response = await fetch(
+    `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?${params}`,
+  )
+  if (!response.ok) return null
+  const payload = await response.json() as { features?: GeocodingFeature[] }
+  const feature = payload.features?.[0]
+  const coordinates = feature?.center || feature?.geometry?.coordinates
+  if (!coordinates || !Number.isFinite(coordinates[0]) || !Number.isFinite(coordinates[1])) return null
+  return {
+    coordinates,
+    placeName: feature.place_name || feature.text || address,
+  }
+}
+
+async function reverseGeocode(longitude: number, latitude: number, apiKey: string) {
+  const params = new URLSearchParams({ key: apiKey, limit: "1", language: "en" })
+  const response = await fetch(
+    `https://api.maptiler.com/geocoding/${longitude},${latitude}.json?${params}`,
+  )
+  if (!response.ok) return "AREA UNRESOLVED"
+  const payload = await response.json() as { features?: GeocodingFeature[] }
+  const feature = payload.features?.[0]
+  return feature?.place_name || feature?.text || "AREA UNRESOLVED"
+}
+
 const allGroups = Object.keys(layerGroups) as LayerGroup[]
 
 const layerLabels: Record<LayerGroup, string> = {
@@ -271,9 +343,15 @@ export default function FilterMap() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
   const locationMarkerRef = useRef<Marker | null>(null)
+  const pinMarkersRef = useRef<Marker[]>([])
+  const pingMarkersRef = useRef<Marker[]>([])
+  const areaRequestRef = useRef(0)
   const [activeGroups, setActiveGroups] = useState<LayerGroup[]>(allGroups)
   const [coordinates, setCoordinates] = useState("ACQUIRING POSITION")
   const [zoom, setZoom] = useState("--")
+  const [areaLabel, setAreaLabel] = useState("RESOLVING LOCAL AREA")
+  const [pinRecords, setPinRecords] = useState<MarkerRecord[]>([])
+  const [pingRecords, setPingRecords] = useState<MarkerRecord[]>([])
   const [mapStatus, setMapStatus] = useState("INITIALISING VECTOR FEED")
   const [command, setCommand] = useState("")
   const [commandStatus, setCommandStatus] = useState("THE MAP IS LISTENING")
@@ -281,6 +359,48 @@ export default function FilterMap() {
 
   const apiKey = import.meta.env.VITE_MAPTILER_API_KEY as string | undefined
   const style = useMemo(() => (apiKey ? createMapStyle(apiKey) : null), [apiKey])
+
+  const clearPinMarkers = useCallback(() => {
+    pinMarkersRef.current.forEach((marker) => marker.remove())
+    pinMarkersRef.current = []
+    setPinRecords([])
+  }, [])
+
+  const clearPingMarkers = useCallback(() => {
+    pingMarkersRef.current.forEach((marker) => marker.remove())
+    pingMarkersRef.current = []
+    setPingRecords([])
+  }, [])
+
+  const addMapMarker = useCallback((kind: "pin" | "ping", record: MarkerRecord) => {
+    const map = mapRef.current
+    if (!map) return
+
+    const markerNode = document.createElement("div")
+    markerNode.className = `filtermap-marker-node filtermap-marker-node--${kind}`
+    markerNode.setAttribute("aria-label", `${kind === "pin" ? "Pinned" : "Pinged"}: ${record.label}`)
+    const markerVisual = document.createElement("div")
+    markerVisual.className = kind === "pin" ? "filtermap-address-pin" : "filtermap-coordinate-ping"
+    if (kind === "pin") {
+      const label = document.createElement("span")
+      label.textContent = record.label
+      markerVisual.appendChild(label)
+    }
+    markerNode.appendChild(markerVisual)
+
+    const popup = new maplibregl.Popup({ offset: kind === "pin" ? 26 : 18, closeButton: false })
+      .setText(`${record.label} // ${record.latitude.toFixed(5)}, ${record.longitude.toFixed(5)}`)
+    const marker = new maplibregl.Marker({
+      element: markerNode,
+      anchor: kind === "pin" ? "bottom" : "center",
+    })
+      .setLngLat([record.longitude, record.latitude])
+      .setPopup(popup)
+      .addTo(map)
+
+    if (kind === "pin") pinMarkersRef.current.push(marker)
+    else pingMarkersRef.current.push(marker)
+  }, [])
 
   const applyVisibility = useCallback((groups: LayerGroup[]) => {
     const map = mapRef.current
@@ -323,12 +443,27 @@ export default function FilterMap() {
       setZoom(map.getZoom().toFixed(1))
     }
 
+    let disposed = false
+    const updateArea = async () => {
+      if (!apiKey) return
+      const requestId = ++areaRequestRef.current
+      const center = map.getCenter()
+      try {
+        const area = await reverseGeocode(center.lng, center.lat, apiKey)
+        if (!disposed && requestId === areaRequestRef.current) setAreaLabel(area.toUpperCase())
+      } catch {
+        if (!disposed && requestId === areaRequestRef.current) setAreaLabel("AREA SIGNAL MASKED")
+      }
+    }
+
     map.on("load", () => {
       setMapStatus("VECTOR FEED ONLINE")
       updateReadout()
+      void updateArea()
       applyVisibility(allGroups)
     })
     map.on("move", updateReadout)
+    map.on("moveend", updateArea)
     map.on("error", () => setMapStatus("SIGNAL DEGRADED"))
 
     if (navigator.geolocation) {
@@ -352,11 +487,16 @@ export default function FilterMap() {
     }
 
     return () => {
+      disposed = true
       locationMarkerRef.current?.remove()
+      pinMarkersRef.current.forEach((marker) => marker.remove())
+      pingMarkersRef.current.forEach((marker) => marker.remove())
+      pinMarkersRef.current = []
+      pingMarkersRef.current = []
       map.remove()
       mapRef.current = null
     }
-  }, [applyVisibility, style])
+  }, [apiKey, applyVisibility, style])
 
   const toggleGroup = (group: LayerGroup) => {
     setActiveGroups((current) =>
@@ -382,31 +522,147 @@ export default function FilterMap() {
   const submitCommand = async (event: FormEvent) => {
     event.preventDefault()
     const cleanCommand = command.trim()
-    if (!cleanCommand || isFiltering) return
+    const map = mapRef.current
+    if (!cleanCommand || isFiltering || !map || !apiKey) return
 
     setIsFiltering(true)
     setCommandStatus("LUNA IS DECODING THE SIGNAL…")
 
     try {
+      const currentCenter = map.getCenter()
       const response = await fetch("/api/filter-map", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: cleanCommand }),
+        body: JSON.stringify({
+          command: cleanCommand,
+          context: {
+            center: { longitude: currentCenter.lng, latitude: currentCenter.lat },
+            zoom: map.getZoom(),
+            area: areaLabel,
+            visibleLayers: activeGroups,
+            pins: pinRecords,
+            pings: pingRecords,
+          },
+        }),
       })
       const responseText = await response.text()
-      let payload: { error?: string; layers?: unknown; message?: string }
+      let payload: MapActionPlan
       try {
-        payload = JSON.parse(responseText) as { error?: string; layers?: unknown; message?: string }
+        payload = JSON.parse(responseText) as MapActionPlan
       } catch {
         throw new Error("The neural link returned static")
       }
       if (!response.ok) throw new Error(payload?.error || "Unknown signal failure")
 
-      const groups = Array.isArray(payload.layers)
-        ? payload.layers.filter((group: string): group is LayerGroup => allGroups.includes(group as LayerGroup))
-        : []
-      setActiveGroups(groups)
-      setCommandStatus((payload.message || "FILTER ACCEPTED").toUpperCase())
+      if (payload.filters?.change) {
+        const groups = Array.isArray(payload.filters.layers)
+          ? payload.filters.layers.filter(
+              (group: unknown): group is LayerGroup =>
+                typeof group === "string" && allGroups.includes(group as LayerGroup),
+            )
+          : []
+        setActiveGroups(groups)
+      }
+
+      if (payload.clearPins) clearPinMarkers()
+      if (payload.clearPings) clearPingMarkers()
+
+      const addressCache = new Map<string, ReturnType<typeof geocodeAddress>>()
+      const locateAddress = (address: string) => {
+        const key = address.trim().toLowerCase()
+        const existing = addressCache.get(key)
+        if (existing) return existing
+        const request = geocodeAddress(address, apiKey, [currentCenter.lng, currentCenter.lat])
+        addressCache.set(key, request)
+        return request
+      }
+
+      const resolveTarget = async (target: MarkerTarget) => {
+        if (target.targetType === "coordinates") {
+          if (
+            !Number.isFinite(target.longitude) || !Number.isFinite(target.latitude) ||
+            target.longitude < -180 || target.longitude > 180 ||
+            target.latitude < -90 || target.latitude > 90
+          ) return null
+          return {
+            coordinates: [target.longitude, target.latitude] as [number, number],
+            placeName: target.label,
+          }
+        }
+        return locateAddress(target.address)
+      }
+
+      const pinTargets = Array.isArray(payload.pins) ? payload.pins : []
+      const pingTargets = Array.isArray(payload.pings) ? payload.pings : []
+      const cameraAddressPromise = payload.camera?.targetType === "address" && payload.camera.address
+        ? locateAddress(payload.camera.address)
+        : Promise.resolve(null)
+      const [resolvedPins, resolvedPings, cameraAddress] = await Promise.all([
+        Promise.all(pinTargets.map(async (target) => ({ target, location: await resolveTarget(target) }))),
+        Promise.all(pingTargets.map(async (target) => ({ target, location: await resolveTarget(target) }))),
+        cameraAddressPromise,
+      ])
+
+      const newPinRecords = resolvedPins.flatMap(({ target, location }) => {
+        if (!location) return []
+        const record: MarkerRecord = {
+          id: `pin-${Date.now()}-${Math.random()}`,
+          address: target.address || location.placeName,
+          longitude: location.coordinates[0],
+          latitude: location.coordinates[1],
+          label: target.label || location.placeName,
+        }
+        addMapMarker("pin", record)
+        return [record]
+      })
+      const newPingRecords = resolvedPings.flatMap(({ target, location }) => {
+        if (!location) return []
+        const record: MarkerRecord = {
+          id: `ping-${Date.now()}-${Math.random()}`,
+          address: target.address || location.placeName,
+          longitude: location.coordinates[0],
+          latitude: location.coordinates[1],
+          label: target.label || location.placeName,
+        }
+        addMapMarker("ping", record)
+        return [record]
+      })
+
+      if (newPinRecords.length) {
+        setPinRecords((current) => payload.clearPins ? newPinRecords : [...current, ...newPinRecords])
+      }
+      if (newPingRecords.length) {
+        setPingRecords((current) => payload.clearPings ? newPingRecords : [...current, ...newPingRecords])
+      }
+
+      const camera = payload.camera
+      const cameraZoom = camera && camera.zoom > 0 ? Math.min(19, Math.max(2, camera.zoom)) : map.getZoom()
+      let cameraTarget: [number, number] | null = null
+      if (camera?.targetType === "address" && cameraAddress) cameraTarget = cameraAddress.coordinates
+      if (
+        camera?.targetType === "coordinates" &&
+        Number.isFinite(camera.longitude) && Number.isFinite(camera.latitude) &&
+        camera.longitude >= -180 && camera.longitude <= 180 &&
+        camera.latitude >= -90 && camera.latitude <= 90
+      ) cameraTarget = [camera.longitude, camera.latitude]
+      if (camera?.targetType === "current") cameraTarget = [currentCenter.lng, currentCenter.lat]
+
+      if (cameraTarget) {
+        map.flyTo({ center: cameraTarget, zoom: cameraZoom, duration: 1900, curve: 1.35, essential: true })
+      } else if (camera && camera.zoom > 0) {
+        map.easeTo({ zoom: cameraZoom, duration: 1500, essential: true })
+      } else {
+        const newTargets = [...newPinRecords, ...newPingRecords]
+        if (newTargets.length > 1) {
+          const bounds = new maplibregl.LngLatBounds()
+          newTargets.forEach((target) => bounds.extend([target.longitude, target.latitude]))
+          map.fitBounds(bounds, { padding: 90, maxZoom: 15, duration: 1900 })
+        }
+      }
+
+      const missedTargets = pinTargets.length + pingTargets.length - newPinRecords.length - newPingRecords.length
+      const status = payload.message || "ACTION PLAN ACCEPTED"
+      setCommandStatus(`${status}${missedTargets ? ` // ${missedTargets} TARGET${missedTargets === 1 ? "" : "S"} UNRESOLVED` : ""}`.toUpperCase())
       setCommand("")
     } catch (error) {
       setCommandStatus(error instanceof Error ? error.message.toUpperCase() : "THE SIGNAL WENT DARK")
@@ -470,7 +726,6 @@ export default function FilterMap() {
             <div className="filtermap-corner filtermap-corner--tr" aria-hidden="true" />
             <div className="filtermap-corner filtermap-corner--bl" aria-hidden="true" />
             <div className="filtermap-corner filtermap-corner--br" aria-hidden="true" />
-            <div className="filtermap-scanline" aria-hidden="true" />
             {style ? (
               <div className="filtermap-map" ref={mapContainerRef} />
             ) : (
@@ -486,18 +741,18 @@ export default function FilterMap() {
           <form className="filtermap-command" onSubmit={submitCommand}>
             <div className="filtermap-command-mark" aria-hidden="true">⌁</div>
             <label htmlFor="filtermap-command-input">
-              <span>UNKNOWN INPUT</span>
+              <span>LUNA MAP OPERATOR</span>
               <input
                 id="filtermap-command-input"
                 value={command}
                 onChange={(event) => setCommand(event.target.value)}
-                placeholder="tell the map what should remain…"
-                maxLength={180}
+                placeholder="move, zoom, filter, pin, ping…"
+                maxLength={500}
                 autoComplete="off"
                 spellCheck="false"
               />
             </label>
-            <button type="submit" disabled={isFiltering || !command.trim()}>
+            <button type="submit" disabled={isFiltering || !command.trim() || !apiKey}>
               {isFiltering ? "…" : "EXECUTE"}
             </button>
           </form>
@@ -509,11 +764,17 @@ export default function FilterMap() {
             <span>COORDINATES</span>
             <strong>{coordinates}</strong>
           </div>
+          <div className="filtermap-telemetry-block">
+            <span>GENERAL AREA</span>
+            <strong title={areaLabel}>{areaLabel}</strong>
+          </div>
           <div className="filtermap-telemetry-grid">
             <div><span>ZOOM</span><strong>{zoom}</strong></div>
             <div><span>PROJECTION</span><strong>WEB/M</strong></div>
-            <div><span>VECTOR</span><strong>V3</strong></div>
+            <div><span>VECTOR</span><strong>V4</strong></div>
             <div><span>AI CORE</span><strong>LUNA</strong></div>
+            <div><span>PINS</span><strong>{pinRecords.length.toString().padStart(2, "0")}</strong></div>
+            <div><span>PINGS</span><strong>{pingRecords.length.toString().padStart(2, "0")}</strong></div>
           </div>
           <div className="filtermap-signal-bars" aria-hidden="true">
             {Array.from({ length: 18 }, (_, index) => <i key={index} style={{ height: `${18 + ((index * 17) % 66)}%` }} />)}
