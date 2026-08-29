@@ -15,7 +15,7 @@ const layerGroups = {
   buildings: ["buildings"],
   streets: ["street-glow", "streets"],
   motorways: ["motorway-glow", "motorways"],
-  borders: ["border-glow", "borders"],
+  borders: ["country-border-glow", "country-borders", "border-glow", "borders"],
   water: ["water", "waterways"],
   parks: ["landcover", "parks"],
   rail: ["rail"],
@@ -43,6 +43,7 @@ type MarkerRecord = {
 type MapActionPlan = {
   error?: string
   filters?: { change: boolean; layers: unknown }
+  detail?: { change: boolean; value: number }
   camera?: {
     targetType: "none" | "address" | "coordinates" | "current"
     address: string
@@ -58,30 +59,89 @@ type MapActionPlan = {
 }
 
 type GeocodingFeature = {
+  id?: string
   center?: [number, number]
   geometry?: { coordinates?: [number, number] }
   place_name?: string
   text?: string
+  place_type?: string[]
+  properties?: { kind?: string; place_designation?: string }
 }
 
-async function geocodeAddress(address: string, apiKey: string, proximity: [number, number]) {
+function distanceInKm(from: [number, number], to: [number, number]) {
+  const radians = (degrees: number) => degrees * Math.PI / 180
+  const latitudeDelta = radians(to[1] - from[1])
+  const longitudeDelta = radians(to[0] - from[0])
+  const a = Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(radians(from[1])) * Math.cos(radians(to[1])) * Math.sin(longitudeDelta / 2) ** 2
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+async function geocodeAddress(
+  address: string,
+  apiKey: string,
+  context: { center: [number, number]; area: string },
+) {
   const params = new URLSearchParams({
     key: apiKey,
-    limit: "1",
+    limit: "8",
     language: "en",
-    proximity: proximity.join(","),
+    fuzzyMatch: "true",
+    autocomplete: "false",
   })
   const response = await fetch(
     `https://api.maptiler.com/geocoding/${encodeURIComponent(address)}.json?${params}`,
   )
   if (!response.ok) return null
   const payload = await response.json() as { features?: GeocodingFeature[] }
-  const feature = payload.features?.[0]
-  const coordinates = feature?.center || feature?.geometry?.coordinates
-  if (!coordinates || !Number.isFinite(coordinates[0]) || !Number.isFinite(coordinates[1])) return null
+  const candidates = (payload.features || []).flatMap((feature) => {
+    const coordinates = feature.center || feature.geometry?.coordinates
+    if (!coordinates || !Number.isFinite(coordinates[0]) || !Number.isFinite(coordinates[1])) return []
+    return [{
+      coordinates,
+      name: feature.place_name || feature.text || address,
+      text: feature.text || "",
+      type: feature.place_type?.join(", ") || feature.properties?.kind || feature.properties?.place_designation || "place",
+      distanceKm: Math.round(distanceInKm(context.center, coordinates)),
+    }]
+  }).map((candidate, index) => ({ ...candidate, index }))
+  if (!candidates.length) return null
+
+  let selectedIndex = candidates[0].index
+  try {
+    const resolverResponse = await fetch("/api/filter-map-place", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: address,
+        context: {
+          area: context.area,
+          longitude: context.center[0],
+          latitude: context.center[1],
+        },
+        candidates: candidates.map((candidate) => ({
+          index: candidate.index,
+          name: candidate.name,
+          text: candidate.text,
+          type: candidate.type,
+          longitude: candidate.coordinates[0],
+          latitude: candidate.coordinates[1],
+          distanceKm: candidate.distanceKm,
+        })),
+      }),
+    })
+    if (resolverResponse.ok) {
+      const selection = await resolverResponse.json() as { selectedIndex?: unknown }
+      if (typeof selection.selectedIndex === "number") selectedIndex = selection.selectedIndex
+    }
+  } catch {
+    // The top geocoder result remains a safe fallback if the resolver is unavailable.
+  }
+
+  const selected = candidates.find((candidate) => candidate.index === selectedIndex) || candidates[0]
   return {
-    coordinates,
-    placeName: feature.place_name || feature.text || address,
+    coordinates: selected.coordinates,
+    placeName: selected.name,
   }
 }
 
@@ -107,6 +167,23 @@ const layerLabels: Record<LayerGroup, string> = {
   parks: "Terrain",
   rail: "Rail",
   labels: "Labels",
+}
+
+const detailMinZooms: Record<string, readonly number[]> = {
+  buildings: [18, 17, 16, 15, 14, 13, 12, 11, 9, 0],
+  "street-glow": [16, 14, 12, 10, 9, 8, 7, 6, 5, 0],
+  streets: [16, 14, 12, 10, 9, 8, 7, 6, 5, 0],
+  "motorway-glow": [10, 9, 8, 7, 6, 5.5, 5, 4, 4, 0],
+  motorways: [10, 9, 8, 7, 6, 5.5, 5, 4, 4, 0],
+  "country-border-glow": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "country-borders": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "border-glow": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  borders: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  waterways: [14, 12, 10, 9, 8, 7, 6, 5, 4, 0],
+  parks: [14, 12, 11, 10, 9, 8, 7, 6, 5, 0],
+  rail: [16, 14, 12, 11, 10, 9, 8, 6, 5, 0],
+  "place-labels": [6, 5, 4, 3, 3, 2, 1, 0, 0, 0],
+  "road-labels": [18, 17, 16, 15, 14, 13, 12, 10, 8, 0],
 }
 
 function createMapStyle(apiKey: string): StyleSpecification {
@@ -267,6 +344,30 @@ function createMapStyle(apiKey: string): StyleSpecification {
         },
       },
       {
+        id: "country-border-glow",
+        type: "line",
+        source: "openmaptiles",
+        "source-layer": "country_border",
+        paint: {
+          "line-color": "#ffffff",
+          "line-opacity": 0.42,
+          "line-blur": 5,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 0, 2.8, 5, 5, 10, 8],
+        },
+      },
+      {
+        id: "country-borders",
+        type: "line",
+        source: "openmaptiles",
+        "source-layer": "country_border",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#f5fff8",
+          "line-opacity": 0.98,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.1, 5, 1.8, 10, 3.2],
+        },
+      },
+      {
         id: "border-glow",
         type: "line",
         source: "openmaptiles",
@@ -346,7 +447,9 @@ export default function FilterMap() {
   const pinMarkersRef = useRef<Marker[]>([])
   const pingMarkersRef = useRef<Marker[]>([])
   const areaRequestRef = useRef(0)
+  const detailLevelRef = useRef(5)
   const [activeGroups, setActiveGroups] = useState<LayerGroup[]>(allGroups)
+  const [detailLevel, setDetailLevel] = useState(5)
   const [coordinates, setCoordinates] = useState("ACQUIRING POSITION")
   const [zoom, setZoom] = useState("--")
   const [areaLabel, setAreaLabel] = useState("RESOLVING LOCAL AREA")
@@ -414,9 +517,23 @@ export default function FilterMap() {
     }
   }, [])
 
+  const applyDetail = useCallback((value: number) => {
+    const map = mapRef.current
+    if (!map?.isStyleLoaded()) return
+    const level = Math.min(10, Math.max(1, Math.round(value)))
+    for (const [layerId, minZooms] of Object.entries(detailMinZooms)) {
+      if (map.getLayer(layerId)) map.setLayerZoomRange(layerId, minZooms[level - 1], 24)
+    }
+  }, [])
+
   useEffect(() => {
     applyVisibility(activeGroups)
   }, [activeGroups, applyVisibility])
+
+  useEffect(() => {
+    detailLevelRef.current = detailLevel
+    applyDetail(detailLevel)
+  }, [applyDetail, detailLevel])
 
   useEffect(() => {
     if (!mapContainerRef.current || !style) return
@@ -461,6 +578,7 @@ export default function FilterMap() {
       updateReadout()
       void updateArea()
       applyVisibility(allGroups)
+      applyDetail(detailLevelRef.current)
     })
     map.on("move", updateReadout)
     map.on("moveend", updateArea)
@@ -496,7 +614,7 @@ export default function FilterMap() {
       map.remove()
       mapRef.current = null
     }
-  }, [apiKey, applyVisibility, style])
+  }, [apiKey, applyDetail, applyVisibility, style])
 
   const toggleGroup = (group: LayerGroup) => {
     setActiveGroups((current) =>
@@ -538,6 +656,7 @@ export default function FilterMap() {
           context: {
             center: { longitude: currentCenter.lng, latitude: currentCenter.lat },
             zoom: map.getZoom(),
+            detail: detailLevel,
             area: areaLabel,
             visibleLayers: activeGroups,
             pins: pinRecords,
@@ -563,6 +682,9 @@ export default function FilterMap() {
           : []
         setActiveGroups(groups)
       }
+      if (payload.detail?.change) {
+        setDetailLevel(Math.min(10, Math.max(1, Math.round(payload.detail.value))))
+      }
 
       if (payload.clearPins) clearPinMarkers()
       if (payload.clearPings) clearPingMarkers()
@@ -572,7 +694,10 @@ export default function FilterMap() {
         const key = address.trim().toLowerCase()
         const existing = addressCache.get(key)
         if (existing) return existing
-        const request = geocodeAddress(address, apiKey, [currentCenter.lng, currentCenter.lat])
+        const request = geocodeAddress(address, apiKey, {
+          center: [currentCenter.lng, currentCenter.lat],
+          area: areaLabel,
+        })
         addressCache.set(key, request)
         return request
       }
@@ -718,6 +843,25 @@ export default function FilterMap() {
           <button type="button" className="filtermap-reset" onClick={() => setActiveGroups(allGroups)}>
             RESTORE ALL CHANNELS
           </button>
+          <div className="filtermap-detail-control">
+            <div>
+              <span>DETAIL LEVEL</span>
+              <strong>{detailLevel.toString().padStart(2, "0")} / 10</strong>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              step="1"
+              value={detailLevel}
+              onChange={(event) => setDetailLevel(Number(event.target.value))}
+              aria-label="Map detail level"
+            />
+            <div className="filtermap-detail-buttons">
+              <button type="button" onClick={() => setDetailLevel((value) => Math.max(1, value - 1))} aria-label="Reduce map detail">−</button>
+              <button type="button" onClick={() => setDetailLevel((value) => Math.min(10, value + 1))} aria-label="Increase map detail">+</button>
+            </div>
+          </div>
         </aside>
 
         <div className="filtermap-stage">
@@ -770,7 +914,7 @@ export default function FilterMap() {
           </div>
           <div className="filtermap-telemetry-grid">
             <div><span>ZOOM</span><strong>{zoom}</strong></div>
-            <div><span>PROJECTION</span><strong>WEB/M</strong></div>
+            <div><span>DETAIL</span><strong>{detailLevel.toString().padStart(2, "0")} / 10</strong></div>
             <div><span>VECTOR</span><strong>V4</strong></div>
             <div><span>AI CORE</span><strong>LUNA</strong></div>
             <div><span>PINS</span><strong>{pinRecords.length.toString().padStart(2, "0")}</strong></div>
