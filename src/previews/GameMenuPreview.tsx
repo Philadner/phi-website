@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import GameArtwork from '../components/ChatGameArtwork'
+import { UNO_DISCLAIMER } from '../lib/chatGames'
 import '../stylesheets/ChatGames.css'
 import '../stylesheets/Chatroom.css'
 import './GameMenuPreview.css'
@@ -10,7 +11,7 @@ const games = [
   { id: 'tictactoe', title: 'Tic tac toe', description: 'Pick a square and take your turn. Three in a row wins. Try to avoid another draw.' },
   { id: 'wordle', title: 'Wordle race', description: 'Same word, same six guesses. Race the room to solve it first without giving away your answer.' },
   { id: 'battleships', title: 'Battleships', description: 'Hide your fleet, call your shots, and sink their ships. Your opponent only sees what you hit.' },
-  { id: 'uno', title: 'Uno', description: 'Match colours and numbers, throw down action cards, and get rid of your hand. Remember to call Uno.' },
+  { id: 'uno', title: 'Uno', description: UNO_DISCLAIMER },
   { id: 'gartic', title: 'Gartic Phone', description: 'Write a prompt, draw what you get, then guess the next drawing. Pass it around and see how far it goes.', soon: true },
 ]
 

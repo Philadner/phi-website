@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { CARD_COLORS, CHAT_GAMES, gameRequest } from '../lib/chatGames'
+import { CARD_COLORS, CHAT_GAMES, UNO_DISCLAIMER, gameRequest } from '../lib/chatGames'
 import type { CardColor, GameResponse, GameView } from '../lib/chatGames'
 import type { ChatSession } from '../lib/chat'
 import GameArtwork from './ChatGameArtwork'
@@ -103,6 +103,7 @@ export default function ChatGameCard({ id, session }: { id: string; session: Cha
   const winner = g.players.find(p => p.id === g.winner)?.name
   return <section className="chat-game-card" aria-label={`${title} game`}>
     <header><h3>{title}</h3><span>{g.status === 'done' ? winner ? `${winner} wins` : g.reason : g.status === 'waiting' ? 'Waiting for players' : g.status === 'setup' ? 'Place your fleet' : g.kind === 'wordle' ? 'Race on' : `${g.players.find(p => p.id === g.turn)?.name}'s turn`}</span></header>
+    {g.kind === 'uno' && <p className="chat-game-disclaimer">{UNO_DISCLAIMER}</p>}
     <div className="chat-game-players">{g.players.map((p, i) => <span key={p.id} className={g.turn === p.id && g.status === 'active' && g.kind !== 'wordle' ? 'chat-game-current' : ''}>{g.kind === 'chess' ? i === 0 ? '♙ ' : '♟ ' : g.kind === 'tictactoe' ? i === 0 ? '× ' : '○ ' : ''}{p.name}{g.kind === 'uno' && g.status !== 'waiting' ? ` · ${g.counts[p.id]} cards${g.uno.includes(p.id) ? ' · UNO!' : ''}` : ''}</span>)}</div>
     {g.status === 'waiting' ? <><GameArtwork game={g.kind} title={title} /><div className="chat-game-controls">{session && !member && <button type="button" disabled={busy} onClick={() => void play({ action: 'join' })}>Join game</button>}{me === g.host && (g.kind === 'uno' || g.kind === 'wordle') && <button type="button" disabled={busy || g.players.length < 2} onClick={() => void play({ action: 'start' })}>Start round</button>}{member && <button type="button" disabled={busy} onClick={() => void play({ action: 'leave' })}>{me === g.host ? 'Cancel game' : 'Leave lobby'}</button>}{!session && <span>Choose a username to join.</span>}</div></> : <div className="chat-game-body">
       {g.kind === 'chess' && <ChessGame game={g} me={me} disabled={disabled} play={move => void play(move)} />}

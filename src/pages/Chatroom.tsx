@@ -70,6 +70,8 @@ export default function Chatroom() {
   const { setPresence } = useChatPresence()
   const textarea = useRef<HTMLTextAreaElement>(null)
   const feed = useRef<HTMLDivElement>(null)
+  const feedContents = useRef<HTMLDivElement>(null)
+  const composer = useRef<HTMLFormElement>(null)
   const nearBottom = useRef(true)
   const latestId = useRef(0)
   const historyCursor = useRef<number | null>(null)
@@ -196,6 +198,32 @@ export default function Chatroom() {
       olderScroll.current = null
     } else if (nearBottom.current) element.scrollTop = element.scrollHeight
   }, [messages])
+
+  useEffect(() => {
+    const element = feed.current
+    const contents = feedContents.current
+    if (!element || !contents) return
+    const observer = new ResizeObserver(() => {
+      if (nearBottom.current) element.scrollTop = element.scrollHeight
+    })
+    observer.observe(contents)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const element = composer.current
+    if (!element) return
+    const measure = () => {
+      const headerBottom = document.querySelector('.site-header--chat')?.getBoundingClientRect().bottom || 80
+      element.style.setProperty('--chat-menu-max-height', `${Math.max(80, element.getBoundingClientRect().top - headerBottom - 20)}px`)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    window.addEventListener('resize', measure)
+    measure()
+    return () => { observer.disconnect(); window.removeEventListener('resize', measure) }
+  }, [booting, session?.id, editingName])
 
   async function join(name: string) {
     setJoining(true)
@@ -372,6 +400,7 @@ export default function Chatroom() {
         nearBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 100
         if (nearBottom.current) setNewMessages(false)
       }}>
+        <div ref={feedContents}>
         {hasMore && <button type="button" className="chat-older" disabled={loadingOlder} onClick={loadOlder}>{loadingOlder ? 'Loading…' : 'Load earlier messages'}</button>}
         {historyError && <p className="chat-error" role="alert">{historyError}</p>}
         {messages.filter((message) => message.id > floor).map((message) => <article id={`chat-message-${message.id}`} className={`chat-message ${message.author_id === session?.id && !message.is_ai ? 'chat-message--self' : ''} ${message.kind === 'action' ? 'chat-message--action' : ''} ${session && (message.mentioned_ids?.includes(session.id) || message.reply_preview?.authorId === session.id) ? 'chat-message--mentioned' : ''} ${jumpedTo === message.id ? 'chat-message--jumped' : ''}`} key={message.id}>
@@ -383,6 +412,7 @@ export default function Chatroom() {
             {message.modifiers?.game_id && <ChatGameCard id={message.modifiers.game_id} session={session} />}
           </div>
         </article>)}
+        </div>
       </div>
       {room.running.length > 0 && <div className="chat-ai-status" role="status">AI replying…</div>}
       {room.requests.filter((job) => job.status === 'error').map((job) => <div className="chat-ai-status" key={job.id}><span>{job.error || 'AI could not reply.'}</span><button type="button" disabled={room.running.includes(job.trigger_id)} onClick={() => void room.runAi(job.trigger_id)}>Retry AI</button></div>)}
@@ -393,7 +423,7 @@ export default function Chatroom() {
         <label htmlFor="chat-username">Username</label>
         <div className="chat-join-controls"><input id="chat-username" value={username} onChange={(event) => setUsername(event.target.value)} minLength={2} maxLength={24} pattern="[A-Za-z0-9_ \-]{2,24}" placeholder="Your username" autoComplete="nickname" required /><button disabled={joining}>{joining ? 'Joining…' : session ? 'Save name' : 'Join the chat →'}</button>{session && <button type="button" onClick={() => { setUsername(session.username); setEditingName(false) }}>Cancel</button>}</div>
         {error && <p className="chat-error" role="alert">{error}</p>}
-      </form> : <form className="chat-composer" onSubmit={send} onPaste={(event) => {
+      </form> : <form ref={composer} className="chat-composer" onSubmit={send} onPaste={(event) => {
         const files = [...event.clipboardData.items].filter((item) => item.kind === 'file').map((item) => item.getAsFile()).filter((file): file is File => Boolean(file))
         if (files.length) { event.preventDefault(); uploads.add(files.map((file) => ({ file }))) }
       }}>

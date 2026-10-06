@@ -1,4 +1,4 @@
-.game-picker.chat-stuff-menu { --list-width: 240px; display: flex; width: var(--list-width); height: min(414px, calc(100dvh - 286px)); padding: 0; max-width: calc(100vw - 78px); max-height: calc(100dvh - 286px); overflow: hidden; transition: width 240ms cubic-bezier(.22, 1, .36, 1); }
+.game-picker.chat-stuff-menu { --list-width: 240px; display: flex; width: var(--list-width); height: min(414px, var(--chat-menu-max-height, calc(100dvh - 286px))); padding: 0; max-width: calc(100vw - 78px); max-height: var(--chat-menu-max-height, calc(100dvh - 286px)); overflow: hidden; transition: width 240ms cubic-bezier(.22, 1, .36, 1); }
 .game-picker--games.chat-stuff-menu { width: 610px; transition-delay: 180ms; }
 .game-picker-window { flex: 0 0 var(--list-width); overflow: hidden; }
 .game-picker-track { display: flex; width: calc(var(--list-width) * 2); transform: translateX(0); transition: transform 180ms cubic-bezier(.22, 1, .36, 1); height: 100%; }
@@ -6,7 +6,7 @@
 .game-picker-stuff, .game-picker-list { flex: 0 0 var(--list-width); width: var(--list-width); min-height: 0; padding: 8px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #444 transparent; }
 .game-picker .chat-stuff-item { padding: 10px; }
 .game-picker-list { display: flex; flex-direction: column; gap: 3px; }
-.game-picker-list button { text-align: left; border: 0; border-radius: 3px; padding: 11px 10px; background: transparent; font-size: 13px; }
+.game-picker .game-picker-list button { text-align: left; border: 0; border-radius: 3px; padding: 11px 10px; background: transparent; font-size: 13px; }
 .game-picker-list .game-picker-back { color: #999; margin-bottom: 8px; padding-bottom: 15px; border-bottom: 1px solid #303030; border-radius: 0; }
 .game-picker-list .game-picker-back:hover { color: #fff; }
 .game-picker-list .game-picker-option { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
@@ -22,9 +22,9 @@
 .game-picker-copy h2 { margin: 0 0 9px; color: #eee; font-size: 20px; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
 .game-picker-copy p { margin: 0; color: #aaa; font-size: 13px; line-height: 1.6; }
 .game-picker-action { flex-shrink: 0; margin-top: auto; padding: 14px 20px 16px; }
-.game-picker-action button { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 45px; padding: 12px 15px; border: 1px solid gold; border-radius: 4px; background: gold; color: #111; font-weight: 600; font-size: 14px; }
-.game-picker-action button:hover { background: #e6c300; border-color: #e6c300; color: #111; }
-.game-picker-action button:disabled { background: #28261c; border-color: #45402b; color: #ab9e64; opacity: 1; }
+.game-picker .game-picker-action button { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 45px; padding: 12px 15px; border: 1px solid gold; border-radius: 4px; background: gold; color: #111; font-weight: 600; font-size: 14px; }
+.game-picker .game-picker-action button:hover { background: #e6c300; border-color: #e6c300; color: #111; }
+.game-picker .game-picker-action button:disabled { background: #28261c; border-color: #45402b; color: #ab9e64; opacity: 1; }
 @keyframes game-detail-in { from { opacity: .4; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 640px) {
   .game-preview-header { padding: 0 16px; }
@@ -40,7 +40,7 @@
   .game-picker-copy h2 { font-size: 17px; }
   .game-picker-copy p { font-size: 12px; }
   .game-picker-action { padding: 12px; }
-  .game-picker-list button { padding: 11px 7px; font-size: 12px; }
+  .game-picker .game-picker-list button { padding: 11px 7px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .game-picker.chat-stuff-menu, .game-picker-track, .game-picker-detail, .game-picker-window { transition: none; }
@@ -49,6 +49,7 @@
 .chat-game-card { width: min(480px, 100%); margin: 12px 0 4px; border: 1px solid #383838; border-radius: 5px; background: #141414; overflow: hidden; font-size: .8rem; }
 .chat-game-card > header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; margin: 0; gap: 10px; }
 .chat-game-card h3 { font-size: 1rem; margin: 0; }
+.chat-game-disclaimer { margin: 6px 16px 10px; color: #aaa; font-size: .72rem; line-height: 1.5; }
 .chat-game-card > header > span { color: #aaa; font-size: .72rem; text-align: right; }
 .chat-game-players { display: flex; flex-wrap: wrap; gap: 7px 14px; padding: 6px 16px 12px; color: #aaa; font-size: .7rem; }
 .chat-game-current { color: gold; }
@@ -66,7 +67,7 @@
 .chat-game-chess { width: min(360px, 100%); }
 .chat-simple-board { display: grid; gap: 5px; width: min(330px, 100%); }
 .chat-simple-board--tictactoe { grid-template-columns: repeat(3, 1fr); }
-.chat-simple-board--tictactoe button { aspect-ratio: 1; padding: 0; font-size: 3.2rem; font-weight: 300; background: #1b1b1b; }
+.chat-game-card .chat-simple-board--tictactoe button { aspect-ratio: 1; padding: 0; font-size: 3.2rem; font-weight: 300; background: #1b1b1b; }
 .chat-simple-board--tictactoe button[data-player="1"] { color: #e0bc43; opacity: 1; }
 .chat-simple-board--tictactoe button[data-player="2"] { color: #ccc; opacity: 1; }
 .chat-simple-board--connect4 { grid-template-columns: repeat(7, 1fr); padding: 10px; background: #252b35; border-radius: 4px; gap: 7px; }
@@ -90,10 +91,10 @@
 .chat-battleship-boards > div { width: min(208px, 100%); }
 .chat-battleship-boards h4 { margin: 4px 0 8px; color: #aaa; font-size: .7rem; font-weight: 400; }
 .chat-battleship-grid { display: grid; grid-template-columns: repeat(10, 1fr); }
-.chat-battleship-grid button { padding: 0; aspect-ratio: 1; border: 1px solid #3b4a50; border-radius: 0; background: #1d282d; font-size: .9rem; }
+.chat-game-card .chat-battleship-grid button { padding: 0; aspect-ratio: 1; border: 1px solid #3b4a50; border-radius: 0; background: #1d282d; font-size: .9rem; }
 .chat-battleship-grid button:disabled { opacity: 1; }
-.chat-battleship-grid [data-ship="true"] { background: #626e72; }
-.chat-battleship-grid [data-hit="true"] { background: #6b372c; color: #ffb599; }
+.chat-game-card .chat-battleship-grid [data-ship="true"] { background: #626e72; }
+.chat-game-card .chat-battleship-grid [data-hit="true"] { background: #6b372c; color: #ffb599; }
 .chat-battleship-grid [data-hit="false"] { color: #adbfca; }
 .chat-uno-top { display: flex; align-items: center; gap: 18px; }
 .chat-uno-top small { color: #888; }
@@ -107,12 +108,12 @@
 .chat-uno-card:disabled { opacity: .45; }
 .chat-uno-top .chat-uno-card { width: 64px; height: 92px; }
 .chat-game-controls input[type="checkbox"] { accent-color: gold; }
-.chat-gif-picker { position: absolute; z-index: 15; bottom: calc(100% + 8px); left: 0; width: min(420px, 100%); max-height: min(460px, calc(100dvh - 270px)); overflow: auto; scrollbar-width: thin; background: #151515; border: 1px solid #383838; border-radius: 5px; padding: 10px; }
+.chat-gif-picker { position: absolute; z-index: 15; bottom: calc(100% + 8px); left: 0; width: min(420px, 100%); max-height: min(460px, var(--chat-menu-max-height, calc(100dvh - 310px))); overflow: auto; scrollbar-width: thin; background: #151515; border: 1px solid #383838; border-radius: 5px; padding: 10px; }
 .chat-gif-picker header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.chat-gif-picker header input { flex: 1; min-width: 0; padding: 9px 10px; background: #202020; color: #eee; border: 1px solid #444; border-radius: 3px; font: .82rem inherit; }
-.chat-gif-picker header button { padding: 2px 7px; border: 0; background: transparent; font-size: 1.4rem; }
+.chat-gif-picker header input { flex: 1; min-width: 0; padding: 9px 10px; background: #202020; color: #eee; border: 1px solid #444; border-radius: 3px; font-size: .82rem; }
+.chat-shell .chat-gif-picker header button { padding: 2px 7px; border: 0; background: transparent; font-size: 1.4rem; }
 .chat-gif-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-.chat-gif-results button { border: 0; background: transparent; padding: 0; border-radius: 2px; overflow: hidden; text-align: left; }
+.chat-gif-picker .chat-gif-results button { border: 0; background: transparent; padding: 0; border-radius: 2px; overflow: hidden; text-align: left; }
 .chat-gif-results img { display: block; width: 100%; height: 90px; object-fit: cover; }
 .chat-gif-results span { display: block; font-size: .6rem; padding: 3px 2px; color: #999; }
 .chat-gif-picker footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }

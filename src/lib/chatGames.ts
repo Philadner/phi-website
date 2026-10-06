@@ -1,10 +1,12 @@
+export const UNO_DISCLAIMER = 'Uno is currently really shit. It’ll be fixed with the Gartic Phone update.'
+
 export const CHAT_GAMES = [
   { id: 'chess', title: 'Chess', description: 'Challenge someone in the room. Take turns, plan your next move, and put their king in checkmate.' },
   { id: 'connect4', title: 'Connect 4', description: 'Drop a disc into the grid. Connect four in a row before your opponent does.' },
   { id: 'tictactoe', title: 'Tic tac toe', description: 'Pick a square and take your turn. Three in a row wins. Try to avoid another draw.' },
   { id: 'wordle', title: 'Wordle race', description: 'Same word, same six guesses. Race the room to solve it first without giving away your answer.' },
   { id: 'battleships', title: 'Battleships', description: 'Hide your fleet, call your shots, and sink their ships. Your opponent only sees what you hit.' },
-  { id: 'uno', title: 'Uno', description: 'Match colours and numbers, throw down action cards, and get rid of your hand. Remember to call Uno.' },
+  { id: 'uno', title: 'Uno', description: UNO_DISCLAIMER },
   { id: 'gartic', title: 'Gartic Phone', description: 'Write a prompt, draw what you get, then guess the next drawing. Pass it around and see how far it goes.', soon: true },
 ] as const
 export type GameKind = Exclude<typeof CHAT_GAMES[number]['id'], 'gartic'>
