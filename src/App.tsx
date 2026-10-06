@@ -29,6 +29,7 @@ import FilterMap from './pages/FilterMap';
 import { lazy, Suspense } from 'react';
 import ChatPresenceProvider from './components/ChatPresenceProvider';
 import { useChatPresence } from './lib/chat';
+import ChatUploadProgress from './components/ChatUploadProgress';
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
@@ -355,6 +356,7 @@ useEffect(() => {
           )}
 
           <div className="header-actions titlebar-content">
+            {isChatMode && <ChatUploadProgress />}
             {isChatMode && <button type="button" className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} aria-label={chatPresence.live ? `${chatPresence.count} online — show active users` : 'Show active users'} aria-expanded={peopleOpen} aria-controls="chat-active-users" onClick={() => setPeopleOpen(!peopleOpen)}>
               <i aria-hidden="true" />{chatPresence.live ? `${chatPresence.count} online` : 'Connecting…'}
             </button>}

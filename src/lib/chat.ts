@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { ChatAttachment, UploadProgress } from './chatAttachments'
 
 export type ChatSession = { id: string; username: string }
 export type ChatMessage = {
@@ -9,6 +10,7 @@ export type ChatMessage = {
   content: string
   kind: 'message' | 'action'
   created_at: string
+  attachments?: ChatAttachment[]
 }
 export type ChatPresence = { count: number; live: boolean }
 export const ChatPresenceContext = createContext<{
@@ -16,7 +18,9 @@ export const ChatPresenceContext = createContext<{
   setPresence: (value: ChatPresence) => void
   peopleOpen: boolean
   setPeopleOpen: (open: boolean) => void
-}>({ presence: { count: 0, live: false }, setPresence: () => {}, peopleOpen: false, setPeopleOpen: () => {} })
+  uploads: UploadProgress[]
+  setUploads: (value: UploadProgress[]) => void
+}>({ presence: { count: 0, live: false }, setPresence: () => {}, peopleOpen: false, setPeopleOpen: () => {}, uploads: [], setUploads: () => {} })
 export const useChatPresence = () => useContext(ChatPresenceContext)
 
 export async function chatRequest<T>(query = '', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {

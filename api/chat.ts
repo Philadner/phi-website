@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createHash, createHmac, randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
+import { MAX_ATTACHMENTS, UUID } from '../src/lib/chatAttachments.js'
 
 const COOKIE = 'phi_chat_session'
 const MAX_AGE = 30 * 24 * 60 * 60
@@ -74,15 +75,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (body.action === 'send') {
       if (!token) return res.status(401).json({ error: 'Choose a username to join.' })
       const content = typeof body.content === 'string' ? body.content.trim() : ''
-      if (!content || content.length > 8000) return res.status(400).json({ error: 'Messages must be 1–8,000 characters.' })
+      const attachmentIds = body.attachmentIds ?? []
+      if (!Array.isArray(attachmentIds) || attachmentIds.length > MAX_ATTACHMENTS || attachmentIds.some((id) => typeof id !== 'string' || !UUID.test(id)) || new Set(attachmentIds).size !== attachmentIds.length) return res.status(400).json({ error: 'Invalid attachments.' })
+      if ((!content && !attachmentIds.length) || content.length > 8000) return res.status(400).json({ error: 'Add a message or a file (up to 8,000 characters).' })
       if (typeof body.clientId !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(body.clientId)) {
         return res.status(400).json({ error: 'Invalid message ID.' })
       }
       const kind = body.kind ?? 'message'
       if (kind !== 'message' && kind !== 'action') return res.status(400).json({ error: 'Invalid message type.' })
-      const { data, error } = await db.rpc('send_chat_message', { p_token_hash: hash(token), p_client_id: body.clientId, p_content: content, p_kind: kind })
+      const { data, error } = await db.rpc('send_chat_message', { p_token_hash: hash(token), p_client_id: body.clientId, p_content: content, p_kind: kind, p_attachment_ids: attachmentIds })
       if (error?.code === '28000') return res.status(401).json({ error: error.message })
       if (error?.code === 'P0001') return res.status(429).json({ error: error.message })
+      if (error?.code === '22023') return res.status(400).json({ error: error.message })
       if (error) throw error
       return res.status(200).json({ message: data[0] })
     }

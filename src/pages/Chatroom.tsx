@@ -5,6 +5,10 @@ import type { Theme } from 'emoji-picker-react'
 import ChatMarkdown from '../components/ChatMarkdown'
 import ChatActiveUsers from '../components/ChatActiveUsers'
 import ChatComposerTools from '../components/ChatComposerTools'
+import ChatAttachments, { DraftAttachments } from '../components/ChatAttachments'
+import ChatSelectionToolbar from '../components/ChatSelectionToolbar'
+import useChatUploads from '../hooks/useChatUploads'
+import { droppedFiles } from '../lib/chatDrop'
 import { chatRequest, useChatPresence } from '../lib/chat'
 import type { ChatMessage, ChatSession } from '../lib/chat'
 import '../stylesheets/Chatroom.css'
@@ -38,6 +42,10 @@ export default function Chatroom() {
   const [formattingOpen, setFormattingOpen] = useState(false)
   const [stuffOpen, setStuffOpen] = useState(false)
   const [newMessages, setNewMessages] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const uploads = useChatUploads(session)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const dragDepth = useRef(0)
   const { setPresence } = useChatPresence()
   const textarea = useRef<HTMLTextAreaElement>(null)
   const feed = useRef<HTMLDivElement>(null)
@@ -181,36 +189,47 @@ export default function Chatroom() {
     setStuffOpen(false)
   }
 
+  function openFiles() {
+    setStuffOpen(false)
+    setFormattingOpen(false)
+    fileInput.current?.click()
+  }
+
   async function send(event?: FormEvent) {
     event?.preventDefault()
-    if (sending || !session || !draft.trim()) return
+    if (sending || !session || (!draft.trim() && !uploads.files.length)) return
     const text = draft.trim()
     setError('')
     if (text === '/help') { setStuffOpen(true); setFormattingOpen(false); setDraft(''); return }
     if (text === '/format') { setFormattingOpen(true); setStuffOpen(false); setDraft(''); return }
     if (text === '/emoji') { openEmoji(); setDraft(''); return }
+    if (text === '/upload') { openFiles(); setDraft(''); return }
     if (text === '/nick' || text.startsWith('/nick ')) {
       const name = text.slice(5).trim()
       if (!name) { setEditingName(true); return }
       if (await join(name)) setDraft('')
       return
     }
-    if (/^\/(ai|games?|gif|upload)(\s|$)/i.test(text)) {
+    if (uploads.busy || uploads.files.some((file) => file.state === 'error')) { setError('Wait for your uploads, or remove the failed files.'); return }
+    if (/^\/(ai|games?|gif)(\s|$)/i.test(text)) {
       setError('That command is coming later. Try /help for what works now.')
       return
     }
     const action = text.startsWith('/me ')
     if (text.startsWith('/') && !text.startsWith('//') && !action) { setError('Unknown command. Use /help, or start with // to send a slash.'); return }
     const content = action ? text.slice(4).trim() : text.startsWith('//') ? text.slice(1) : text
-    if (!content) return
-    if (requestIdentity.current?.content !== text) requestIdentity.current = { content: text, clientId: crypto.randomUUID() }
+    const attachmentIds = uploads.files.filter((file) => file.state === 'ready').map((file) => file.id)
+    if (!content && !attachmentIds.length) return
+    const identity = JSON.stringify([text, attachmentIds])
+    if (requestIdentity.current?.content !== identity) requestIdentity.current = { content: identity, clientId: crypto.randomUUID() }
     setSending(true)
     try {
-      const data = await chatRequest<{ message: ChatMessage }>('', { action: 'send', content, kind: action ? 'action' : 'message', clientId: requestIdentity.current.clientId })
+      const data = await chatRequest<{ message: ChatMessage }>('', { action: 'send', content, kind: action ? 'action' : 'message', clientId: requestIdentity.current.clientId, attachmentIds })
       nearBottom.current = true
       receive([data.message])
       setNewMessages(false)
       setDraft((current) => current === draft ? '' : current)
+      uploads.release(attachmentIds)
       setPreview(false)
       setEmojiOpen(false)
       requestIdentity.current = null
@@ -231,7 +250,22 @@ export default function Chatroom() {
     finally { setLoadingOlder(false) }
   }
 
-  return <main className="chat-shell">
+  return <main className={`chat-shell ${dragging ? 'chat-shell--dragging' : ''}`} onDragEnter={(event) => {
+    if (!event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    dragDepth.current += 1
+    setDragging(true)
+  }} onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.dataTransfer.dropEffect = session ? 'copy' : 'none' } }} onDragLeave={(event) => {
+    event.preventDefault()
+    dragDepth.current = Math.max(0, dragDepth.current - 1)
+    if (!dragDepth.current) setDragging(false)
+  }} onDrop={(event) => {
+    if (!event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    dragDepth.current = 0
+    setDragging(false)
+    void droppedFiles(event.dataTransfer).then(({ files, truncated }) => uploads.add(files, truncated)).catch(() => uploads.setError('Could not read that folder. Try selecting the files instead.'))
+  }}>
     <section className="chat-room" aria-label="Chat lobby">
       <div className="chat-feed" ref={feed} role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions" onScroll={() => {
         const element = feed.current
@@ -243,7 +277,7 @@ export default function Chatroom() {
         {historyError && <p className="chat-error" role="alert">{historyError}</p>}
         {messages.map((message) => <article className={`chat-message ${message.author_id === session?.id ? 'chat-message--self' : ''} ${message.kind === 'action' ? 'chat-message--action' : ''}`} key={message.id}>
           <div className="chat-avatar" aria-hidden="true">{message.username.slice(0, 2).toUpperCase()}</div>
-          <div className="chat-message-content"><header><strong>{message.username}</strong>{message.author_id === session?.id && <span className="chat-you">you</span>}<time dateTime={message.created_at} title={new Date(message.created_at).toLocaleString()}>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>{message.kind === 'action' && <span className="chat-you">/me</span>}</header><ChatMarkdown content={message.content} /></div>
+          <div className="chat-message-content"><header><strong>{message.username}</strong>{message.author_id === session?.id && <span className="chat-you">you</span>}<time dateTime={message.created_at} title={new Date(message.created_at).toLocaleString()}>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>{message.kind === 'action' && <span className="chat-you">/me</span>}</header><ChatMarkdown content={message.content} /><ChatAttachments attachments={message.attachments} /></div>
         </article>)}
       </div>
       {newMessages && <button className="chat-new-messages" onClick={() => { nearBottom.current = true; feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: 'smooth' }); setNewMessages(false) }}>New messages ↓</button>}
@@ -252,13 +286,21 @@ export default function Chatroom() {
         <label htmlFor="chat-username">Username</label>
         <div className="chat-join-controls"><input id="chat-username" value={username} onChange={(event) => setUsername(event.target.value)} minLength={2} maxLength={24} pattern="[A-Za-z0-9_ \-]{2,24}" placeholder="Your username" autoComplete="nickname" required /><button disabled={joining}>{joining ? 'Joining…' : session ? 'Save name' : 'Join the chat →'}</button>{session && <button type="button" onClick={() => { setUsername(session.username); setEditingName(false) }}>Cancel</button>}</div>
         {error && <p className="chat-error" role="alert">{error}</p>}
-      </form> : <form className="chat-composer" onSubmit={send}>
-        <ChatComposerTools formattingOpen={formattingOpen} setFormattingOpen={setFormattingOpen} stuffOpen={stuffOpen} setStuffOpen={setStuffOpen} preview={preview} setPreview={setPreview} insert={insert} insertCommand={insertCommand} changeName={() => setEditingName(true)} openEmoji={openEmoji} />
+      </form> : <form className="chat-composer" onSubmit={send} onPaste={(event) => {
+        const files = [...event.clipboardData.items].filter((item) => item.kind === 'file').map((item) => item.getAsFile()).filter((file): file is File => Boolean(file))
+        if (files.length) { event.preventDefault(); uploads.add(files.map((file) => ({ file }))) }
+      }}>
+        <input ref={fileInput} type="file" multiple hidden aria-label="Upload files" onChange={(event) => { uploads.add([...event.target.files || []].map((file) => ({ file }))); event.target.value = '' }} />
+        <ChatComposerTools formattingOpen={formattingOpen} setFormattingOpen={setFormattingOpen} stuffOpen={stuffOpen} setStuffOpen={setStuffOpen} preview={preview} setPreview={setPreview} insert={insert} insertCommand={insertCommand} changeName={() => setEditingName(true)} openEmoji={openEmoji} openFiles={openFiles} />
+        <DraftAttachments files={uploads.files} remove={(id) => uploads.release([id], true)} retry={uploads.retry} locked={sending} />
+        {uploads.busy && <div className="chat-upload-queue">{uploads.files.filter((file) => file.state === 'queued' || file.state === 'uploading').map((file) => <button type="button" key={file.id} aria-label={`Cancel upload of ${file.file.name}`} onClick={() => uploads.release([file.id], true)}>{file.file.name} ×</button>)}</div>}
         {emojiOpen && <div className="chat-emoji-panel"><button type="button" className="chat-emoji-close" onClick={() => setEmojiOpen(false)}>Close emoji picker ×</button><Suspense fallback={<p>Loading emoji…</p>}><EmojiPicker theme={'dark' as Theme} lazyLoadEmojis width="100%" height={350} searchPlaceholder="Search emoji…" onEmojiClick={(emoji) => { insert(emoji.emoji); setEmojiOpen(false) }} /></Suspense></div>}
         {preview && <div className="chat-draft-preview"><ChatMarkdown content={draft} /></div>}
         <textarea ref={textarea} className={preview ? 'chat-textarea--hidden' : ''} aria-label="Message" placeholder="Message" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={8000} rows={3} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } if (event.key === 'Escape') { setEmojiOpen(false); setFormattingOpen(false); setStuffOpen(false) } }} />
         {error && <p className="chat-error" role="alert">{error}</p>}
-        <div className="chat-composer-footer"><span>Chatting as <button type="button" onClick={() => setEditingName(true)}>{session.username}</button><small>Enter to send · Shift + Enter for a new line</small></span><span className="chat-character-count">{draft.length.toLocaleString()} / 8,000</span><button className="chat-send" disabled={sending || !draft.trim()}>{sending ? 'Sending…' : 'Send ↑'}</button></div>
+        {uploads.error && <p className="chat-error" role="alert">{uploads.error}</p>}
+        <ChatSelectionToolbar input={textarea} value={draft} insert={insert} hidden={preview || formattingOpen || stuffOpen || emojiOpen} />
+        <div className="chat-composer-footer"><span>Chatting as <button type="button" onClick={() => setEditingName(true)}>{session.username}</button><small>Enter to send · Shift + Enter for a new line</small></span><span className="chat-character-count">{draft.length.toLocaleString()} / 8,000</span><button className="chat-send" disabled={sending || uploads.busy || uploads.files.some((file) => file.state === 'error') || (!draft.trim() && !uploads.files.length)}>{sending ? 'Sending…' : 'Send ↑'}</button></div>
       </form>}
     </section>
     <ChatActiveUsers people={people} sessionId={session?.id} />

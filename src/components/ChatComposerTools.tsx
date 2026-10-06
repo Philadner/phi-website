@@ -11,10 +11,10 @@ type Props = {
   insertCommand: (command: string) => void
   changeName: () => void
   openEmoji: () => void
+  openFiles: () => void
 }
 
 const upcoming = [
-  { label: 'Upload a file', command: '/upload' },
   { label: 'Ask AI', command: '/ai' },
   { label: 'Start a game', command: '/game' },
   { label: 'Find a GIF', command: '/gif' },
@@ -24,7 +24,7 @@ function StuffLabel({ label, command }: { label: string; command: string }) {
   return <span className="chat-stuff-label" aria-hidden="true"><span className="chat-stuff-name">{label}</span><span className="chat-stuff-command">{command}</span></span>
 }
 
-export default function ChatComposerTools({ formattingOpen, setFormattingOpen, stuffOpen, setStuffOpen, preview, setPreview, insert, insertCommand, changeName, openEmoji }: Props) {
+export default function ChatComposerTools({ formattingOpen, setFormattingOpen, stuffOpen, setStuffOpen, preview, setPreview, insert, insertCommand, changeName, openEmoji, openFiles }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const styleButton = useRef<HTMLButtonElement>(null)
   const stuffButton = useRef<HTMLButtonElement>(null)
@@ -95,6 +95,7 @@ export default function ChatComposerTools({ formattingOpen, setFormattingOpen, s
       <button type="button" className="chat-stuff-item" aria-label="Choose emoji (/emoji)" onClick={() => choose(openEmoji)}><StuffLabel label="Choose emoji" command="/emoji" /></button>
       <button type="button" className="chat-stuff-item" aria-label="Text style (/format)" onClick={() => choose(() => setFormattingOpen(true))}><StuffLabel label="Text style" command="/format" /></button>
       <div className="chat-stuff-divider" />
+      <button type="button" className="chat-stuff-item" aria-label="Upload files (/upload)" onClick={() => choose(openFiles)}><StuffLabel label="Upload files" command="/upload" /></button>
       {upcoming.map((item) => <button key={item.command} type="button" className="chat-stuff-item" aria-disabled="true" aria-label={`${item.label} (${item.command}) — coming soon`}><StuffLabel {...item} /><small>soon</small></button>)}
     </section>}
   </div>
