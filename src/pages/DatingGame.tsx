@@ -4,9 +4,10 @@ import "../stylesheets/DatingGame.css";
 
 const JAY_IMAGE_URL = "https://cdn.phi.me.uk/pictures/Jay.png";
 const JAY_CONFUSED_IMAGE_URL = "https://cdn.phi.me.uk/pictures/jay/jay-confused.jpg";
+const AIRPORT_IMAGE_URL = "https://cdn.phi.me.uk/pictures/locations/ben-gurion-airport.png";
 
 type CharacterId = "jay" | "phil" | "dylan" | "oscar" | "benjamin";
-type Phase = "title" | "name" | "dialogue" | "hub" | "ending";
+type Phase = "title" | "name" | "dialogue" | "morse" | "hub" | "ending";
 type LineEffect = "location" | "heartbeat" | "creepy";
 
 const PHIL_IMAGE_URLS = {
@@ -22,7 +23,8 @@ const DYLAN_IMAGE_URLS = {
   default: "https://cdn.phi.me.uk/pictures/dylan/dylan-default.jpg",
   allegiance: "https://cdn.phi.me.uk/pictures/dylan/dylan-allegiance.jpg",
   headset: "https://cdn.phi.me.uk/pictures/dylan/dylan-headset.jpg",
-  sad: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad.jpg",
+  sad: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad.png",
+  sadBlinking: "https://cdn.phi.me.uk/pictures/dylan/dylan-sad-blinking.png",
   serious: "https://cdn.phi.me.uk/pictures/dylan/dylan-dead-serious.jpg",
   tree: "https://cdn.phi.me.uk/pictures/dylan/dylan-tree.jpg",
   withOscar: "https://cdn.phi.me.uk/pictures/dylan/dylan-oscar-couple.jpg",
@@ -47,6 +49,8 @@ type Line = {
   speaker?: string;
   text: string;
   effect?: LineEffect;
+  backgroundImage?: string;
+  portraitImage?: string;
 };
 
 type CharacterState = {
@@ -97,19 +101,156 @@ type Ending = {
 };
 
 const CHARACTER_ORDER: CharacterId[] = ["jay", "phil", "dylan", "oscar", "benjamin"];
+const INTRODUCTION_TITLES: Record<CharacterId, string> = {
+  jay: "Jay · Scratching therapy",
+  phil: "Phil · Dorm hall disaster",
+  dylan: "Dylan · Red light rescue",
+  oscar: "Oscar · In the tree",
+  benjamin: "Bibi · Ice cream interrogation",
+};
+
+const MORSE_MESSAGE = "SOS HE TAKING ME TO THE AMAZING DIGITAL CIRCUS FINAL PREMIERE";
+const MORSE_UNLOCK_TEXT = "SOS HE";
+const MORSE_CODE: Record<string, string> = {
+  A: ".-",
+  B: "-...",
+  C: "-.-.",
+  D: "-..",
+  E: ".",
+  F: "..-.",
+  G: "--.",
+  H: "....",
+  I: "..",
+  J: ".---",
+  K: "-.-",
+  L: ".-..",
+  M: "--",
+  N: "-.",
+  O: "---",
+  P: ".--.",
+  Q: "--.-",
+  R: ".-.",
+  S: "...",
+  T: "-",
+  U: "..-",
+  V: "...-",
+  W: ".--",
+  X: "-..-",
+  Y: "-.--",
+  Z: "--..",
+};
+
+type MorseSignalToken =
+  | { kind: "pulse"; symbol: "." | "-"; duration: number }
+  | { kind: "separator"; text: string; duration: number };
+
+function makeMorseSignal(message: string): MorseSignalToken[] {
+  const tokens: MorseSignalToken[] = [];
+
+  Array.from(message).forEach((character, characterIndex) => {
+    if (character === " ") {
+      tokens.push({ kind: "separator", text: " / ", duration: 420 });
+      return;
+    }
+
+    Array.from(MORSE_CODE[character]).forEach((symbol) => {
+      tokens.push({
+        kind: "pulse",
+        symbol: symbol as "." | "-",
+        duration: symbol === "." ? 150 : 460,
+      });
+    });
+
+    if (message[characterIndex + 1] && message[characterIndex + 1] !== " ") {
+      tokens.push({ kind: "separator", text: " ", duration: 230 });
+    }
+  });
+
+  return tokens;
+}
+
+function nextMorseCharacterIndex(startIndex: number) {
+  let nextIndex = startIndex;
+  while (MORSE_MESSAGE[nextIndex] === " ") nextIndex += 1;
+  return nextIndex;
+}
+
+const MORSE_SIGNAL = makeMorseSignal(MORSE_MESSAGE);
+
+type ChoiceStats = {
+  question: string;
+  total: number;
+  options: Record<string, { votes: number; percent: number }>;
+};
+
+async function recordDatingChoice(question: string, option: string) {
+  const response = await fetch("/api/dating-choice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, option }),
+  });
+  const payload = (await response.json()) as ChoiceStats & { error?: string };
+  if (!response.ok) throw new Error(payload.error || "Choice tally failed");
+  return payload;
+}
+
+function bibiPollReaction(direction: "left" | "right", stats: ChoiceStats): Line[] {
+  const leftVotes = stats.options.left?.votes ?? 0;
+  const rightVotes = stats.options.right?.votes ?? 0;
+  const directionVotes = leftVotes + rightVotes;
+  const leftPercent = directionVotes === 0 ? 0 : Math.round((leftVotes / directionVotes) * 100);
+  const rightPercent = directionVotes === 0 ? 0 : 100 - leftPercent;
+  const selectedPercent = direction === "left" ? leftPercent : rightPercent;
+  const otherDirection = direction === "left" ? "right" : "left";
+  const selectedPeople = direction === "left" ? "lefties" : "righties";
+  const response: Line[] = [];
+
+  if (direction === "left") {
+    response.push({ speaker: "Bibi", text: "ME TOO!" });
+  }
+
+  if (selectedPercent >= 90) {
+    response.push({
+      speaker: "Bibi",
+      text: `Literally everyone who has played this has said ${direction}.`,
+    });
+  } else if (selectedPercent >= 75) {
+    response.push({
+      speaker: "Bibi",
+      text: `I know, like who the hell has a ${otherDirection}-bending dick? ${selectedPercent}% of people who played have ${selectedPeople}.`,
+    });
+  } else if (selectedPercent >= 50) {
+    response.push({
+      speaker: "Bibi",
+      text: `Oh really? Cool! I mean it's half and half, to be fair. ${leftPercent}% left and ${rightPercent}% right.`,
+    });
+  } else if (selectedPercent >= 25) {
+    response.push({
+      speaker: "Bibi",
+      text: `Man, you're kinda in the minority here. Like, the ${selectedPeople} are under threat. Only ${selectedPercent}% of people have 'em.`,
+    });
+  } else {
+    response.push({
+      speaker: "Bibi",
+      text: `Okay, you're kinda on your own here. Only ${selectedPercent}% of people have ${selectedPeople}.`,
+    });
+  }
+
+  return response;
+}
 
 const INITIAL_CAST: Record<CharacterId, CharacterState> = {
   jay: {
     id: "jay",
     name: "Jay",
-    description: "Heartthrob. Average guy. Terrifyingly committed to Arby's.",
+    description: "Heartthrob. Average guy, kinda a degenerate? But come on. He's kinda cute :3",
     colour: "#ffcf4a",
-    affection: 0,
+    affection: 2,
     trust: 0,
     weirdness: 0,
     jealousy: 0,
     progress: 0,
-    status: "Pretending not to look at you",
+    status: "Sneaking glances at you 👀",
   },
   phil: {
     id: "phil",
@@ -138,14 +279,14 @@ const INITIAL_CAST: Record<CharacterId, CharacterState> = {
   oscar: {
     id: "oscar",
     name: "Oscar",
-    description: "Quietly magnetic. Also allegedly somebody else's soulmate.",
+    description: "Aura farmer. Also allegedly somebody else's soulmate.",
     colour: "#9f8cff",
     affection: 0,
     trust: 0,
     weirdness: 0,
     jealousy: 0,
     progress: 0,
-    status: "Drawing something suspiciously romantic",
+    status: "Scribbling something in a small orange notebook",
   },
   benjamin: {
     id: "benjamin",
@@ -616,6 +757,7 @@ export default function DatingGame() {
   const [draftName, setDraftName] = useState("");
   const [playerName, setPlayerName] = useState("Mystery Legend");
   const [cast, setCast] = useState(cloneInitialCast);
+  const [metCharacters, setMetCharacters] = useState<CharacterId[]>([]);
   const [completedScenes, setCompletedScenes] = useState<string[]>([]);
   const [sceneLabel, setSceneLabel] = useState("Opening");
   const [lines, setLines] = useState<Line[]>([]);
@@ -623,11 +765,25 @@ export default function DatingGame() {
   const [visibleCharacters, setVisibleCharacters] = useState(0);
   const [choices, setChoices] = useState<ChoiceButton[]>([]);
   const [ending, setEnding] = useState<Ending | null>(null);
+  const [morseCharacterIndex, setMorseCharacterIndex] = useState(0);
+  const [morsePulseIndex, setMorsePulseIndex] = useState(0);
+  const [morseEnteredCode, setMorseEnteredCode] = useState("");
+  const [morseMistake, setMorseMistake] = useState("");
+  const [morseButtonPressed, setMorseButtonPressed] = useState(false);
+  const [morseBlinking, setMorseBlinking] = useState(false);
+  const [morseSignalTrail, setMorseSignalTrail] = useState("");
+  const [morseSignalStatus, setMorseSignalStatus] = useState("WAITING FOR DYLAN");
+  const [morseReplayKey, setMorseReplayKey] = useState(0);
   const afterLinesRef = useRef<() => void>(() => undefined);
+  const morsePressStartedAtRef = useRef<number | null>(null);
 
   const activeLine = lines[lineIndex];
   const lineIsComplete = !activeLine || visibleCharacters >= activeLine.text.length;
   const scenesPlayed = completedScenes.length;
+  const introductionsComplete = metCharacters.length === CHARACTER_ORDER.length;
+  const morseDecodedText = MORSE_MESSAGE.slice(0, morseCharacterIndex).trimEnd();
+  const morseUnlocked = morseDecodedText.startsWith(MORSE_UNLOCK_TEXT);
+  const morseComplete = morseCharacterIndex >= MORSE_MESSAGE.length;
 
   const play = useCallback((label: string, nextLines: Line[], after?: () => void) => {
     setSceneLabel(label);
@@ -680,26 +836,560 @@ export default function DatingGame() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [advanceDialogue, choices.length, phase]);
 
+  useEffect(() => {
+    if (phase !== "morse") return;
+
+    let timer: number | undefined;
+    let cancelled = false;
+    setMorseSignalTrail("");
+    setMorseSignalStatus("DYLAN IS BLINKING");
+    setMorseBlinking(false);
+
+    const runToken = (tokenIndex: number) => {
+      if (cancelled) return;
+      const token = MORSE_SIGNAL[tokenIndex];
+
+      if (!token) {
+        setMorseBlinking(false);
+        setMorseSignalStatus("TRANSMISSION COMPLETE — REPLAY AVAILABLE");
+        return;
+      }
+
+      if (token.kind === "separator") {
+        setMorseSignalTrail((current) => `${current}${token.text}`);
+        timer = window.setTimeout(() => runToken(tokenIndex + 1), token.duration);
+        return;
+      }
+
+      setMorseSignalStatus(token.symbol === "." ? "SHORT BLINK · DOT" : "LONG BLINK · DASH");
+      setMorseBlinking(true);
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        setMorseBlinking(false);
+        setMorseSignalTrail((current) => `${current}${token.symbol}`);
+        timer = window.setTimeout(() => runToken(tokenIndex + 1), 115);
+      }, token.duration);
+    };
+
+    timer = window.setTimeout(() => runToken(0), 650);
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [morseReplayKey, phase]);
+
+  const recordSilently = (question: string, option: string) => {
+    void recordDatingChoice(question, option).catch((error) => {
+      console.warn("Dating choice tally failed", error);
+    });
+  };
+
+  const finishIntroduction = (id: CharacterId, outcome: Line[]) => {
+    play(`${INTRODUCTION_TITLES[id]} · Complete`, outcome, () => {
+      setMetCharacters((current) => (current.includes(id) ? current : [...current, id]));
+      setPhase("hub");
+    });
+  };
+
+  const startJayIntroduction = () => {
+    const label = INTRODUCTION_TITLES.jay;
+    play(
+      label,
+      [
+        { text: "Jay is in Bob Scratchit's scratching therapy." },
+        { text: "You walk through the door and see… uhhh." },
+        { text: "Jay is lying tummy-down on a bed, with Bob Scratchit vigorously itching his butt." },
+        { text: "Bob Scratchit is getting DEEP in there. Like, disturbingly committed." },
+        { text: "Jay has a whip in one hand, and there's a table piled with small gold coins in front of him." },
+        { text: "You stand there in silence." },
+        { text: "Two agonising minutes pass. Then Jay looks at you." },
+        { speaker: "Jay", text: "Oh hey! What's your name?" },
+        { speaker: playerName, text: `Oh! My name is ${playerName}.` },
+        { speaker: "Jay", text: "So, like, why are you in my private scratching session?" },
+      ],
+      () =>
+        showChoices(label, { text: "Choose how to respond." }, [
+          {
+            label: "I'm just… confused.",
+            action: () => {
+              recordSilently("intro:jay:scratching", "confused");
+              finishIntroduction("jay", [
+                { speaker: "Jay", text: "So this is just kinda standard scratching therapy." },
+                {
+                  speaker: "Jay",
+                  text: "But I'm a VIP customer, so I get a deluxe roleplay scratch—and I chose A Christmas Carol roleplay.",
+                },
+                {
+                  speaker: "Jay",
+                  text: "Basically, Bob Scratchit scratches me, and if it's good, I flick him a coin. He's gotta catch it to, like, feed his family.",
+                },
+                { speaker: "Jay", text: "And if it's a bad scratch, I whip him." },
+                { speaker: playerName, text: "Ohhh, okay. Yeah, that makes total sense." },
+              ]);
+            },
+          },
+          {
+            label: "I'm watching. Hard. As fuck.",
+            action: () => {
+              recordSilently("intro:jay:scratching", "watching");
+              setCast((current) => ({
+                ...current,
+                jay: {
+                  ...current.jay,
+                  progress: 1,
+                  status: "Waiting for you at Arby's",
+                },
+              }));
+              setCompletedScenes((current) => (
+                current.includes("jay-invite") ? current : [...current, "jay-invite"]
+              ));
+              finishIntroduction("jay", [
+                { speaker: "Jay", text: "YO, YOU ALSO HAVE A KINK FOR THIS?" },
+                { speaker: "Jay", text: "OH MY GOD. OH—OH MY GOD, I AM ACTUALLY—" },
+                {
+                  speaker: "Jay",
+                  text: "Okay, wait. Genuinely, have my fucking number. TAKE IT. TAKE IT. TAKE IT.",
+                },
+                {
+                  speaker: playerName,
+                  text: "Okay, YES. Oh my God, this is actually so hot. Like, can—",
+                },
+                { speaker: playerName, text: "…Can WE do this?" },
+                {
+                  speaker: "Jay",
+                  text: "I just, like, wanna get to know you, man. I've never met a soul who finds this hot too.",
+                },
+                { speaker: "Jay", text: "Just—oh my God. Meet me at Arby's. PLEASE." },
+              ]);
+            },
+          },
+        ]),
+    );
+  };
+
+  const finishPhilIntroductionBranch = (choice: "okay" | "crush" | "obsessed", branchLines: Line[]) => {
+    recordSilently("intro:phil:dorm", choice);
+    finishIntroduction("phil", [
+      ...branchLines,
+      { speaker: playerName, text: "Sure." },
+      { text: "You pick up the posters." },
+      { text: "Each one is Jay in a different position. Weird.", portraitImage: PHIL_IMAGE_URLS.default },
+      { speaker: playerName, text: "So you REALLY like Jay." },
+      { speaker: "Phil", text: "PLEEASE don't tell him." },
+      { speaker: playerName, text: "Oookayyyy, sure." },
+      { speaker: "Phil", text: "That didn't sound convincing." },
+      { speaker: "Phil", text: "Well, you know what? If it's gonna get out, it's gonna get out with a bang." },
+      { speaker: "Phil", text: "Meet me tomorrow, in the bushes outside Jay's house." },
+      { text: "The door slams shut. Five seconds later, frantic clapping begins." },
+    ]);
+  };
+
+  const startPhilIntroduction = () => {
+    const label = INTRODUCTION_TITLES.phil;
+    play(
+      label,
+      [
+        {
+          text: "You're walking through the dorm halls and see Phil stumbling through his doorway, making out with a cardboard cutout of Jay.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        {
+          text: "His backpack is full of posters with AI-generated Jay nudes made with Dola AI. You hear him murmuring.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        { speaker: "Phil", text: "Oh fuck yes, mm, JAY—oh my gooood.", portraitImage: PHIL_IMAGE_URLS.floor },
+        {
+          text: "He falls down, making the entire building shake a considerable amount.",
+          portraitImage: PHIL_IMAGE_URLS.floor,
+        },
+        { text: "You run up to him.", portraitImage: PHIL_IMAGE_URLS.floor },
+      ],
+      () =>
+        showChoices(label, { text: "Phil looks up from the floor." }, [
+          {
+            label: "Are you okay??",
+            action: () =>
+              finishPhilIntroductionBranch("okay", [
+                { speaker: "Phil", text: "Yeah, I'm… fine." },
+                { speaker: "Phil", text: "Can you help me pick up these posters, please?" },
+              ]),
+          },
+          {
+            label: "So who's your crush?",
+            action: () =>
+              finishPhilIntroductionBranch("crush", [
+                { speaker: "Phil", text: "…" },
+                { speaker: "Phil", text: "Funny." },
+                { speaker: "Phil", text: "Anyway, can you help me pick up these posters, please?" },
+              ]),
+          },
+          {
+            label: "You're a bit obsessed.",
+            action: () =>
+              finishPhilIntroductionBranch("obsessed", [
+                { speaker: "Phil", text: "And grass is fucking green." },
+                { speaker: "Phil", text: "YES, I'M OBSESSED.", portraitImage: PHIL_IMAGE_URLS.shocked },
+                { text: "You stand there in shock. Phil has gotten right up in your face.", portraitImage: PHIL_IMAGE_URLS.shocked },
+                { speaker: "Phil", text: "Can you help me pick up these posters, please?", portraitImage: PHIL_IMAGE_URLS.shocked },
+              ]),
+          },
+        ]),
+    );
+  };
+
+  const startOscarIntroduction = () => {
+    const label = INTRODUCTION_TITLES.oscar;
+    play(
+      label,
+      [
+        {
+          text: "You walk up to a tree and look up to see what you presume is Oscar, sitting in the branches, covered by a blanket.",
+        },
+        { speaker: playerName, text: "Hey, what you doing?" },
+        { speaker: "Oscar", text: "Hi, yeah, I'm just having a wank." },
+      ],
+      () =>
+        showChoices(label, { text: "Choose how to respond." }, [
+          {
+            label: "Back away slowly",
+            action: () => {
+              recordSilently("intro:oscar:tree", "slowly");
+              finishIntroduction("oscar", [
+                { text: "You start walking backwards." },
+                { speaker: "Oscar", text: "Honestly, you should try it sometime. It's so calming." },
+                { speaker: "Oscar", text: "The tree wood. My wood. All in synergy." },
+                { text: "Only to bump into someone." },
+                { speaker: "Dylan", text: "Oh hey! Sorry, didn't see you there." },
+                {
+                  speaker: "Dylan",
+                  text: "Anyway, I'll be off. My friend's told me to meet him in, like, a tree or something. I don't know—I think he meant under one.",
+                },
+                { speaker: playerName, text: "Oh, it's completely fine. Uhh, I'll be off then!" },
+              ]);
+            },
+          },
+          {
+            label: "Back away quickly",
+            action: () => {
+              recordSilently("intro:oscar:tree", "quickly");
+              finishIntroduction("oscar", [{ text: "You get the fuck out of there." }]);
+            },
+          },
+          {
+            label: "What to?",
+            action: () => {
+              recordSilently("intro:oscar:tree", "what-to");
+              play(
+                `${label} · What to?`,
+                [
+                  { speaker: playerName, text: "So, like, what to?" },
+                  { speaker: "Oscar", text: "Okay, it's like this really niche artist on Twitter." },
+                  { speaker: "Oscar", text: "Like, the way they animate these Marvel Rivals skins." },
+                  { speaker: "Oscar", text: "Fucking radical." },
+                ],
+                () =>
+                  showChoices(`${label} · Follow-up`, { text: "This information changes everything." }, [
+                    {
+                      label: "Write that shit down",
+                      action: () => {
+                        recordSilently("intro:oscar:artist", "write-it-down");
+                        finishIntroduction("oscar", [
+                          {
+                            text: "You open your notes app and start questioning Oscar about his taste for a good ten minutes.",
+                          },
+                          { text: "Your eyes are opened to a whole new world in your phone." },
+                        ]);
+                      },
+                    },
+                    {
+                      label: "Leave",
+                      action: () => {
+                        recordSilently("intro:oscar:artist", "leave");
+                        finishIntroduction("oscar", [{ text: "You leave." }]);
+                      },
+                    },
+                  ]),
+              );
+            },
+          },
+        ]),
+    );
+  };
+
+  const resetMorseDecoder = () => {
+    setMorseCharacterIndex(0);
+    setMorsePulseIndex(0);
+    setMorseEnteredCode("");
+    setMorseMistake("");
+    setMorseButtonPressed(false);
+    morsePressStartedAtRef.current = null;
+  };
+
+  const startDylanIntroduction = () => {
+    const label = INTRODUCTION_TITLES.dylan;
+    const driverName = metCharacters.includes("benjamin") ? "Bibi" : "Netanyahu";
+
+    play(
+      label,
+      [
+        {
+          text: `You walk up to a car stopped at a red light and see Dylan and ${driverName} in there.`,
+          portraitImage: DYLAN_IMAGE_URLS.sad,
+        },
+        {
+          text: `Dylan has his face smushed against the window, and ${driverName} is driving.`,
+          portraitImage: DYLAN_IMAGE_URLS.sad,
+        },
+        { speaker: playerName, text: "Hey Dylan, are you alright?", portraitImage: DYLAN_IMAGE_URLS.sad },
+        {
+          text: "Dylan blinks in Morse code, and you whip out your Morse code translator from TikTok Shop to translate it.",
+          portraitImage: DYLAN_IMAGE_URLS.sadBlinking,
+        },
+      ],
+      () => {
+        resetMorseDecoder();
+        setMorseReplayKey((current) => current + 1);
+        setPhase("morse");
+      },
+    );
+  };
+
+  const changeDylanIntroductionStats = (
+    stats: Partial<Pick<CharacterState, "affection" | "trust" | "weirdness">>,
+    status: string,
+  ) => {
+    setCast((current) => ({
+      ...current,
+      dylan: {
+        ...current.dylan,
+        affection: current.dylan.affection + (stats.affection ?? 0),
+        trust: current.dylan.trust + (stats.trust ?? 0),
+        weirdness: current.dylan.weirdness + (stats.weirdness ?? 0),
+        status,
+      },
+    }));
+  };
+
+  const showDylanRescueChoices = () => {
+    const label = INTRODUCTION_TITLES.dylan;
+    showChoices(`${label} · SOS intercepted`, { text: "You have decoded enough. Dylan needs you to DO SOMETHING." }, [
+      {
+        label: "Open the child-locked door and save him",
+        detail: "Grab Dylan and run.",
+        action: () => {
+          recordSilently("intro:dylan:car", "save");
+          changeDylanIntroductionStats(
+            { affection: 3, trust: 2 },
+            "Safe from the Digital Circus finale",
+          );
+          finishIntroduction("dylan", [
+            { text: "You open the door, grab Dylan, and run away with him." },
+            { speaker: "Dylan", text: "Oh my GOD, thank you." },
+            { speaker: "Dylan", text: "I did NOT wanna go to The Amazing Digital Circus final premiere." },
+            { speaker: "Dylan", text: "Like, I love Bibi, but I did NOT want to go to that shit." },
+          ]);
+        },
+      },
+      {
+        label: "Leave him there to accept his fate",
+        detail: "The premiere waits for no man.",
+        action: () => {
+          recordSilently("intro:dylan:car", "leave");
+          changeDylanIntroductionStats(
+            { affection: -4, trust: -2 },
+            "Devastated and en route to the final premiere",
+          );
+          finishIntroduction("dylan", [
+            { text: "You stand there pulling a nice smug face as you watch his ass get driven to the premiere." },
+            { text: "Dylan looks at you, devastated.", portraitImage: DYLAN_IMAGE_URLS.sad },
+          ]);
+        },
+      },
+      {
+        label: "Get in the car with him",
+        detail: "An exclusive, deeply regrettable route.",
+        action: () => {
+          recordSilently("intro:dylan:car", "join");
+          changeDylanIntroductionStats(
+            { weirdness: 3 },
+            "Trapped at The Amazing Digital Circus final premiere",
+          );
+          play(
+            "Dylan · Full steam ahead",
+            [
+              { text: "You get in the car." },
+              { speaker: playerName, text: "OH MY GOD, I am so excited. I LOVE The Amazing Digital Circus!!!" },
+              {
+                speaker: "Dylan",
+                text: "Bro, what the FUCK? You were supposed to help me. You're a fan of this shit??",
+              },
+              { speaker: "Bibi", text: "Full steam ahead!! I wanna see this premiere." },
+            ],
+            () =>
+              finishIntroduction("dylan", [
+                {
+                  text: "EXCLUSIVE SCENE PLACEHOLDER: The Amazing Digital Circus final premiere starts here. This path is only reachable by getting into the car.",
+                  effect: "location",
+                },
+              ]),
+          );
+        },
+      },
+    ]);
+  };
+
+  const submitMorseSymbol = (symbol: "." | "-") => {
+    if (morseComplete) return;
+    const currentCharacter = MORSE_MESSAGE[morseCharacterIndex];
+    const expectedCode = MORSE_CODE[currentCharacter];
+
+    if (!expectedCode || expectedCode[morsePulseIndex] !== symbol) {
+      setMorseMistake("SIGNAL MISMATCH — that letter has reset. Watch Dylan and try it again.");
+      setMorsePulseIndex(0);
+      setMorseEnteredCode("");
+      navigator.vibrate?.([45, 35, 45]);
+      return;
+    }
+
+    const nextEnteredCode = `${morseEnteredCode}${symbol}`;
+    setMorseMistake("");
+    navigator.vibrate?.(symbol === "." ? 18 : [25, 18, 35]);
+
+    if (morsePulseIndex + 1 === expectedCode.length) {
+      setMorseCharacterIndex(nextMorseCharacterIndex(morseCharacterIndex + 1));
+      setMorsePulseIndex(0);
+      setMorseEnteredCode("");
+      return;
+    }
+
+    setMorseEnteredCode(nextEnteredCode);
+    setMorsePulseIndex((current) => current + 1);
+  };
+
+  const startMorsePress = () => {
+    if (morseComplete || morsePressStartedAtRef.current !== null) return;
+    morsePressStartedAtRef.current = performance.now();
+    setMorseButtonPressed(true);
+    setMorseMistake("");
+  };
+
+  const finishMorsePress = () => {
+    const startedAt = morsePressStartedAtRef.current;
+    if (startedAt === null) return;
+    const duration = performance.now() - startedAt;
+    morsePressStartedAtRef.current = null;
+    setMorseButtonPressed(false);
+    submitMorseSymbol(duration >= 340 ? "-" : ".");
+  };
+
+  const cancelMorsePress = () => {
+    morsePressStartedAtRef.current = null;
+    setMorseButtonPressed(false);
+  };
+
+  const chooseBibiDirection = async (direction: "left" | "right") => {
+    const label = INTRODUCTION_TITLES.benjamin;
+    play(`${label} · Live results`, [{ speaker: "Bibi", text: "One moment. I'm consulting the figures." }], () => undefined);
+
+    try {
+      const stats = await recordDatingChoice("intro:benjamin:direction", direction);
+      finishIntroduction("benjamin", bibiPollReaction(direction, stats));
+    } catch (error) {
+      console.warn("Bibi poll failed", error);
+      finishIntroduction("benjamin", [
+        { speaker: "Bibi", text: "The national penis-direction figures are temporarily unavailable." },
+        { speaker: "Bibi", text: `Your answer was ${direction}. I will remember this spiritually.` },
+      ]);
+    }
+  };
+
+  const startBibiIntroduction = () => {
+    const label = INTRODUCTION_TITLES.benjamin;
+    play(
+      label,
+      [
+        { text: "You walk up to Benjamin Netanyahu. He's sitting on a bench, eating some ice cream." },
+        { speaker: playerName, text: "Hello, Benjamin Netanyahu!" },
+        {
+          speaker: "Bibi",
+          text: "Hello, fellow Israeli! I must implore that you do not call me Netanyahu. It is only needed of you to call me Bibi.",
+        },
+        { speaker: playerName, text: "Okay." },
+        { speaker: "Bibi", text: "So, does your penis bend to the left or to the right?" },
+      ],
+      () =>
+        showChoices(label, { text: "Bibi waits for an answer." }, [
+          {
+            label: "Left",
+            detail: "Compare your answer with the live player poll.",
+            action: () => {
+              void chooseBibiDirection("left");
+            },
+          },
+          {
+            label: "Right",
+            detail: "Compare your answer with the live player poll.",
+            action: () => {
+              void chooseBibiDirection("right");
+            },
+          },
+          {
+            label: "Who the fuck starts a conversation like that?",
+            action: () => {
+              recordSilently("intro:benjamin:direction", "rebuke");
+              finishIntroduction("benjamin", [
+                { speaker: "Bibi", text: "Well FUCK YOU TOO!" },
+                { speaker: "Bibi", text: "It's just like a question, like I'm just asking you." },
+                { speaker: "Bibi", text: "It's like a reasonable question." },
+                { speaker: playerName, text: "My dick is none of your business." },
+              ]);
+            },
+          },
+        ]),
+    );
+  };
+
+  const startIntroduction = (id: CharacterId) => {
+    if (metCharacters.includes(id)) return;
+    if (id === "jay") return startJayIntroduction();
+    if (id === "phil") return startPhilIntroduction();
+    if (id === "dylan") return startDylanIntroduction();
+    if (id === "oscar") return startOscarIntroduction();
+    return startBibiIntroduction();
+  };
+
   const submitName = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const chosenName = draftName.trim() || "Mystery Legend";
     setPlayerName(chosenName);
     play(
-      "Scratchit's scratching therapy",
+      "Arrival · Ben Gurion Airport",
       [
-        { text: "LOCATION: Tel Aviv, Israel", effect: "location" },
-        { text: "SCENE: Jay is in Bob Scratchit's scratching therapy." },
-        { text: "You're sitting in a nearby chair, for some reason. You catch Jay's eye." },
-        { speaker: "Jay", text: "Oh hey! What's your name?" },
-        { speaker: chosenName, text: `Oh! My name is ${chosenName}.` },
-        { text: "Five people are currently dateable. Nobody knows who approved this." },
+        {
+          text: "LOCATION: Ben Gurion Airport, Tel Aviv",
+          effect: "location",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        {
+          text: "Welcome to Tel Aviv, Israel.",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        {
+          text: "Life is exciting all of a sudden. You're in a new place, and you're getting ready for your new place at Streamer University.",
+          backgroundImage: AIRPORT_IMAGE_URL,
+        },
+        { text: "All the doors are open.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "But your heart feels so closed.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "Right now, you need to make some friends.", backgroundImage: AIRPORT_IMAGE_URL },
+        { text: "Or maybe something more.", backgroundImage: AIRPORT_IMAGE_URL },
       ],
       () => setPhase("hub"),
     );
   };
 
-  const chooseScene = (scene: Scene, choice: StoryChoice) => {
+  const chooseScene = (scene: Scene, choice: StoryChoice, choiceIndex: number) => {
     const context = { playerName, cast };
+    recordSilently(`route:${scene.id}`, String(choiceIndex + 1));
     setCast((current) => ({
       ...current,
       [scene.character]: {
@@ -717,6 +1407,7 @@ export default function DatingGame() {
   };
 
   const startRoute = (id: CharacterId) => {
+    if (!introductionsComplete) return;
     const progress = cast[id].progress;
     if (progress >= 2) return;
     const scene = SCENES[id][progress];
@@ -725,10 +1416,10 @@ export default function DatingGame() {
       showChoices(
         scene.title,
         scene.prompt,
-        scene.choices.map((choice) => ({
+        scene.choices.map((choice, choiceIndex) => ({
           label: choice.label,
           detail: choice.detail,
-          action: () => chooseScene(scene, choice),
+          action: () => chooseScene(scene, choice, choiceIndex),
         })),
       ),
     );
@@ -813,6 +1504,7 @@ export default function DatingGame() {
     setDraftName("");
     setPlayerName("Mystery Legend");
     setCast(cloneInitialCast());
+    setMetCharacters([]);
     setCompletedScenes([]);
     setSceneLabel("Opening");
     setLines([]);
@@ -820,14 +1512,21 @@ export default function DatingGame() {
     setVisibleCharacters(0);
     setChoices([]);
     setEnding(null);
+    resetMorseDecoder();
+    setMorseSignalTrail("");
+    setMorseSignalStatus("WAITING FOR DYLAN");
+    setMorseBlinking(false);
   };
 
   const activeColour = useMemo(() => {
-    const speakerMatch = CHARACTER_ORDER.find((id) => cast[id].name === activeLine?.speaker);
+    const speakerMatch = activeLine?.speaker === "Bibi"
+      ? "benjamin"
+      : CHARACTER_ORDER.find((id) => cast[id].name === activeLine?.speaker);
     return speakerMatch ? cast[speakerMatch].colour : "#ffe66f";
   }, [activeLine?.speaker, cast]);
 
   const activePortraitUrl = useMemo(() => {
+    if (activeLine?.portraitImage) return activeLine.portraitImage;
     if (activeLine?.speaker === "Jay") {
       if (/no idea|quite a lot|mean—wow|lesson learned|everybody\?/i.test(activeLine.text)) {
         return JAY_CONFUSED_IMAGE_URL;
@@ -862,7 +1561,7 @@ export default function DatingGame() {
       if (/honest|asking|Dylan/i.test(activeLine.text)) return OSCAR_IMAGE_URLS.serious;
       return OSCAR_IMAGE_URLS.default;
     }
-    if (activeLine?.speaker === "Benjamin Netanyahu") {
+    if (activeLine?.speaker === "Benjamin Netanyahu" || activeLine?.speaker === "Bibi") {
       if (/funny|heartwarming/i.test(activeLine.text)) return BIBI_IMAGE_URLS.smile;
       if (/placeholder|explain|answered nothing/i.test(activeLine.text)) return BIBI_IMAGE_URLS.shrug;
       if (/mine|motorcade|vehicle/i.test(activeLine.text)) return BIBI_IMAGE_URLS.lecture;
@@ -880,7 +1579,14 @@ export default function DatingGame() {
             <span>PHI</span> HEARTWARE
           </button>
           <div className="dating-game__status">
-            <span className="dating-game__status-light" /> {phase === "hub" ? "FREE ROAM" : sceneLabel.toUpperCase()}
+            <span className="dating-game__status-light" />{" "}
+            {phase === "hub"
+              ? introductionsComplete
+                ? "FREE ROAM"
+                : "ORIENTATION"
+              : phase === "morse"
+                ? "MORSE INTERCEPT"
+                : sceneLabel.toUpperCase()}
           </div>
           {phase !== "title" && (
             <button className="dating-game__restart" type="button" onClick={resetGame}>Restart</button>
@@ -893,8 +1599,8 @@ export default function DatingGame() {
             <h1>DATING<span>SIM</span></h1>
             <p className="dating-title__warning">WARNING: GETS STEAMY. CONTAINS ARBY'S.</p>
             <p className="dating-title__intro">
-              Five questionable romance routes. Ten encounters. One judgemental pigeon. Your choices are remembered,
-              even when everyone wishes they weren't.
+              Five mandatory introductions. Ten questionable romance encounters. One judgemental pigeon. Every answer
+              joins the anonymous stats, even when everyone wishes it hadn't.
             </p>
             <button className="dating-title__start" type="button" onClick={() => setPhase("name")}>
               <span>▶</span> Start making mistakes
@@ -905,8 +1611,8 @@ export default function DatingGame() {
 
         {phase === "name" && (
           <section className="dating-name-card">
-            <p className="dating-name-card__speaker">JAY</p>
-            <h1>Oh hey! What's your name?</h1>
+            <p className="dating-name-card__speaker">STREAMER UNIVERSITY</p>
+            <h1>Before you land—what's your name?</h1>
             <form onSubmit={submitName}>
               <label htmlFor="dating-player-name">Tell the truth, probably</label>
               <input
@@ -922,6 +1628,142 @@ export default function DatingGame() {
           </section>
         )}
 
+        {phase === "morse" && (
+          <section className="dating-morse">
+            <div className="dating-morse__heading">
+              <div>
+                <p className="dating-morse__kicker">TIKTOK SHOP EMERGENCY EQUIPMENT</p>
+                <h1>Translate Dylan's blinks.</h1>
+              </div>
+              <p>
+                Tap the triangle for a dot. Hold it for a dash. Decode through <strong>SOS HE</strong> and you can
+                intervene.
+              </p>
+            </div>
+
+            <div className="dating-morse__workspace">
+              <div className={`dating-morse__dylan ${morseBlinking ? "is-blinking" : ""}`}>
+                <img
+                  src={morseBlinking ? DYLAN_IMAGE_URLS.sadBlinking : DYLAN_IMAGE_URLS.sad}
+                  alt={morseBlinking ? "Dylan blinking a Morse-code pulse" : "Dylan looking devastated in the car"}
+                />
+                <div className="dating-morse__signal-badge">
+                  <span className={morseBlinking ? "is-live" : ""} />
+                  {morseSignalStatus}
+                </div>
+                <div className="dating-morse__incoming" aria-live="polite">
+                  <span>INCOMING MORSE</span>
+                  <code>{morseSignalTrail || "Signal begins in a moment…"}</code>
+                </div>
+                <button
+                  className="dating-morse__replay"
+                  type="button"
+                  onClick={() => setMorseReplayKey((current) => current + 1)}
+                >
+                  ↻ Replay Dylan's blinks
+                </button>
+              </div>
+
+              <div className="dating-morse__device-shell">
+                <div className="dating-morse__device">
+                  <span className="dating-morse__screw dating-morse__screw--left" aria-hidden="true" />
+                  <span className="dating-morse__screw dating-morse__screw--right" aria-hidden="true" />
+                  <div className="dating-morse__device-title">
+                    <span>MORSE</span>
+                    <span>CODE</span>
+                  </div>
+
+                  <svg className="dating-morse__circuit" viewBox="0 0 300 430" aria-hidden="true">
+                    <path d="M36 72H112V132H70V208H128V316H72" />
+                    <path d="M264 72H188V132H230V208H172V316H228" />
+                    <path d="M112 132H150V242H128" />
+                    <path d="M188 132H150V242H172" />
+                    <path d="M72 316H112V382H150V338H188V382H228V316" />
+                    <circle cx="36" cy="72" r="12" />
+                    <circle cx="70" cy="132" r="12" />
+                    <circle cx="70" cy="208" r="12" />
+                    <circle cx="128" cy="208" r="12" />
+                    <circle cx="128" cy="316" r="12" />
+                    <circle cx="264" cy="72" r="12" />
+                    <circle cx="230" cy="132" r="12" />
+                    <circle cx="230" cy="208" r="12" />
+                    <circle cx="172" cy="208" r="12" />
+                    <circle cx="172" cy="316" r="12" />
+                    <rect x="61" y="304" width="22" height="24" />
+                    <rect x="217" y="304" width="22" height="24" />
+                    <rect x="139" y="326" width="22" height="26" />
+                  </svg>
+
+                  <div className="dating-morse__readout">
+                    <span>TRANSLATION</span>
+                    <strong>{morseDecodedText || "…"}</strong>
+                    <small>{MORSE_MESSAGE.replace(/[A-Z]/g, "_")}</small>
+                  </div>
+
+                  <div className="dating-morse__pulse-readout">
+                    <span>CURRENT LETTER</span>
+                    <code>{morseEnteredCode || "READY"}</code>
+                  </div>
+
+                  <button
+                    className={`dating-morse__pulse-button ${morseButtonPressed ? "is-pressed" : ""}`}
+                    type="button"
+                    aria-label="Morse pulse: tap for dot, hold for dash"
+                    disabled={morseComplete}
+                    onContextMenu={(event) => event.preventDefault()}
+                    onPointerDown={(event) => {
+                      event.preventDefault();
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startMorsePress();
+                    }}
+                    onPointerUp={(event) => {
+                      event.preventDefault();
+                      finishMorsePress();
+                    }}
+                    onPointerCancel={cancelMorsePress}
+                    onKeyDown={(event) => {
+                      if (event.key !== " " && event.key !== "Enter") return;
+                      event.preventDefault();
+                      if (!event.repeat) startMorsePress();
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key !== " " && event.key !== "Enter") return;
+                      event.preventDefault();
+                      finishMorsePress();
+                    }}
+                  >
+                    <span aria-hidden="true">▽</span>
+                  </button>
+
+                  <div className="dating-morse__legend">
+                    <span><i /> SHORT = DOT</span>
+                    <span><i /> LONG = DASH</span>
+                  </div>
+                  <div className={`dating-morse__lights ${morseUnlocked ? "is-unlocked" : ""}`} aria-hidden="true">
+                    <i /><i /><i />
+                  </div>
+                </div>
+
+                <p className={`dating-morse__feedback ${morseMistake ? "is-error" : ""}`} aria-live="polite">
+                  {morseMistake || (morseComplete
+                    ? "FULL MESSAGE DECODED. Dylan's fate is in your hands."
+                    : morseUnlocked
+                      ? "SOS HE decoded. You can act now or keep translating."
+                      : "Match Dylan's short and long blinks with the triangle.")}
+                </p>
+                <div className="dating-morse__device-actions">
+                  <button type="button" onClick={resetMorseDecoder}>Clear translator</button>
+                  {morseUnlocked && (
+                    <button className="dating-morse__intervene" type="button" onClick={showDylanRescueChoices}>
+                      DO SOMETHING →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {phase === "dialogue" && activeLine && (
           <section
             className={`dating-dialogue ${activeLine.effect ? `dating-dialogue--${activeLine.effect}` : ""}`}
@@ -931,10 +1773,16 @@ export default function DatingGame() {
               <span>{sceneLabel}</span>
               <span>{lineIndex + 1} / {lines.length}</span>
             </div>
-            <div className="dating-dialogue__stage" aria-hidden="true">
+            <div
+              className={`dating-dialogue__stage ${activeLine.backgroundImage ? "dating-dialogue__stage--image" : ""}`}
+              aria-hidden="true"
+            >
+              {activeLine.backgroundImage && (
+                <img className="dating-dialogue__background" src={activeLine.backgroundImage} alt="" />
+              )}
               {activeLine.effect === "heartbeat" && <div className="dating-heart">♥</div>}
               {activeLine.effect === "creepy" && <div className="dating-glitch">ERROR / FEELINGS / ERROR</div>}
-              {!activeLine.effect && <div className="dating-orbit"><span /><span /><span /></div>}
+              {!activeLine.effect && !activeLine.backgroundImage && <div className="dating-orbit"><span /><span /><span /></div>}
               {activePortraitUrl && (
                 <img
                   className="dating-dialogue__character"
@@ -987,17 +1835,24 @@ export default function DatingGame() {
             <div className="dating-hub__intro">
               <div>
                 <p className="dating-hub__kicker">SOCIAL HUB · {playerName}</p>
-                <h1>Who do you want to find?</h1>
-                <p>Routes stay open. Date one person, several people, or create a preventable group-chat disaster.</p>
+                <h1>{introductionsComplete ? "Who do you want to find?" : "You should probably meet everyone."}</h1>
+                <p>
+                  {introductionsComplete
+                    ? "Routes stay open. Date one person, several people, or create a preventable group-chat disaster."
+                    : "Introductions first. Meet all five people, then their romance routes unlock on this same menu."}
+                </p>
               </div>
               <div className="dating-hub__counter">
-                <strong>{scenesPlayed}</strong><span>encounters complete</span>
+                <strong>{introductionsComplete ? scenesPlayed : `${metCharacters.length}/5`}</strong>
+                <span>{introductionsComplete ? "encounters complete" : "people met"}</span>
               </div>
             </div>
             <div className="dating-hub__grid">
               {CHARACTER_ORDER.map((id, index) => {
                 const character = cast[id];
+                const introductionComplete = metCharacters.includes(id);
                 const routeComplete = character.progress >= 2;
+                const cardComplete = introductionsComplete ? routeComplete : introductionComplete;
                 const portraitUrl = id === "jay"
                   ? JAY_IMAGE_URL
                   : id === "phil"
@@ -1009,12 +1864,12 @@ export default function DatingGame() {
                         : BIBI_IMAGE_URLS.serious;
                 return (
                   <button
-                    className={`dating-route-card ${routeComplete ? "dating-route-card--complete" : ""}`}
+                    className={`dating-route-card ${cardComplete ? "dating-route-card--complete" : ""}`}
                     style={{ "--route-colour": character.colour } as CSSProperties}
                     key={id}
                     type="button"
-                    onClick={() => startRoute(id)}
-                    disabled={routeComplete}
+                    onClick={() => (introductionsComplete ? startRoute(id) : startIntroduction(id))}
+                    disabled={cardComplete}
                   >
                     <span className="dating-route-card__index">0{index + 1}</span>
                     <span className={`dating-route-card__portrait ${portraitUrl ? "dating-route-card__portrait--photo" : ""}`}>
@@ -1035,22 +1890,58 @@ export default function DatingGame() {
                       <em>{character.status}</em>
                     </span>
                     <span className="dating-route-card__footer">
-                      <span className="dating-route-card__pips" aria-label={`${character.progress} of 2 encounters complete`}>
-                        <i className={character.progress >= 1 ? "is-filled" : ""} />
-                        <i className={character.progress >= 2 ? "is-filled" : ""} />
+                      <span
+                        className="dating-route-card__pips"
+                        aria-label={
+                          introductionsComplete
+                            ? `${character.progress} of 2 encounters complete`
+                            : introductionComplete
+                              ? "Introduction complete"
+                              : "Introduction not complete"
+                        }
+                      >
+                        {introductionsComplete ? (
+                          <>
+                            <i className={character.progress >= 1 ? "is-filled" : ""} />
+                            <i className={character.progress >= 2 ? "is-filled" : ""} />
+                          </>
+                        ) : (
+                          <i className={introductionComplete ? "is-filled" : ""} />
+                        )}
                       </span>
-                      <span>{routeComplete ? "ROUTE COMPLETE" : SCENES[id][character.progress].title}</span>
+                      <span>
+                        {introductionsComplete
+                          ? routeComplete
+                            ? "ROUTE COMPLETE"
+                            : SCENES[id][character.progress].title
+                          : introductionComplete
+                            ? "INTRODUCTION COMPLETE"
+                            : INTRODUCTION_TITLES[id]}
+                      </span>
                     </span>
                   </button>
                 );
               })}
             </div>
             <div className="dating-hub__footer">
-              <p><span>◆</span> Feelings are tracked privately. No affection spreadsheet will save you.</p>
-              <button type="button" onClick={endNight} disabled={scenesPlayed < 4}>
-                {scenesPlayed < 4
-                  ? `Meet ${4 - scenesPlayed} more time${4 - scenesPlayed === 1 ? "" : "s"}`
-                  : "End the night →"}
+              <p>
+                <span>◆</span>{" "}
+                {introductionsComplete
+                  ? "Feelings are tracked privately. Dialogue choices are tallied anonymously."
+                  : "Meet everybody first. Every introduction is now fully playable."}
+              </p>
+              <button
+                type="button"
+                onClick={endNight}
+                disabled={!introductionsComplete || scenesPlayed < 4}
+              >
+                {!introductionsComplete
+                  ? `Meet ${CHARACTER_ORDER.length - metCharacters.length} more ${
+                      CHARACTER_ORDER.length - metCharacters.length === 1 ? "person" : "people"
+                    }`
+                  : scenesPlayed < 4
+                    ? `Complete ${4 - scenesPlayed} more encounter${4 - scenesPlayed === 1 ? "" : "s"}`
+                    : "End the night →"}
               </button>
             </div>
             <details className="dating-hub__credits">

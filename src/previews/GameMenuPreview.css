@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #0d0d0d; color: #eee; color-scheme: dark; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+button { cursor: pointer; }
+.game-preview-header { display: flex; align-items: center; height: 80px; padding: 0 28px; gap: 20px; border-bottom: 1px solid #252525; }
+.game-preview-header a { font-size: 24px; color: #aaa; text-decoration: none; }
+.game-preview-header strong { font-size: 22px; color: #fff; text-shadow: 0 0 5px #d3b32c; }
+.game-preview-header > span { display: flex; align-items: center; gap: 8px; margin-left: auto; color: #aaa; font-size: 13px; }
+.game-preview-header i { width: 7px; height: 7px; border-radius: 50%; background: #a6e290; }
+.game-preview-header button { padding: 0; border: 0; background: transparent; color: #ccc; font-size: 22px; }
+.game-preview-shell { max-width: none; }
+.game-preview-notice { color: #aaa; font-size: 13px; margin: 0; padding: 14px 8px; }
+.game-preview-shell .chat-composer { margin-top: 0; }
+.game-preview-shell .chat-send { border-radius: 5px; padding: 10px 15px; }
+
