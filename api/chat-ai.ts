@@ -51,7 +51,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({ model: AI_MODEL, store: false, reasoning: { effort: 'low' }, max_output_tokens: 3000, max_tool_calls: 3, instructions: AI_PROMPT, input, tools: [{ type: 'web_search' }], text: { format: { type: 'json_schema', name: 'phi_chat_reply', strict: true, schema: AI_SCHEMA } } }),
     })
     const payload = await response.json()
-    if (!response.ok) { console.error('Chat AI provider error', response.status, payload.error?.code); throw new Error('AI could not reply. Try again shortly.') }
+    if (!response.ok) {
+      console.error('Chat AI provider error', response.status, payload.error?.code)
+      const message = payload.error?.code === 'credit_balance_exhausted' || payload.error?.code === 'insufficient_quota'
+        ? 'OpenAI API credit is exhausted. Add API credit to enable AI replies.'
+        : response.status === 429 ? 'OpenAI is rate limited. Try again shortly.' : 'AI could not reply. Try again shortly.'
+      await db.from('chat_ai_requests').update({ status: 'error', error: message }).eq('id', job.id).eq('lease', lease).eq('status', 'processing')
+      return res.status(response.status === 429 ? 429 : 422).json({ error: message })
+    }
     const result = parseAiOutput(payload)
     const { data: people, error: peopleError } = await db.from('chat_sessions').select('id,username').gt('expires_at', new Date().toISOString()).limit(500)
     if (peopleError) throw new Error('Mentions could not load.')
