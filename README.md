@@ -8,7 +8,7 @@ Welcome to the codebase behind my phi labs site, the playground where every shin
 - Archive.org powered music digger with buttery overlay transitions (Framer Motion), prefetching audio metadata, and deep links per album.
 - Realtime-ish changelog duo: Markdown notes for the human version plus a live feed of GitHub commits pulled through a Vercel function.
 - Workin hard or hardly workin stats panel that pings Vercel and GitHub to judge whether I have actually shipped anything today.
-- Browser based chatroom hanging off a tiny WebSocket server on Render, because sometimes you just want to yell into the void.
+- Chatroom V2 at `/chat`: guest usernames, rich Markdown, fonts, emoji search and Supabase Realtime.
 - Append page that lets friends drop new phrases into the homepage ticker via a locked-down POST endpoint.
 
 ## Under the hood
@@ -35,7 +35,7 @@ VERCEL_PROJECT=phi-website
 SITE_TOKEN=kv-writer-token         # used by /api/append
 ```
 
-Drop them into a `.env.local` file at the project root or export them in your shell. The WebSocket chat will try to connect to `wss://phi-chat-server.onrender.com`; update the URL in `src/pages/Chatroom.tsx` if you are running your own socket.
+Drop them into a `.env.local` file at the project root or export them in your shell. Chat uses the existing Supabase environment variables and Vercel serverless API; see [Chatroom V2 setup](docs/chat-v2.md).
 
 ## Roadmap vibes
 - Smooth out the music player overlay for mobile browsers.

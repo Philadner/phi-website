@@ -22,6 +22,7 @@
     "@vercel/node": "^5.3.17",
     "@vercel/speed-insights": "^1.2.0",
     "clsx": "^2.1.1",
+    "emoji-picker-react": "^4.22.3",
     "framer-motion": "^12.23.12",
     "maplibre-gl": "^6.6.0",
     "react": "^19.1.0",
@@ -29,11 +30,14 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.5.3",
     "redis": "^5.12.1",
+    "remark-directive": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "unist-util-visit": "^5.1.0",
     "ytmusic-api": "^5.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

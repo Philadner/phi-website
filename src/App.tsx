@@ -26,11 +26,16 @@ import DylanTightness from './pages/DylanTightness';
 import PhilTightness from './pages/PhilTightness';
 import ChangelogCommits from './pages/ChangelogCommits';
 import FilterMap from './pages/FilterMap';
+import { lazy, Suspense } from 'react';
+import ChatPresenceProvider from './components/ChatPresenceProvider';
+import { useChatPresence } from './lib/chat';
 import use1998Mode from './hooks/use1998Mode';
 import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
 import { PhiMark } from './components/PhiMark';
 import './App.css';
+
+const Chatroom = lazy(() => import('./pages/Chatroom'));
 
 function ModernLoader() {
   return (
@@ -153,6 +158,8 @@ function AppShell() {
   const [mode1998] = use1998Mode();
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
+  const isChatMode = location.pathname === '/chat';
+  const { presence: chatPresence } = useChatPresence();
   const isPresentationDemo = location.pathname === "/presentation" || location.pathname === "/remote";
   const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -198,7 +205,7 @@ useEffect(() => {
   const el = headerRef.current;
   if (!el) return;
 
-  if (isMusicMode) {
+  if (isMusicMode || isChatMode) {
     el.style.setProperty('--p', '0');
     el.style.setProperty('--squish', '0');
     el.style.setProperty('--fade', '0');
@@ -272,7 +279,7 @@ useEffect(() => {
     el.removeEventListener('mouseleave', onLeave);
     window.removeEventListener('scroll', onScroll);
   };
-}, [isMusicMode]);
+}, [isMusicMode, isChatMode]);
 
   
   const navigate = useNavigate();
@@ -281,9 +288,16 @@ useEffect(() => {
     <div className={loaded ? 'loaded page' : 'page'}>
       {!loaded && (mode1998 ? <RetroLoader /> : <ModernLoader />)}
 
-      {!isPresentationDemo && <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""}`}>
+      {!isPresentationDemo && <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""} ${isChatMode ? 'site-header--chat' : ''}`}>
         <div className="site-header__inner">
-          {isMusicMode ? (
+          {isChatMode ? (
+            <div className="chat-brand titlebar-content">
+              <Link to="/" className="music-brand__back" aria-label="Back to main phi(l)">
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </Link>
+              <Link to="/chat" className="logo">phi(chat)</Link>
+            </div>
+          ) : isMusicMode ? (
             <div className="music-brand titlebar-content">
               <Link to="/" className="music-brand__back" aria-label="Back to website">
                 <FontAwesomeIcon icon={faArrowLeft} />
@@ -332,7 +346,7 @@ useEffect(() => {
                 <FontAwesomeIcon icon={faMagnifyingGlass} />
               </button>
             </>
-          ) : (
+          ) : isChatMode ? <div className="chat-header-room titlebar-content">THE LOBBY <span>V2</span></div> : (
             <nav className="topnav titlebar-content">
               <Link to="/musicpl">Music</Link>
               <Link to="/quickl">Quick links</Link>
@@ -341,6 +355,9 @@ useEffect(() => {
           )}
 
           <div className="header-actions titlebar-content">
+            {isChatMode && <span className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} role="status">
+              <i aria-hidden="true" />{chatPresence.live ? `${chatPresence.count} online` : 'Connecting…'}
+            </span>}
             <button
               className="menu-btn"
               onClick={() => setSideOpen(true)}
@@ -379,6 +396,7 @@ useEffect(() => {
           {/* always visible in sidebar */}
           <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
           <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
+          <Link to="/chat" onClick={() => setSideOpen(false)}>Chatroom</Link>
           <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
           <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
           <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
@@ -438,6 +456,7 @@ useEffect(() => {
             <Route path="/1998/:rest" element={<Navigate to="/" replace />} />
             <Route path="/1998/:rest/*" element={<Navigate to="/" replace />} />
             <Route path="/about" element={<About />} />
+            <Route path="/chat" element={<Suspense fallback={<p className="BodyTextCentre">Opening chat…</p>}><Chatroom /></Suspense>} />
             <Route path="/quickl" element={<QuickLinks />} />
             <Route path="/games" element={<Games />} />
             <Route path="/floop" element={<Floop />} />
@@ -470,8 +489,8 @@ useEffect(() => {
 
 export default function App() {
   return (
-    <MusicPlayerProvider>
+    <ChatPresenceProvider><MusicPlayerProvider>
       <AppShell />
-    </MusicPlayerProvider>
+    </MusicPlayerProvider></ChatPresenceProvider>
   );
 }
