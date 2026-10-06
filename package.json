@@ -10,9 +10,13 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:chat-uploads": "node scripts/test-chat-uploads.mjs",
-    "test:chat-features": "node scripts/test-chat-features.mjs"
+    "test:chat-features": "node scripts/test-chat-features.mjs",
+    "test:chat-games": "node scripts/test-chat-games.mjs"
   },
   "dependencies": {
+    "chess.js": "^1.4.0",
+    "react-chessboard": "^5.12.1",
+    "word-list": "^4.1.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
     "@fortawesome/free-solid-svg-icons": "^7.2.0",

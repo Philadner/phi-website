@@ -79,9 +79,7 @@ checks, alongside the required lint/build and live upload checks.
 
 ## Next releases
 
-1. Turn-based chess (`react-chessboard`), connect four, tic tac toe, Wordle race,
-   battleships and Uno, with game commands and UI controls.
-2. Searchable GIF provider integration after choosing/configuring Giphy or Klipy.
+1. Gartic Phone: drawing rounds, timed handoffs and a final reveal.
 
 ## AI, mentions, replies and clears
 
@@ -133,3 +131,38 @@ Blob files. Public RLS and API reads exclude room-cleared history; AI memory and
 context do too. Personal cursors are persisted on the guest session. Blob
 retention is independent. Run `npm run test:chat-features` and the upload checks,
 then lint/build and manual checks on labs.
+
+## Games and GIPHY
+
+Apply migrations `20261006004000_chat_games.sql` and `20261006005000_chat_giphy.sql`.
+The stuff menu slides into the game list, then expands into a full-width image,
+title, description and Start game card. `/game` opens it; `/game chess`,
+`/game connect4`, `/game tictactoe`, `/game wordle`, `/game battleships` and
+`/game uno` post invitations. Gartic Phone is marked coming soon.
+
+Chess uses react-chessboard and chess.js for legal moves, castling, en passant,
+promotion, checkmate and draws. Connect 4 and tic tac toe start with two players.
+Battleships starts with private placement of the five ships (5/4/3/3/2), then
+alternating shots. Wordle race and Uno accept 2–8 players; the host starts the
+round. Wordle has six guesses, a ten-minute limit, an English dictionary and
+first-solve victory. Everyone sees other players' guess colours, with letters
+hidden. Uno deals seven cards and supports skip, reverse, draw two, wild and
+wild draw four. No stacking or bluff/challenge mechanic; a wild draw four is
+rejected if you hold the current colour. Missing the Call Uno checkbox when
+playing down to one card draws two. Resigning ends the round.
+
+Vercel validates every move. Private answers, fleets and hands live in
+service-only `chat_game_secrets`; public `chat_games` publishes only scrubbed
+state through Supabase Realtime. Atomic version checks reject simultaneous or
+stale moves. Guest credentials authorize each player and room clears invalidate
+the game. Game creation is idempotent and limited to five unfinished games per
+guest and twenty invitations per hour. Use `npm run test:chat-games` for rule
+and disclosure checks.
+
+`/gif` or Find a GIF opens client-side GIPHY trending/search using
+`VITE_GIPHY_API_KEY`. The input says Search GIPHY and the picker displays
+Powered by GIPHY attribution and creator names. Search uses a 350ms debounce
+and pagination. Choosing a GIF adds it to the composer; it can be sent alone,
+with text, attachments or a reply. Only GIF ID/title are persisted in Supabase;
+media URLs are fetched fresh from GIPHY and media loads directly, without Blob
+copies or a proxy. Existing clipboard GIF uploads continue using Blob.

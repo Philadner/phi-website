@@ -12,6 +12,12 @@ import useChatRoom from '../hooks/useChatRoom'
 import ChatAiContext from '../components/ChatAiContext'
 import ChatClearVote from '../components/ChatClearVote'
 import ChatMentions from '../components/ChatMentions'
+import ChatGameCard from '../components/ChatGameCard'
+import ChatGif from '../components/ChatGif'
+import ChatGifPicker from '../components/ChatGifPicker'
+import type { ChatGifRef } from '../lib/chatGifs'
+import { gameKind, gameRequest } from '../lib/chatGames'
+import type { GameKind } from '../lib/chatGames'
 import { parseChatCommand } from '../lib/chatFeatures'
 import { droppedFiles } from '../lib/chatDrop'
 import { chatRequest, useChatPresence } from '../lib/chat'
@@ -46,6 +52,13 @@ export default function Chatroom() {
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [formattingOpen, setFormattingOpen] = useState(false)
   const [stuffOpen, setStuffOpen] = useState(false)
+  const [gamesOpen, setGamesOpen] = useState(false)
+  const [gameBusy, setGameBusy] = useState(false)
+  const [gameError, setGameError] = useState('')
+  const [gifOpen, setGifOpen] = useState(false)
+  const [gifQuery, setGifQuery] = useState('')
+  const [draftGif, setDraftGif] = useState<ChatGifRef | null>(null)
+  const gameCreation = useRef<{ kind: GameKind; clientId: string } | null>(null)
   const [newMessages, setNewMessages] = useState(false)
   const [dragging, setDragging] = useState(false)
   const [replying, setReplying] = useState<ChatMessage | null>(null)
@@ -140,6 +153,8 @@ export default function Chatroom() {
       if (active) void refreshRoom()
     }).on('postgres_changes', { event: '*', schema: 'public', table: 'chat_clear_votes' }, () => {
       if (active) void refreshRoom()
+    }).on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_games' }, event => {
+      if (active) window.dispatchEvent(new CustomEvent('chat-game-update', { detail: event.new.id }))
     }).on('presence', { event: 'sync' }, () => {
       if (!active || !channel) return
       const unique = new Map<string, Person>()
@@ -216,12 +231,14 @@ export default function Chatroom() {
   }
 
   function openEmoji() {
+    setGifOpen(false)
     setEmojiOpen(true)
     setFormattingOpen(false)
     setStuffOpen(false)
   }
 
   function openFiles() {
+    setGifOpen(false)
     setStuffOpen(false)
     setFormattingOpen(false)
     fileInput.current?.click()
@@ -229,10 +246,18 @@ export default function Chatroom() {
 
   async function send(event?: FormEvent) {
     event?.preventDefault()
-    if (sending || !session || (!draft.trim() && !uploads.files.length)) return
+    if (sending || !session || (!draft.trim() && !uploads.files.length && !draftGif)) return
     const text = draft.trim()
     const command = parseChatCommand(text)
     setError('')
+    if (command.kind === 'gif') { setGifQuery(command.content); setGifOpen(true); setStuffOpen(false); setFormattingOpen(false); setEmojiOpen(false); setDraft(''); return }
+    if (command.kind === 'game') {
+      if (!command.content) { setGamesOpen(true); setStuffOpen(true); setFormattingOpen(false); setDraft(''); return }
+      const kind = gameKind(command.content)
+      if (!kind) { setError('Choose chess, connect4, tictactoe, wordle, battleships or uno. Gartic Phone is coming soon.'); return }
+      await startGame(kind)
+      return
+    }
     if (text === '/help') { setStuffOpen(true); setFormattingOpen(false); setDraft(''); return }
     if (text === '/format') { setFormattingOpen(true); setStuffOpen(false); setDraft(''); return }
     if (text === '/emoji') { openEmoji(); setDraft(''); return }
@@ -253,26 +278,23 @@ export default function Chatroom() {
       return
     }
     if (uploads.busy || uploads.files.some((file) => file.state === 'error')) { setError('Wait for your uploads, or remove the failed files.'); return }
-    if (command.kind === 'unavailable') {
-      setError('That command is coming later. Try /help for what works now.')
-      return
-    }
     const action = command.kind === 'action'
     if (command.kind === 'invalid' || command.kind === 'local') { setError('Invalid command. Use /help, or start with // to send a slash.'); return }
     const content = command.content
     const attachmentIds = uploads.files.filter((file) => file.state === 'ready').map((file) => file.id)
-    if (!content && !attachmentIds.length) return
+    if (!content && !attachmentIds.length && !draftGif) return
     if (command.kind === 'ai' && !content && !attachmentIds.length) { setError('Add a message or image after /ai.'); return }
-    const identity = JSON.stringify([text, attachmentIds, replying?.id])
+    const identity = JSON.stringify([text, attachmentIds, replying?.id, draftGif])
     if (requestIdentity.current?.content !== identity) requestIdentity.current = { content: identity, clientId: crypto.randomUUID() }
     setSending(true)
     try {
-      const data = await chatRequest<{ message: ChatMessage }>('', { action: 'send', text, content, kind: action ? 'action' : 'message', clientId: requestIdentity.current.clientId, attachmentIds, replyTo: replying?.id ?? null })
+      const data = await chatRequest<{ message: ChatMessage }>('', { action: 'send', text, content, kind: action ? 'action' : 'message', clientId: requestIdentity.current.clientId, attachmentIds, replyTo: replying?.id ?? null, gif: draftGif })
       nearBottom.current = true
       receive([data.message])
       setNewMessages(false)
       setDraft((current) => current === draft ? '' : current)
       uploads.release(attachmentIds)
+      setDraftGif(current => current?.id === draftGif?.id ? null : current)
       setReplying((current) => current?.id === replying?.id ? null : current)
       if (data.message.invokes_ai) void room.runAi(data.message.id)
       setPreview(false)
@@ -281,6 +303,23 @@ export default function Chatroom() {
       textarea.current?.focus()
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Message could not send. Your draft is still here.') }
     finally { setSending(false) }
+  }
+
+  async function startGame(kind: GameKind) {
+    if (gameBusy || !session) return
+    if (gameCreation.current?.kind !== kind) gameCreation.current = { kind, clientId: crypto.randomUUID() }
+    setGameBusy(true); setGameError(''); setError('')
+    try {
+      const result = await gameRequest({ action: 'create', kind, clientId: gameCreation.current.clientId })
+      nearBottom.current = true
+      if (result.message) receive([result.message])
+      setStuffOpen(false); setGamesOpen(false)
+      if (parseChatCommand(draft).kind === 'game') setDraft('')
+      gameCreation.current = null
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : 'Could not start game.'
+      setGameError(message); setError(message)
+    } finally { setGameBusy(false) }
   }
 
   async function loadOlder() {
@@ -339,8 +378,9 @@ export default function Chatroom() {
           <div className="chat-avatar" aria-hidden="true">{message.username.slice(0, 2).toUpperCase()}</div>
           <div className="chat-message-content">
             {message.reply_preview && <button type="button" className="chat-reply-preview" onClick={() => void jumpTo(message.reply_preview!.id)}><strong>{message.reply_preview.username}</strong>{message.reply_preview.isAi && <span className="chat-ai-badge">AI</span>}<span>{message.reply_preview.content}</span></button>}
-            <header><strong>{message.username}</strong>{message.is_ai && <span className="chat-ai-badge">AI</span>}{message.author_id === session?.id && !message.is_ai && <span className="chat-you">you</span>}<time dateTime={message.created_at} title={new Date(message.created_at).toLocaleString()}>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>{message.kind === 'action' && <span className="chat-you">/me</span>}{session && <button type="button" className="chat-reply-button" aria-label={`Reply to ${message.username}'s message`} onClick={() => { setReplying(message); textarea.current?.focus() }}>↩ Reply</button>}</header><ChatMarkdown content={message.content} /><ChatAttachments attachments={message.attachments} />
+            <header><strong>{message.username}</strong>{message.is_ai && <span className="chat-ai-badge">AI</span>}{message.author_id === session?.id && !message.is_ai && <span className="chat-you">you</span>}<time dateTime={message.created_at} title={new Date(message.created_at).toLocaleString()}>{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>{message.kind === 'action' && <span className="chat-you">/me</span>}{session && <button type="button" className="chat-reply-button" aria-label={`Reply to ${message.username}'s message`} onClick={() => { setReplying(message); textarea.current?.focus() }}>↩ Reply</button>}</header>{!message.modifiers?.game_id && !(message.modifiers?.gif && message.content === 'GIF') && <ChatMarkdown content={message.content} />}<ChatAttachments attachments={message.attachments} />{message.modifiers?.gif && <ChatGif gif={message.modifiers.gif} />}
             <ChatAiContext message={message} owner={Boolean(session && message.reply_preview?.authorId === session.id)} busy={room.running.includes(message.reply_to || 0) || room.requests.some((job) => job.trigger_id === message.reply_to && job.status === 'processing')} choose={(grant) => void room.runAi(message.reply_to!, grant)} />
+            {message.modifiers?.game_id && <ChatGameCard id={message.modifiers.game_id} session={session} />}
           </div>
         </article>)}
       </div>
@@ -358,18 +398,20 @@ export default function Chatroom() {
         if (files.length) { event.preventDefault(); uploads.add(files.map((file) => ({ file }))) }
       }}>
         <input ref={fileInput} type="file" multiple hidden aria-label="Upload files" onChange={(event) => { uploads.add([...event.target.files || []].map((file) => ({ file }))); event.target.value = '' }} />
-        <ChatComposerTools formattingOpen={formattingOpen} setFormattingOpen={setFormattingOpen} stuffOpen={stuffOpen} setStuffOpen={setStuffOpen} preview={preview} setPreview={setPreview} insert={insert} insertCommand={insertCommand} changeName={() => setEditingName(true)} openEmoji={openEmoji} openFiles={openFiles} />
+        <ChatComposerTools formattingOpen={formattingOpen} setFormattingOpen={setFormattingOpen} stuffOpen={stuffOpen} setStuffOpen={setStuffOpen} preview={preview} setPreview={setPreview} insert={insert} insertCommand={insertCommand} changeName={() => setEditingName(true)} openEmoji={openEmoji} openFiles={openFiles} openGif={() => { setGifQuery(''); setGifOpen(true); setEmojiOpen(false) }} gamesOpen={gamesOpen} setGamesOpen={setGamesOpen} startGame={kind => void startGame(kind)} gameBusy={gameBusy} gameError={gameError} />
         <DraftAttachments files={uploads.files} remove={(id) => uploads.release([id], true)} retry={uploads.retry} locked={sending} />
         {replying && <div className="chat-replying"><span>Replying to <strong>{replying.username}</strong></span><button type="button" aria-label="Cancel reply" onClick={() => setReplying(null)}>×</button></div>}
         {uploads.busy && <div className="chat-upload-queue">{uploads.files.filter((file) => file.state === 'queued' || file.state === 'uploading').map((file) => <button type="button" key={file.id} aria-label={`Cancel upload of ${file.file.name}`} onClick={() => uploads.release([file.id], true)}>{file.file.name} ×</button>)}</div>}
         {emojiOpen && <div className="chat-emoji-panel"><button type="button" className="chat-emoji-close" onClick={() => setEmojiOpen(false)}>Close emoji picker ×</button><Suspense fallback={<p>Loading emoji…</p>}><EmojiPicker theme={'dark' as Theme} lazyLoadEmojis width="100%" height={350} searchPlaceholder="Search emoji…" onEmojiClick={(emoji) => { insert(emoji.emoji); setEmojiOpen(false) }} /></Suspense></div>}
+        {gifOpen && <ChatGifPicker initialQuery={gifQuery} close={() => setGifOpen(false)} choose={gif => { setDraftGif(gif); setGifOpen(false); textarea.current?.focus() }} />}
+        {draftGif && <div className="chat-gif-draft"><ChatGif gif={draftGif} /><button type="button" aria-label="Remove GIF" onClick={() => setDraftGif(null)}>×</button></div>}
         {preview && <div className="chat-draft-preview"><ChatMarkdown content={draft} /></div>}
         {!preview && <ChatMentions input={textarea} people={people} aiName={room.room.ai_name} draft={draft} setDraft={setDraft} />}
-        <textarea ref={textarea} className={preview ? 'chat-textarea--hidden' : ''} aria-label="Message" placeholder="Message" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={8000} rows={3} onKeyDown={(event) => { if (event.key === 'ArrowDown' && document.querySelector('.chat-mention-picker')) { event.preventDefault(); document.querySelector<HTMLButtonElement>('.chat-mention-picker button')?.focus(); return } if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } if (event.key === 'Escape') { setEmojiOpen(false); setFormattingOpen(false); setStuffOpen(false); setReplying(null) } }} />
+        <textarea ref={textarea} className={preview ? 'chat-textarea--hidden' : ''} aria-label="Message" placeholder="Message" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={8000} rows={3} onKeyDown={(event) => { if (event.key === 'ArrowDown' && document.querySelector('.chat-mention-picker')) { event.preventDefault(); document.querySelector<HTMLButtonElement>('.chat-mention-picker button')?.focus(); return } if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } if (event.key === 'Escape') { setEmojiOpen(false); setFormattingOpen(false); setStuffOpen(false); setGifOpen(false); setReplying(null) } }} />
         {error && <p className="chat-error" role="alert">{error}</p>}
         {uploads.error && <p className="chat-error" role="alert">{uploads.error}</p>}
-        <ChatSelectionToolbar input={textarea} value={draft} insert={insert} hidden={preview || formattingOpen || stuffOpen || emojiOpen} />
-        <div className="chat-composer-footer"><span>Chatting as <button type="button" onClick={() => setEditingName(true)}>{session.username}</button><small>Enter to send · Shift + Enter for a new line</small></span><span className="chat-character-count">{draft.length.toLocaleString()} / 8,000</span><button className="chat-send" disabled={sending || uploads.busy || uploads.files.some((file) => file.state === 'error') || (!draft.trim() && !uploads.files.length)}>{sending ? 'Sending…' : 'Send ↑'}</button></div>
+        <ChatSelectionToolbar input={textarea} value={draft} insert={insert} hidden={preview || formattingOpen || stuffOpen || emojiOpen || gifOpen} />
+        <div className="chat-composer-footer"><span>Chatting as <button type="button" onClick={() => setEditingName(true)}>{session.username}</button><small>Enter to send · Shift + Enter for a new line</small></span><span className="chat-character-count">{draft.length.toLocaleString()} / 8,000</span><button className="chat-send" disabled={sending || uploads.busy || uploads.files.some((file) => file.state === 'error') || (!draft.trim() && !uploads.files.length && !draftGif)}>{sending ? 'Sending…' : 'Send ↑'}</button></div>
       </form>}
     </section>
     <ChatActiveUsers people={people} sessionId={session?.id} />

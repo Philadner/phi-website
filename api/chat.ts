@@ -3,6 +3,7 @@ import { createHash, createHmac, randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { MAX_ATTACHMENTS, UUID } from '../src/lib/chatAttachments.js'
 import { mentionsAi, mentionNames, parseChatCommand } from '../src/lib/chatFeatures.js'
+import { gifReference } from '../src/lib/chatGifs.js'
 
 const COOKIE = 'phi_chat_session'
 const MAX_AGE = 30 * 24 * 60 * 60
@@ -91,8 +92,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!token) return res.status(401).json({ error: 'Choose a username to join.' })
       const raw = typeof body.text === 'string' ? body.text : typeof body.content === 'string' ? body.content : ''
       const command = parseChatCommand(raw)
-      if (!['message', 'action', 'ai'].includes(command.kind)) return res.status(400).json({ error: command.kind === 'unavailable' ? 'That command is coming later.' : 'Invalid command. Use /help to open the stuff menu.' })
-      const content = command.content
+      if (!['message', 'action', 'ai'].includes(command.kind)) return res.status(400).json({ error: 'Invalid command. Use /help to open the stuff menu.' })
+      const gif = body.gif == null ? null : gifReference(body.gif)
+      if (body.gif != null && !gif) return res.status(400).json({ error: 'Invalid GIF.' })
+      const content = command.content || (gif ? 'GIF' : '')
       const attachmentIds = body.attachmentIds ?? []
       if (!Array.isArray(attachmentIds) || attachmentIds.length > MAX_ATTACHMENTS || attachmentIds.some((id) => typeof id !== 'string' || !UUID.test(id)) || new Set(attachmentIds).size !== attachmentIds.length) return res.status(400).json({ error: 'Invalid attachments.' })
       if ((!content && !attachmentIds.length) || content.length > 8000) return res.status(400).json({ error: 'Add a message or a file (up to 8,000 characters).' })
@@ -116,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (parentError) throw parentError
         if (parent?.is_ai) invokesAi = true
       }
-      const { data, error } = await db.rpc('send_chat_message', { p_token_hash: hash(token), p_client_id: body.clientId, p_content: content, p_kind: kind, p_attachment_ids: attachmentIds, p_reply_to: replyTo, p_mentioned_ids: mentionedIds, p_invokes_ai: invokesAi })
+      const { data, error } = await db.rpc('send_chat_message', { p_token_hash: hash(token), p_client_id: body.clientId, p_content: content, p_kind: kind, p_attachment_ids: attachmentIds, p_reply_to: replyTo, p_mentioned_ids: mentionedIds, p_invokes_ai: invokesAi, p_gif: gif })
       if (error?.code === '28000') return res.status(401).json({ error: error.message })
       if (error?.code === 'P0001') return res.status(429).json({ error: error.message })
       if (error?.code === '22023') return res.status(400).json({ error: error.message })

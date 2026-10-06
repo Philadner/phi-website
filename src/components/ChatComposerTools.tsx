@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import ChatGamePicker from './ChatGamePicker'
+import type { GameKind } from '../lib/chatGames'
 
 type Props = {
   formattingOpen: boolean
@@ -12,18 +14,19 @@ type Props = {
   changeName: () => void
   openEmoji: () => void
   openFiles: () => void
+  openGif: () => void
+  gamesOpen: boolean
+  setGamesOpen: (open: boolean) => void
+  startGame: (kind: GameKind) => void
+  gameBusy: boolean
+  gameError: string
 }
-
-const upcoming = [
-  { label: 'Start a game', command: '/game' },
-  { label: 'Find a GIF', command: '/gif' },
-]
 
 function StuffLabel({ label, command }: { label: string; command: string }) {
   return <span className="chat-stuff-label" aria-hidden="true"><span className="chat-stuff-name">{label}</span><span className="chat-stuff-command">{command}</span></span>
 }
 
-export default function ChatComposerTools({ formattingOpen, setFormattingOpen, stuffOpen, setStuffOpen, preview, setPreview, insert, insertCommand, changeName, openEmoji, openFiles }: Props) {
+export default function ChatComposerTools({ formattingOpen, setFormattingOpen, stuffOpen, setStuffOpen, preview, setPreview, insert, insertCommand, changeName, openEmoji, openFiles, openGif, gamesOpen, setGamesOpen, startGame, gameBusy, gameError }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const styleButton = useRef<HTMLButtonElement>(null)
   const stuffButton = useRef<HTMLButtonElement>(null)
@@ -61,7 +64,7 @@ export default function ChatComposerTools({ formattingOpen, setFormattingOpen, s
   }}>
     <div className="chat-composer-buttons">
       <button ref={styleButton} type="button" aria-label="Text style" aria-expanded={formattingOpen} aria-controls="chat-formatting" onClick={() => { setFormattingOpen(!formattingOpen); setStuffOpen(false) }}>Aa</button>
-      <button ref={stuffButton} type="button" aria-expanded={stuffOpen} aria-controls="chat-stuff-menu" onClick={() => { setStuffOpen(!stuffOpen); setFormattingOpen(false) }} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); setStuffOpen(true); setFormattingOpen(false) } }}>stuff menu™</button>
+      <button ref={stuffButton} type="button" aria-expanded={stuffOpen} aria-controls="chat-stuff-menu" onClick={() => { setStuffOpen(!stuffOpen); setFormattingOpen(false); setGamesOpen(false) }} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); setStuffOpen(true); setFormattingOpen(false); setGamesOpen(false) } }}>stuff menu™</button>
       <button type="button" aria-label="Choose emoji" onClick={openEmoji}>☺</button>
       <button type="button" className="chat-preview-toggle" aria-pressed={preview} onClick={() => setPreview(!preview)}>{preview ? 'Edit' : 'Preview'}</button>
     </div>
@@ -81,7 +84,7 @@ export default function ChatComposerTools({ formattingOpen, setFormattingOpen, s
         <button type="button" aria-label="Code block" onClick={() => insert('\n```\n', '\n```\n', 'code')}>Code block</button>
       </div>
     </section>}
-    {stuffOpen && <section id="chat-stuff-menu" className="chat-tool-panel chat-stuff-menu" aria-label="Stuff menu" onKeyDown={(event) => {
+    {stuffOpen && <ChatGamePicker gamesOpen={gamesOpen} setGamesOpen={setGamesOpen} onStart={startGame} busy={gameBusy} error={gameError}>{openGames => <div onKeyDown={(event) => {
       if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
       event.preventDefault()
       const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('.chat-stuff-item')]
@@ -98,7 +101,8 @@ export default function ChatComposerTools({ formattingOpen, setFormattingOpen, s
       <button type="button" className="chat-stuff-item" aria-label="Ask AI (/ai)" onClick={() => choose(() => insertCommand('/ai '))}><StuffLabel label="Ask AI" command="/ai" /></button>
       <button type="button" className="chat-stuff-item" aria-label="Clear for you (/clear)" onClick={() => choose(() => insertCommand('/clear'))}><StuffLabel label="Clear for you" command="/clear" /></button>
       <button type="button" className="chat-stuff-item" aria-label="Clear for everyone (/bigahhclear)" onClick={() => choose(() => insertCommand('/bigahhclear'))}><StuffLabel label="Clear for everyone" command="/bigahhclear" /></button>
-      {upcoming.map((item) => <button key={item.command} type="button" className="chat-stuff-item" aria-disabled="true" aria-label={`${item.label} (${item.command}) — coming soon`}><StuffLabel {...item} /><small>soon</small></button>)}
-    </section>}
+      <button type="button" data-game-start className="chat-stuff-item" aria-label="Start a game (/game)" onClick={openGames}><StuffLabel label="Start a game" command="/game" /></button>
+      <button type="button" className="chat-stuff-item" aria-label="Find a GIF (/gif)" onClick={() => choose(openGif)}><StuffLabel label="Find a GIF" command="/gif" /></button>
+    </div>}</ChatGamePicker>}
   </div>
 }

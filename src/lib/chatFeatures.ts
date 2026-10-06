@@ -31,6 +31,7 @@ export function parseChatCommand(text: string) {
   if (command === '/clear' && !argument) return { kind: 'clear' as const, content: '' }
   if (command === '/bigahhclear' && !argument) return { kind: 'vote' as const, content: '' }
   if (command === '/badabingbadaboomforceclear' && !argument) return { kind: 'force' as const, content: '' }
-  if (['/game', '/games', '/gif'].includes(command)) return { kind: 'unavailable' as const, content: command }
+  if (['/game', '/games'].includes(command)) return { kind: 'game' as const, content: argument }
+  if (command === '/gif') return { kind: 'gif' as const, content: argument }
   return { kind: 'invalid' as const, content: command }
 }

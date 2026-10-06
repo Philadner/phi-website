@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { ChatAttachment, UploadProgress } from './chatAttachments.js'
 import type { ReplyPreview } from './chatFeatures.js'
+import type { ChatGifRef } from './chatGifs.js'
 
 export type ChatSession = { id: string; username: string }
 export type ChatMessage = {
@@ -17,7 +18,7 @@ export type ChatMessage = {
   mentioned_ids?: string[]
   reply_to?: number | null
   reply_preview?: ReplyPreview | null
-  modifiers?: { request_context?: boolean; name?: string | null; context_status?: 'granted' | 'declined'; context_count?: number; with_images?: boolean }
+  modifiers?: { gif?: ChatGifRef; game_id?: string; request_context?: boolean; name?: string | null; context_status?: 'granted' | 'declined'; context_count?: number; with_images?: boolean }
 }
 export type ChatPresence = { count: number; live: boolean }
 export const ChatPresenceContext = createContext<{

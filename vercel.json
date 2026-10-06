@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/chat-game.ts": { "includeFiles": "node_modules/word-list/words.txt" }
+  },
   "crons": [
     {
       "path": "/api/dylan-tightness-cron",

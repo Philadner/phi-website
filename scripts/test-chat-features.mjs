@@ -8,6 +8,12 @@ async function load(path) {
   return import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
 }
 const { parseChatCommand, mentionNames, mentionsAi, mentionText } = await load('../src/lib/chatFeatures.ts')
+const { gifReference } = await load('../src/lib/chatGifs.ts')
+assert.deepEqual(parseChatCommand('/game connect4'), { kind: 'game', content: 'connect4' })
+assert.deepEqual(parseChatCommand('/gif dancing cats'), { kind: 'gif', content: 'dancing cats' })
+assert.equal(gifReference({ id: '../x', title: 'bad' }), null)
+assert.equal(gifReference({ id: 'Good123', title: 'x'.repeat(201) }), null)
+assert.deepEqual(gifReference({ id: 'Good123', title: 'GIF', url: 'https://evil.invalid' }), { id: 'Good123', title: 'GIF' })
 const { AI_MODEL, AI_SCHEMA, parseAiOutput, aiMessageInput } = await load('../api/_lib/chatAi.ts')
 assert.equal(AI_MODEL, 'gpt-6-luna')
 assert.deepEqual(Object.keys(AI_SCHEMA.properties), ['Message', 'modifiers'])
