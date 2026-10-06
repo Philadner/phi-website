@@ -14,7 +14,9 @@ export type ChatPresence = { count: number; live: boolean }
 export const ChatPresenceContext = createContext<{
   presence: ChatPresence
   setPresence: (value: ChatPresence) => void
-}>({ presence: { count: 0, live: false }, setPresence: () => {} })
+  peopleOpen: boolean
+  setPeopleOpen: (open: boolean) => void
+}>({ presence: { count: 0, live: false }, setPresence: () => {}, peopleOpen: false, setPeopleOpen: () => {} })
 export const useChatPresence = () => useContext(ChatPresenceContext)
 
 export async function chatRequest<T>(query = '', body?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {

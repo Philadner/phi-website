@@ -3,6 +3,8 @@ import type { FormEvent } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import type { Theme } from 'emoji-picker-react'
 import ChatMarkdown from '../components/ChatMarkdown'
+import ChatActiveUsers from '../components/ChatActiveUsers'
+import ChatComposerTools from '../components/ChatComposerTools'
 import { chatRequest, useChatPresence } from '../lib/chat'
 import type { ChatMessage, ChatSession } from '../lib/chat'
 import '../stylesheets/Chatroom.css'
@@ -33,9 +35,10 @@ export default function Chatroom() {
   const [hasMore, setHasMore] = useState(false)
   const [preview, setPreview] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
+  const [formattingOpen, setFormattingOpen] = useState(false)
+  const [stuffOpen, setStuffOpen] = useState(false)
   const [newMessages, setNewMessages] = useState(false)
-  const { presence, setPresence } = useChatPresence()
+  const { setPresence } = useChatPresence()
   const textarea = useRef<HTMLTextAreaElement>(null)
   const feed = useRef<HTMLDivElement>(null)
   const nearBottom = useRef(true)
@@ -166,12 +169,26 @@ export default function Chatroom() {
     })
   }
 
+  function insertCommand(command: string) {
+    setDraft((current) => `${command}${current.replace(/^\/\w+\s*/, '')}`)
+    setPreview(false)
+    requestAnimationFrame(() => textarea.current?.focus())
+  }
+
+  function openEmoji() {
+    setEmojiOpen(true)
+    setFormattingOpen(false)
+    setStuffOpen(false)
+  }
+
   async function send(event?: FormEvent) {
     event?.preventDefault()
     if (sending || !session || !draft.trim()) return
     const text = draft.trim()
     setError('')
-    if (text === '/help') { setHelpOpen(true); setDraft(''); return }
+    if (text === '/help') { setStuffOpen(true); setFormattingOpen(false); setDraft(''); return }
+    if (text === '/format') { setFormattingOpen(true); setStuffOpen(false); setDraft(''); return }
+    if (text === '/emoji') { openEmoji(); setDraft(''); return }
     if (text === '/nick' || text.startsWith('/nick ')) {
       const name = text.slice(5).trim()
       if (!name) { setEditingName(true); return }
@@ -216,11 +233,6 @@ export default function Chatroom() {
 
   return <main className="chat-shell">
     <section className="chat-room" aria-label="Chat lobby">
-      <div className="chat-room-heading">
-        <div><p className="chat-kicker">A LITTLE CORNER OF THE INTERNET</p><h1>The lobby<span>.</span></h1></div>
-        <button type="button" className="chat-help-button" onClick={() => setHelpOpen(!helpOpen)} aria-expanded={helpOpen}>/ commands</button>
-      </div>
-
       <div className="chat-feed" ref={feed} role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions" onScroll={() => {
         const element = feed.current
         if (!element) return
@@ -228,7 +240,6 @@ export default function Chatroom() {
         if (nearBottom.current) setNewMessages(false)
       }}>
         {hasMore && <button type="button" className="chat-older" disabled={loadingOlder} onClick={loadOlder}>{loadingOlder ? 'Loading…' : 'Load earlier messages'}</button>}
-        <div className="chat-welcome"><span aria-hidden="true">✳</span><h2>Welcome to phi(chat)</h2><p>Say something. Make it weird. Markdown welcome.</p><small>This is a public room. Anyone can read the messages.</small></div>
         {historyError && <p className="chat-error" role="alert">{historyError}</p>}
         {messages.map((message) => <article className={`chat-message ${message.author_id === session?.id ? 'chat-message--self' : ''} ${message.kind === 'action' ? 'chat-message--action' : ''}`} key={message.id}>
           <div className="chat-avatar" aria-hidden="true">{message.username.slice(0, 2).toUpperCase()}</div>
@@ -237,31 +248,19 @@ export default function Chatroom() {
       </div>
       {newMessages && <button className="chat-new-messages" onClick={() => { nearBottom.current = true; feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: 'smooth' }); setNewMessages(false) }}>New messages ↓</button>}
 
-      {helpOpen && <section className="chat-help" aria-label="Commands and formatting"><div><h2>Your cheat sheet</h2><button aria-label="Close commands" onClick={() => setHelpOpen(false)}>×</button></div><p><code>/nick name</code> change username · <code>/me does a thing</code> send an action · <code>/help</code> this panel</p><p><code>**bold**</code> · <code>*italic*</code> · <code>~~strike~~</code> · <code># Heading</code> · <code>## Subheading</code> · fenced code blocks, lists, links, quotes and tables.</p><p>Select text and pick a font, or write <code>:font[hello]&#123;family=serif&#125;</code>. Fonts: sans, serif, mono, handwritten, display.</p><small>Next up: uploads → /ai → games → GIFs.</small></section>}
-
       {booting ? <div className="chat-join"><p>Opening the lobby…</p></div> : !session || editingName ? <form className="chat-join" onSubmit={(event) => { event.preventDefault(); void join(username) }}>
-        <div><label htmlFor="chat-username">{session ? 'A new name, same you.' : 'What should we call you?'}</label><p>Your name stays reserved in this browser for 30 days.</p></div>
+        <label htmlFor="chat-username">Username</label>
         <div className="chat-join-controls"><input id="chat-username" value={username} onChange={(event) => setUsername(event.target.value)} minLength={2} maxLength={24} pattern="[A-Za-z0-9_ \-]{2,24}" placeholder="Your username" autoComplete="nickname" required /><button disabled={joining}>{joining ? 'Joining…' : session ? 'Save name' : 'Join the chat →'}</button>{session && <button type="button" onClick={() => { setUsername(session.username); setEditingName(false) }}>Cancel</button>}</div>
         {error && <p className="chat-error" role="alert">{error}</p>}
       </form> : <form className="chat-composer" onSubmit={send}>
-        <div className="chat-toolbar" aria-label="Message formatting">
-          <button type="button" title="Bold" aria-label="Bold" onClick={() => insert('**', '**', 'bold')}><b>B</b></button>
-          <button type="button" title="Italic" aria-label="Italic" onClick={() => insert('*', '*', 'italic')}><i>I</i></button>
-          <button type="button" title="Strikethrough" aria-label="Strikethrough" onClick={() => insert('~~', '~~', 'strike')}><s>S</s></button>
-          <button type="button" title="Heading" aria-label="Heading" onClick={() => insert('\n# ', '\n', 'Heading')}>H1</button>
-          <button type="button" title="Subheading" aria-label="Subheading" onClick={() => insert('\n## ', '\n', 'Subheading')}>H2</button>
-          <button type="button" title="Code block" aria-label="Code block" onClick={() => insert('\n```\n', '\n```\n', 'code')}>{'{ }'}</button>
-          <select aria-label="Font for selected text" value="" onChange={(event) => insert(':font[', `]{family=${event.target.value}}`, 'your text')}><option value="" disabled>Font ↗</option><option value="sans">Sans</option><option value="serif">Serif</option><option value="mono">Monospace</option><option value="handwritten">Handwritten</option><option value="display">Display</option></select>
-          <button type="button" aria-label="Choose emoji" aria-expanded={emojiOpen} onClick={() => setEmojiOpen(!emojiOpen)}>☺</button>
-          <button type="button" className="chat-preview-toggle" aria-pressed={preview} onClick={() => setPreview(!preview)}>{preview ? 'Edit' : 'Preview'}</button>
-        </div>
+        <ChatComposerTools formattingOpen={formattingOpen} setFormattingOpen={setFormattingOpen} stuffOpen={stuffOpen} setStuffOpen={setStuffOpen} preview={preview} setPreview={setPreview} insert={insert} insertCommand={insertCommand} changeName={() => setEditingName(true)} openEmoji={openEmoji} />
         {emojiOpen && <div className="chat-emoji-panel"><button type="button" className="chat-emoji-close" onClick={() => setEmojiOpen(false)}>Close emoji picker ×</button><Suspense fallback={<p>Loading emoji…</p>}><EmojiPicker theme={'dark' as Theme} lazyLoadEmojis width="100%" height={350} searchPlaceholder="Search emoji…" onEmojiClick={(emoji) => { insert(emoji.emoji); setEmojiOpen(false) }} /></Suspense></div>}
-        {preview && <div className="chat-draft-preview"><p className="chat-kicker">MESSAGE PREVIEW</p><ChatMarkdown content={draft || '*Nothing here yet.*'} /></div>}
-        <textarea ref={textarea} className={preview ? 'chat-textarea--hidden' : ''} aria-label="Message" placeholder="Send something to the lobby… or try /help" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={8000} rows={3} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } if (event.key === 'Escape') setEmojiOpen(false) }} />
+        {preview && <div className="chat-draft-preview"><ChatMarkdown content={draft} /></div>}
+        <textarea ref={textarea} className={preview ? 'chat-textarea--hidden' : ''} aria-label="Message" placeholder="Message" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={8000} rows={3} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send() } if (event.key === 'Escape') { setEmojiOpen(false); setFormattingOpen(false); setStuffOpen(false) } }} />
         {error && <p className="chat-error" role="alert">{error}</p>}
         <div className="chat-composer-footer"><span>Chatting as <button type="button" onClick={() => setEditingName(true)}>{session.username}</button><small>Enter to send · Shift + Enter for a new line</small></span><span className="chat-character-count">{draft.length.toLocaleString()} / 8,000</span><button className="chat-send" disabled={sending || !draft.trim()}>{sending ? 'Sending…' : 'Send ↑'}</button></div>
       </form>}
     </section>
-    <aside className="chat-people" aria-label="Online users"><p className="chat-kicker">GOOD COMPANY</p><h2>In the room <span>{presence.live ? people.length : '—'}</span></h2><p className="chat-presence-note">{presence.live ? 'Here, right now.' : 'Reconnecting. Messages still work.'}</p><ul>{people.map((person) => <li key={person.id}><i aria-hidden="true" /><span>{person.username}</span>{person.id === session?.id && <small>you</small>}</li>)}</ul>{!people.length && <p className="chat-presence-note">{session ? 'Waiting for company…' : 'Pick a name and make yourself at home.'}</p>}<div className="chat-room-note"><span>✦</span><p>Small room.<br />Big main character energy.</p></div></aside>
+    <ChatActiveUsers people={people} sessionId={session?.id} />
   </main>
 }

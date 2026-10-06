@@ -15,8 +15,11 @@ expires; these are guest identities, not verified accounts.
   strikethrough and links. Raw HTML is disabled. External Markdown images render
   as links until uploads are implemented.
 - Font spans: `:font[**hello**]{family=serif}`. Allowed fonts are `sans`, `serif`,
-  `mono`, `handwritten`, `display`; the toolbar wraps selected text.
-- Searchable emoji picker; `/nick name`, `/me action`, `/help` commands.
+  `mono`, `handwritten`, `display`; the text style box wraps selected text.
+- Searchable emoji picker; `/nick name`, `/me action`, `/emoji`, `/format`,
+  `/help` commands. `/help` opens the stuff menu; upcoming features are marked
+  as unavailable. Menu labels transition into their commands on hover/focus.
+- The titlebar online count opens the active-users drawer, including on mobile.
 - Last 100 messages load initially; earlier messages can be paged in. Realtime
   arrivals, reconnect recovery and HTTP retries deduplicate by message IDs.
 

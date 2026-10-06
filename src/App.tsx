@@ -159,7 +159,7 @@ function AppShell() {
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
   const isChatMode = location.pathname === '/chat';
-  const { presence: chatPresence } = useChatPresence();
+  const { presence: chatPresence, peopleOpen, setPeopleOpen } = useChatPresence();
   const isPresentationDemo = location.pathname === "/presentation" || location.pathname === "/remote";
   const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -346,7 +346,7 @@ useEffect(() => {
                 <FontAwesomeIcon icon={faMagnifyingGlass} />
               </button>
             </>
-          ) : isChatMode ? <div className="chat-header-room titlebar-content">THE LOBBY <span>V2</span></div> : (
+          ) : isChatMode ? null : (
             <nav className="topnav titlebar-content">
               <Link to="/musicpl">Music</Link>
               <Link to="/quickl">Quick links</Link>
@@ -355,9 +355,9 @@ useEffect(() => {
           )}
 
           <div className="header-actions titlebar-content">
-            {isChatMode && <span className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} role="status">
+            {isChatMode && <button type="button" className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} aria-label={chatPresence.live ? `${chatPresence.count} online — show active users` : 'Show active users'} aria-expanded={peopleOpen} aria-controls="chat-active-users" onClick={() => setPeopleOpen(!peopleOpen)}>
               <i aria-hidden="true" />{chatPresence.live ? `${chatPresence.count} online` : 'Connecting…'}
-            </span>}
+            </button>}
             <button
               className="menu-btn"
               onClick={() => setSideOpen(true)}
