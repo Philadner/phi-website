@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:chat-uploads": "node scripts/test-chat-uploads.mjs"
+    "test:chat-uploads": "node scripts/test-chat-uploads.mjs",
+    "test:chat-features": "node scripts/test-chat-features.mjs"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

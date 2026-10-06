@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
-import type { ChatAttachment, UploadProgress } from './chatAttachments'
+import type { ChatAttachment, UploadProgress } from './chatAttachments.js'
+import type { ReplyPreview } from './chatFeatures.js'
 
 export type ChatSession = { id: string; username: string }
 export type ChatMessage = {
@@ -11,6 +12,12 @@ export type ChatMessage = {
   kind: 'message' | 'action'
   created_at: string
   attachments?: ChatAttachment[]
+  is_ai?: boolean
+  invokes_ai?: boolean
+  mentioned_ids?: string[]
+  reply_to?: number | null
+  reply_preview?: ReplyPreview | null
+  modifiers?: { request_context?: boolean; name?: string | null; context_status?: 'granted' | 'declined'; context_count?: number; with_images?: boolean }
 }
 export type ChatPresence = { count: number; live: boolean }
 export const ChatPresenceContext = createContext<{

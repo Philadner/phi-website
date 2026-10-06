@@ -79,8 +79,57 @@ checks, alongside the required lint/build and live upload checks.
 
 ## Next releases
 
-1. `/ai`, server-side OpenAI calls and web search. History is opt-in per request:
-   the AI asks, and the invoking user grants the last 5 or last 20 messages.
-2. Turn-based chess (`react-chessboard`), connect four, tic tac toe, Wordle race,
+1. Turn-based chess (`react-chessboard`), connect four, tic tac toe, Wordle race,
    battleships and Uno, with game commands and UI controls.
-3. Searchable GIF provider integration after choosing/configuring Giphy or Klipy.
+2. Searchable GIF provider integration after choosing/configuring Giphy or Klipy.
+
+## AI, mentions, replies and clears
+
+Apply `supabase/migrations/20261006003000_chat_ai_replies_and_clears.sql` after
+the upload migration. `/api/chat-ai` uses the existing `OPENAI_API_KEY` with
+the exact model `gpt-6-luna`, Responses API structured output, and web search.
+The output schema is `{ Message: string, modifiers: { request_context: boolean,
+name: string | null } }`. Markdown and font spans use the normal message renderer.
+AI names do not reserve guest names; `is_ai` is server-controlled, and a gold AI
+badge always identifies generated messages. `/ai` and `@ai` remain stable;
+mentioning the current AI name or replying to an AI message also invokes it.
+
+Default memory is only earlier AI replies and the messages invoking them, capped
+at 100 messages including the current invocation. Other room messages are not
+sent by default. AI is told to request room context only when explicitly asked
+about previous room messages. Its context-request message stays in chat with
+inline controls visible to everyone, enabled only for the invoking identity.
+Choose 5 or 20 previous messages; the With images checkbox is local state until
+the choice is submitted. The grant is bound to that invocation and owner in SQL,
+and AI then posts another reply. The original request remains, displaying the
+committed choice. PNG/JPEG/WebP images can be included; document contents and
+animated GIF/AVIF pixels are not sent to vision. Current invoking attachments
+may include supported images without granting unrelated room history.
+
+AI jobs are authenticated, durable, and claimed with a lease to avoid duplicate
+provider calls from retries/tabs. Error replies can be retried. Worker recovery
+starts after 3 minutes; provider calls time out after 85 seconds. Limits are 3
+attempts per invocation, 30 attempts per identity/hour, 300 attempts per room/hour,
+and a 5-second initial-call cooldown. API keys and private job rows stay server-side.
+Room clears cancel outstanding AI jobs and discard any late generated replies.
+
+Mention `@username`, or `@"Name With Spaces"`; the composer suggests online users
+and AI. Mentions inside code are ignored. Mentioned identities and reply authors
+get a flat gold highlight. Replies retain a short preview above the message;
+clicking it fetches/jumps to the original, including outside the loaded page.
+Invalid slash commands are rejected in both client and API; `//` escapes a slash.
+
+`/clear` clears the visible history for the current guest identity only. The stuff
+menu calls it Clear for you. `/bigahhclear` (Clear for everyone) opens a vote among
+unique authenticated identities active within 40 seconds, snapshot at vote start.
+The starter votes yes. More than half of that electorate must vote yes to clear;
+a no majority rejects it. Votes expire without clearing after 60 seconds, and
+new votes are limited to one per minute. Room state and votes sync through Realtime.
+The requested hidden force-clear command bypasses voting for any joined guest
+who knows it; it is omitted from the menu and is intentionally not owner-bound.
+
+Clearing advances history cursors rather than permanently deleting messages or
+Blob files. Public RLS and API reads exclude room-cleared history; AI memory and
+context do too. Personal cursors are persisted on the guest session. Blob
+retention is independent. Run `npm run test:chat-features` and the upload checks,
+then lint/build and manual checks on labs.

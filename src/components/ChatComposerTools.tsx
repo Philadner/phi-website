@@ -15,7 +15,6 @@ type Props = {
 }
 
 const upcoming = [
-  { label: 'Ask AI', command: '/ai' },
   { label: 'Start a game', command: '/game' },
   { label: 'Find a GIF', command: '/gif' },
 ]
@@ -96,6 +95,9 @@ export default function ChatComposerTools({ formattingOpen, setFormattingOpen, s
       <button type="button" className="chat-stuff-item" aria-label="Text style (/format)" onClick={() => choose(() => setFormattingOpen(true))}><StuffLabel label="Text style" command="/format" /></button>
       <div className="chat-stuff-divider" />
       <button type="button" className="chat-stuff-item" aria-label="Upload files (/upload)" onClick={() => choose(openFiles)}><StuffLabel label="Upload files" command="/upload" /></button>
+      <button type="button" className="chat-stuff-item" aria-label="Ask AI (/ai)" onClick={() => choose(() => insertCommand('/ai '))}><StuffLabel label="Ask AI" command="/ai" /></button>
+      <button type="button" className="chat-stuff-item" aria-label="Clear for you (/clear)" onClick={() => choose(() => insertCommand('/clear'))}><StuffLabel label="Clear for you" command="/clear" /></button>
+      <button type="button" className="chat-stuff-item" aria-label="Clear for everyone (/bigahhclear)" onClick={() => choose(() => insertCommand('/bigahhclear'))}><StuffLabel label="Clear for everyone" command="/bigahhclear" /></button>
       {upcoming.map((item) => <button key={item.command} type="button" className="chat-stuff-item" aria-disabled="true" aria-label={`${item.label} (${item.command}) — coming soon`}><StuffLabel {...item} /><small>soon</small></button>)}
     </section>}
   </div>
