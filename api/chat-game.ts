@@ -1,17 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { readFileSync } from 'node:fs'
-import wordListPath from 'word-list'
+import { WORDLE_DICTIONARY } from './_lib/wordleDictionary.js'
 import { chatDatabase, chatTokenHash, sameOrigin } from './_lib/chatAuth.js'
 import { applyMove, createGame, gameView, playerView } from './_lib/chatGames.js'
 import type { GameState } from './_lib/chatGames.js'
 import { CHAT_GAMES, gameKind } from '../src/lib/chatGames.js'
 import { UUID } from '../src/lib/chatAttachments.js'
 
-let dictionary: Set<string> | undefined
-function validWord(word: string) {
-  dictionary ||= new Set(readFileSync(wordListPath, 'utf8').split('\n').filter(word => /^[a-z]{5}$/.test(word)))
-  return dictionary.has(word)
-}
+function validWord(word: string) { return WORDLE_DICTIONARY.has(word) }
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
   if (!['GET', 'POST'].includes(req.method || '')) { res.setHeader('Allow', 'GET, POST'); return res.status(405).json({ error: 'Method not allowed.' }) }
