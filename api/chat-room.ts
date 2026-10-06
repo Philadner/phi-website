@@ -15,6 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'vote' && (typeof req.body?.voteId !== 'string' || !UUID.test(req.body.voteId) || typeof req.body.yes !== 'boolean')) return res.status(400).json({ error: 'Invalid vote.' })
     if (action === 'force' && req.body?.command !== '/badabingbadaboomforceclear') return res.status(400).json({ error: 'Invalid command.' })
     const { data, error } = await db.rpc('chat_room_action', { p_token_hash: tokenHash || '', p_action: action, p_vote_id: action === 'vote' ? req.body.voteId : null, p_yes: action === 'vote' ? req.body.yes : null })
+    if (error?.code === '23505') return res.status(409).json({ error: 'That username is currently in use. Choose another.', code: 'username_taken' })
     if (error) return res.status(error.code === '28000' ? 401 : error.code === 'P0001' ? 429 : 400).json({ error: ['28000', 'P0001', '22023'].includes(error.code) ? error.message : 'Room action could not finish.' })
     let requests: unknown[] = []
     if (tokenHash) {
