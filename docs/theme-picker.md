@@ -2,7 +2,7 @@
 
 The sidebar Theme row opens a dedicated pane with four-colour swatches, theme names and fixed light/dark modes. The menu slides right out of the clipped sidebar as themes slide in from the left (180ms ease-out). Back returns to the menu, restores keyboard focus and discards unsaved previews. Reduced-motion preferences disable the transition.
 
-Preview changes the live site without saving. Apply saves the theme ID; a blocking head script restores its palette before paint. Storage errors retain the applied theme for the current visit. Cancel, Back and closing the drawer restore the last applied theme.
+Selecting a theme immediately previews it on the live site without saving. Apply saves the theme ID; a blocking head script restores its palette before paint. Storage errors retain the applied theme for the current visit. Cancel, Back and closing the drawer restore the last applied theme. The drawer uses the dynamic viewport height and bottom safe-area inset to keep Apply visible on mobile while the theme list scrolls independently.
 
 There are 19 choices: phi, 17 album palettes from the supplied specification, and hub as the final choice. phi uses the original labs CSS gold (`#FFD700`) styling, including its original backgrounds and glow colours. hub uses black, white, grey and orange (`#FF9900`). `src/lib/themes.json` is the palette source of truth.
 

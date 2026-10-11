@@ -31,7 +31,12 @@ export default function ThemePicker() {
         {themes.map((theme) => (
           <label className="theme-picker__option" key={theme.id}>
             <input type="radio" name="album-theme" value={theme.id}
-              checked={selectedId === theme.id} onChange={() => setSelectedId(theme.id)} />
+              checked={selectedId === theme.id} onChange={() => {
+                setSelectedId(theme.id)
+                paintTheme(theme)
+                setPreviewId(theme.id === applied.id ? null : theme.id)
+                setMessage(theme.id === applied.id ? '' : `Previewing ${theme.name}. Apply to save.`)
+              }} />
             <span className="theme-picker__swatches" aria-hidden="true">
               {[theme.background, theme.primary, theme.secondary, theme.highlight].map((color, index) => (
                 <i key={index} style={{ backgroundColor: color }} />
@@ -42,14 +47,10 @@ export default function ThemePicker() {
         ))}
       </div>
       <div className="theme-picker__actions">
-        <button type="button" onClick={() => {
-          paintTheme(selected)
-          setPreviewId(selected.id)
-          setMessage(`Previewing ${selected.name}. Apply to save, or cancel to restore ${applied.name}.`)
-        }}>Preview</button>
         <button type="button" className="theme-picker__apply" onClick={apply}>Apply</button>
         {previewId && <button type="button" onClick={() => {
           paintTheme(applied)
+          setSelectedId(applied.id)
           setPreviewId(null)
           setMessage(`Restored ${applied.name}.`)
         }}>Cancel</button>}
