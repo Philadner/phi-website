@@ -123,16 +123,13 @@ body.loaded.body--music-lock {
   transform: scale(1.2);
 }
 
-
 .GamePage {
   overflow-x: hidden;
-  
+
 }
 .FancyLink:hover {
   transform: scale(1.1);
 }
-
-
 
 .Home {
   justify-content: center;
@@ -145,14 +142,13 @@ body.loaded.body--music-lock {
   stroke-width: 2;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: 
-  draw 2.5s ease forwards, 
+  animation:
+  draw 2.5s ease forwards,
   scaleDraw 2.5s ease forwards;
 
   transform-origin: center;
   filter: drop-shadow(0 0 4px gold);
 }
-
 
 .page {
   width: 100%;
@@ -179,7 +175,6 @@ body.loaded.body--music-lock {
   }
 }
 
-
 @keyframes scaleFade {
   0% {
     transform: scale(1);
@@ -188,7 +183,6 @@ body.loaded.body--music-lock {
     transform: scale(1.2);
   }
 }
-
 
 /* When Loaded */
 .loaded #loader {
@@ -351,16 +345,6 @@ body.loaded.body--music-lock {
   }
 }
 
-.site-header .menu-btn {
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 6px 8px;
-}
-
 .music-header-search {
   position: relative;
   display: flex;
@@ -429,7 +413,7 @@ body.loaded.body--music-lock {
     grid-template-columns: auto 1fr auto;
   }
   .site-header .topnav {
-    display: none; /* you already have a sidebar */
+    display: none;
   }
   .site-header--music .site-header__inner {
     grid-template-columns: auto 1fr auto;
@@ -494,7 +478,6 @@ body.loaded.body--music-lock {
   }
 }
 
-
 .logo {
   font-size: 1.8rem;
   font-weight: bolder;
@@ -552,92 +535,6 @@ nav a:hover::after {
   flex-grow: 1;
 }
 
-/* Right-side drawer */
-/* Desktop sidebar width */
-.sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: min(280px, 85vw);
-  height: 100vh;
-  background: rgba(20,20,24,0.205);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(255,255,255,.1);
-  transform: translateX(100%);
-  transition: transform 220ms ease;
-  z-index: 1200;
-  padding: 14px;
-  overflow: hidden; /* hides the glow outside */
-  
-}
-
-.sidebar.open { transform: translateX(0); }
-
-/* Mobile: take whole screen */
-@media (max-width: 900px) {
-  .sidebar { width: 100vw; }
-}
-
-/* Let the inner <a> become direct flex children so GAP works */
-.sidebar-nav .sidebar-mobile-only {
-  display: contents;
-}
-
-
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  color: gold;
-  font-weight: bold;
-}
-.close-btn {
-  background: none;
-  border: none;
-  color: gold;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;  /* stack vertically */
-  gap: 14px;               /* spacing between items */
-}
-
-.sidebar-mode-btn {
-  width: 100%;
-  text-align: left;
-}
-
-.sidebar-nav a {
-  display: block;          /* make each link full-width block */
-  color: gold;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.sidebar-nav a:hover {
-  color: darkgoldenrod;
-}
-
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.4);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 1100;
-}
-.overlay.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-
 /* Top nav for desktop */
 .topnav {
   display: flex;
@@ -646,50 +543,13 @@ nav a:hover::after {
 }
 .topnav a { white-space: nowrap; }
 
-
-/* Hamburger hidden by default */
-/* Always show ☰ */
-.menu-btn {
-  display: inline-flex;
-  margin-left: auto;
-  font-size: 22px;
-  background: none;
-  border: none;
-  color: gold;
-  cursor: pointer;
-}
-
-/* REPLACE your existing .menu-btn rule with this */
-.menu-btn {
-  position: static;     /* was absolute → caused overlap */
-  margin-left: 12px;
-  font-size: 20px;
-  background: none;
-  border: none;
-  color: gold;
-  cursor: pointer;
-}
-
 @media (min-width: 901px) {
   .topnav { display: flex; gap: 18px; }
-  .sidebar-mobile-only { display: none; }  /* don’t duplicate links */
 }
 
 /* --- MOBILE RULES --- */
 @media (max-width: 900px) {
   .topnav { display: none; } /* hide the row of links */
-  .sidebar-mobile-only { 
-    display: block;
-  }    
-  .menu-btn {
-    display: inline-flex;        /* show ☰ */
-    margin-left: auto;           /* push to right side */
-    font-size: 22px;
-    background: none;
-    border: none;
-    color: gold;
-    cursor: pointer;
-  }
 
   .music-header-search {
     padding: 8px 12px;
@@ -702,16 +562,7 @@ nav a:hover::after {
 
 .body--lock { overflow: hidden !important; }
 
-/* Mobile-only links visibility */
-@media (min-width: 901px) {
-  .sidebar-mobile-only { display: none !important; }  /* hide on desktop */
-}
-
-@media (max-width: 900px) {
-  .sidebar-mobile-only { display: contents; }
-}
-
-/* Sidebar callout (glowing square) */
+/* Rainbow Jay Game callout */
 .gameshow-banner {
   display: flex;
   flex-direction: column;
@@ -728,15 +579,6 @@ nav a:hover::after {
   text-align: center;
   gap: 8px;
   cursor: pointer;
-}
-
-.sidebar-nav a.sidebar-note {
-  color: yellow;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-}
-.sidebar-nav a.sidebar-note:hover {
-  color: #ffe36a;
 }
 
 .gameshow-banner:hover {
@@ -764,7 +606,7 @@ nav a:hover::after {
   font-style: normal;
   font-size:1.5rem;
   color: yellow;
-  text-shadow: 
+  text-shadow:
   0 0 2px #000,
   2px 2px 0 #000,
  -2px -2px 0 #000;
@@ -781,7 +623,6 @@ nav a:hover::after {
   50% { box-shadow: 0 0 40px rgba(255, 255, 0, 0.9); }
 }
 
-
 /*stats */
 
 .statcard {
@@ -794,7 +635,6 @@ nav a:hover::after {
 .statlabel { opacity: .8; font-size: .85rem; }
 .statvalue { font-weight: 700; margin-top: 2px; }
 .statsub { opacity: .7; font-size: .85rem; margin-top: 2px; }
-
 
 /* Ticker */
 @keyframes ticker-scroll {
@@ -856,3 +696,21 @@ nav a:hover::after {
   transition: filter 0.15s ease;
   transition: background 0.15s ease-in-out;
 }
+
+/* The homepage wheel owns navigation; every route has a direct way home. */
+.site-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  background: transparent;
+  border: 0;
+  color: gold;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.site-home:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.site-home--standalone { position: fixed; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 1200; }
+html[data-theme]:not([data-theme="phi"]) .site-home { background: transparent; color: var(--theme-text); }

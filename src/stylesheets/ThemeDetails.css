@@ -5,18 +5,13 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .page,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-shell { color: var(--theme-text); }
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) a,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .theme-picker__option,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .theme-trigger,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .theme-back { color: var(--theme-text); }
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) a { color: var(--theme-text); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) h1,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) h2,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) h3,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .HeadingBigLeft,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .HeadingLeft,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ClickableHeadingLeft { color: var(--theme-text); }
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .theme-picker__actions button { color: var(--theme-text); border-color: var(--theme-border); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-shell,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-pane,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-panel,
@@ -60,7 +55,8 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action--p
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-brand__mark path { stroke: var(--highlight); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-bar { --music-accent: var(--highlight); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-progress-slider,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-volume-slider, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-slider { background: linear-gradient(to right, var(--highlight) 0 var(--music-range-progress, 0%), var(--theme-border) var(--music-range-progress, 0%) 100%); }
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-volume-slider,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-slider { background: linear-gradient(to right, var(--highlight) 0 var(--music-range-progress, 0%), var(--theme-border) var(--music-range-progress, 0%) 100%); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer small,
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-character-count,
@@ -86,33 +82,3 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tightness-page 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button { background: transparent; border-color: transparent; }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button:hover { background: color-mix(in srgb, var(--highlight) 12%, var(--background)); }
 
-/* The drawer is a readable palette surface; retain its original backdrop blur. */
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar {
-  background: color-mix(in srgb, var(--background) 94%, transparent);
-  border-left-color: var(--theme-border);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-header {
-  color: var(--theme-text);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .close-btn,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-back,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .menu-btn {
-  background: transparent;
-  color: var(--theme-text);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a:not(.gameshow-banner):hover {
-  color: var(--theme-accent);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option {
-  color: var(--theme-text);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option small {
-  color: var(--theme-muted);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__list,
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-trigger {
-  border-color: var(--theme-border);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option:has(:checked) {
-  outline-color: var(--theme-accent);
-}

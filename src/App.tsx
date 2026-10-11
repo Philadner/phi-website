@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faMagnifyingGlass, faHouse } from "@fortawesome/free-solid-svg-icons";
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -32,8 +32,7 @@ import ChatUploadProgress from './components/ChatUploadProgress';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
 import { PhiMark } from './components/PhiMark';
 import './App.css';
-import ThemePicker from './components/ThemePicker';
-import { themes } from './lib/themes';
+import { HOME_RESET_EVENT, tick } from './lib/homeNavigation';
 
 const Chatroom = lazy(() => import('./pages/Chatroom'));
 const ThemeLab = lazy(() => import('./previews/ThemeLab'));
@@ -50,10 +49,6 @@ function ModernLoader() {
 
 function AppShell() {
   const [loaded, setLoaded] = useState(false);
-  const [sideOpen, setSideOpen] = useState(false);
-  const [themePickerOpen, setThemePickerOpen] = useState(false);
-  const themeTriggerRef = useRef<HTMLButtonElement>(null);
-  const themeBackRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
   const isChatMode = location.pathname === '/chat';
@@ -69,21 +64,10 @@ function AppShell() {
     goToMusicHome,
     setMobileSearchOpen,
   } = useMusicPlayer();
-  const currentTheme = themes.find((theme) => theme.id === document.documentElement.dataset.theme) ?? themes[0];
-
-  useEffect(() => {
-    if (themePickerOpen && sideOpen) themeBackRef.current?.focus();
-  }, [themePickerOpen, sideOpen]);
-
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    document.body.classList.toggle('body--lock', sideOpen);
-    return () => document.body.classList.remove('body--lock');
-  }, [sideOpen]);
 
   useEffect(() => {
     document.body.classList.toggle('body--music-lock', isMusicMode);
@@ -180,6 +164,11 @@ useEffect(() => {
 
   
   const navigate = useNavigate();
+  const goHome = () => {
+    tick(18);
+    if (location.pathname === '/') window.dispatchEvent(new Event(HOME_RESET_EVENT));
+    else navigate('/');
+  };
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
@@ -204,7 +193,6 @@ useEffect(() => {
                 className="logo"
                 onClick={() => {
                   goToMusicHome();
-                  setSideOpen(false);
                 }}
               >
                 <span className="music-brand__wordmark">phi(music)</span>
@@ -212,7 +200,7 @@ useEffect(() => {
               </Link>
             </div>
           ) : (
-            <Link to="/" className="logo titlebar-content">phi(l)</Link>
+            <Link to="/" className="logo titlebar-content" onClick={event => { event.preventDefault(); goHome(); }}>phi(l)</Link>
           )}
 
           {isMusicMode ? (
@@ -256,13 +244,8 @@ useEffect(() => {
             {isChatMode && <button type="button" className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} aria-label={chatPresence.live ? `${chatPresence.count} online — show active users` : 'Show active users'} aria-expanded={peopleOpen} aria-controls="chat-active-users" onClick={() => setPeopleOpen(!peopleOpen)}>
               <i aria-hidden="true" />{chatPresence.live ? `${chatPresence.count} online` : 'Connecting…'}
             </button>}
-            <button
-              className="menu-btn"
-              onClick={() => { setThemePickerOpen(false); setSideOpen(true); }}
-              aria-label="Open menu"
-              type="button"
-            >
-              ☰
+            <button className="site-home" onClick={goHome} aria-label="Home" type="button" title="Home">
+              <FontAwesomeIcon icon={faHouse} />
             </button>
           </div>
         </div>
@@ -270,92 +253,7 @@ useEffect(() => {
       {!isPresentationDemo && <div className="header-spacer" />}
 
 
-      {/* Sidebar */}
-      <aside className={`sidebar ${sideOpen ? "open" : ""}`} inert={!sideOpen}>
-        <div className="sidebar-header">
-          {themePickerOpen ? <button ref={themeBackRef} type="button" className="theme-back" onClick={() => {
-            setThemePickerOpen(false);
-            requestAnimationFrame(() => themeTriggerRef.current?.focus());
-          }}>← Back</button> : <span>Site Menu</span>}
-          {themePickerOpen && <span>Themes</span>}
-          <button type="button" aria-label="Close menu" onClick={() => setSideOpen(false)} className="close-btn">×</button>
-        </div>
-
-        <div className="sidebar-viewport">
-        <div className={`sidebar-content ${themePickerOpen ? 'sidebar-content--themes' : ''}`}>
-          <div id="sidebar-themes" className="sidebar-pane sidebar-pane--themes" inert={!themePickerOpen}>
-            {sideOpen && themePickerOpen && <ThemePicker />}
-          </div>
-          <div className="sidebar-pane sidebar-pane--menu" inert={themePickerOpen}>
-        <nav className="sidebar-nav">
-          <button ref={themeTriggerRef} className="theme-trigger" type="button"
-            aria-expanded={themePickerOpen} aria-controls="sidebar-themes" onClick={() => setThemePickerOpen(true)}>
-            <span>Theme: {currentTheme.name}</span>
-            <span className="theme-picker__swatches" aria-hidden="true">
-              {[currentTheme.background, currentTheme.primary, currentTheme.secondary, currentTheme.highlight].map((color, index) =>
-                <i key={index} style={{ backgroundColor: color }} />)}
-            </span>
-            <span aria-hidden="true">▾</span>
-          </button>
-
-          {/* always visible in sidebar */}
-          {document.documentElement.dataset.themeDemo === 'true' && <a href="/theme-lab">Demo data · Theme lab ↗</a>}
-          <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
-          <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
-          <Link to="/chat" onClick={() => setSideOpen(false)}>Chatroom</Link>
-          <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
-          <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
-          <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-          <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
-          <Link to="/dylan" onClick={() => setSideOpen(false)}>Dylan Tightness</Link>
-          <Link to="/phil-tightness" onClick={() => setSideOpen(false)}>Phil Tightness</Link>
-          <div
-            className="gameshow-banner"
-            role="button"
-            tabIndex={0}
-            onClick={() => {
-              setSideOpen(false);
-              navigate("/jay");
-              }
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                setSideOpen(false);
-                navigate("/jay");
-              }
-            }}
-          >
-            <span className="gameshow-text">Jay Game</span>
-            <span className="gameshow-divider">Play in browser</span>
-          </div>
-
-          {/* <Link
-            to="/workinhardorhardlyworkin"
-            onClick={() => setSideOpen(false)}
-            className="sidebar-note"
-          >
-            is phil lazy
-          </Link> */}
-          
-          
-
-          {/* only visible on mobile test change */}
-          <div className="sidebar-mobile-only">
-            <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music</Link>
-            <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
-            <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-            <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
-          </div>
-        </nav>
-          </div>
-        </div>
-        </div>
-      </aside>
-
-      <div
-        className={`overlay ${sideOpen ? 'show' : ''}`}
-        onClick={() => setSideOpen(false)}
-      />
+      {isPresentationDemo && <button className="site-home site-home--standalone" onClick={goHome} aria-label="Home" type="button" title="Home"><FontAwesomeIcon icon={faHouse} /></button>}
 
       {loaded && (
         <>

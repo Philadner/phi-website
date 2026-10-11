@@ -51,10 +51,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .topnav a
   color: var(--theme-text);
 }
 
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .menu-btn {
-  color: var(--theme-text);
-}
-
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-header-search__icon {
   color: var(--theme-muted);
 }
@@ -82,7 +78,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-brand__back:hov
   }
 }
 
-
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .logo {
   color: var(--highlight);
   text-shadow: 0 0 5px var(--highlight);
@@ -108,45 +103,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) #main-site {
   background-color: var(--background);
 }
 
-
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-header {
-  color: var(--highlight);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .close-btn {
-  color: var(--highlight);
-}
-
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a {
-  color: var(--highlight);
-}
-
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a:hover {
-  color: var(--highlight);
-}
-
-
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .overlay {
-  background: color-mix(in srgb, var(--background) 40%, transparent);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
-  color: var(--highlight);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
-  color: var(--highlight);
-}
-@media (max-width: 900px) {    
-  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
-    color: var(--highlight);
-  }
-}
-
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a.sidebar-note {
-  color: var(--theme-muted);
-}
-html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a.sidebar-note:hover {
-  color: var(--highlight);
-}
-
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .statcard {
   background: color-mix(in srgb, var(--background) 4%, transparent);
   border: 1px solid var(--secondary);
@@ -162,7 +118,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ticker-bg:hover {
 }
 
 /* src/index.css */
-
 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) {
   background-color: var(--background);
@@ -200,7 +155,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) button:hover {
 }
 
 /* src/stylesheets/AlbumDetail.css */
-
 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumTitle {
     color: var(--theme-text);
@@ -258,7 +212,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackDownload:hover {
 }
 
 /* src/stylesheets/Research.css */
-
 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-page {
   background: var(--background);
@@ -356,7 +309,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose blockq
 
 /* src/stylesheets/QuickLinks.css */
 
-
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) :where(.quicklinks) a {
     color :var(--theme-accent);
 }
@@ -404,7 +356,6 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-button{
 }
 
 /* src/stylesheets/home.css */
-
 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .home-stage {
   background:
