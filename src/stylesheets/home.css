@@ -12,6 +12,7 @@ body.body--home-lock { overflow: hidden !important; }
   overflow: clip;
   background: radial-gradient(circle at 83% 70%, rgba(255,221,51,.025), transparent 25%), #0b0b0c;
   isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
 }
 .home-phrase-wheel-zone {
   position: absolute;
@@ -142,7 +143,8 @@ html[data-theme] .home-navigation.home-stage .home-category[aria-pressed="true"]
   text-shadow: 0 0 22px color-mix(in srgb, var(--highlight, #ffdd33) 52%, transparent);
 }
 .home-category-wheel.is-dragging .home-category { transition: none; }
-.home-navigation :is(.home-word, .home-category):focus-visible { outline: 2px solid var(--wheel-focus); outline-offset: 5px; }
+.home-navigation :is(.home-phrase-wheel-zone, .home-word, .home-category):focus { outline: none; }
+.home-navigation[data-input="keyboard"] :is(.home-phrase-wheel-zone, .home-word, .home-category):focus-visible { outline: 2px solid var(--wheel-focus); outline-offset: 5px; }
 .home-phrase-announcement { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .home-stage::after {
   content: ''; position: absolute; inset: 0; z-index: 200; pointer-events: none;

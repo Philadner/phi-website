@@ -2,7 +2,7 @@
 
 The homepage has two wheels: categories (Socials, Projects, phi, Navigate, Theme) and a vertical item wheel. Categories scroll vertically in the right column on desktop and horizontally at the bottom on mobile. phi is the default and retains its shuffled community phrases, automatic cycling and single-line width filtering. Navigation and theme names wrap at their full focused width before the complete block scales down; their line breaks stay fixed during selection. Off-screen items remain available through scrolling.
 
-Swipe, scroll or use arrow keys to select categories and items. Tap the centred item or press Enter to activate it. The Home button across the website returns to `/`, or resets an existing homepage to phi. The old sidebar is removed; its destinations are in Navigate. Games remain available there on mobile, including the rainbow Jay Game banner.
+Swipe, scroll or use arrow keys to select categories and items. Tap anywhere in the large item wheel or press Enter to activate the centred item. Swipes only scroll and never activate. Touch taps have no highlight box; keyboard focus remains visible. The Home button across the website returns to `/`, or resets an existing homepage to phi. The old sidebar is removed; its destinations are in Navigate. Games remain available there on mobile, including the rainbow Jay Game banner.
 
 Scrolling through Theme immediately previews each palette. Activate the centred theme to apply and save it. Leaving Theme without applying restores the previous palette. A blocking head script restores saved colours before paint. If browser storage is unavailable, applying still works for the current visit.
 

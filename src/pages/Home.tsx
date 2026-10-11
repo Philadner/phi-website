@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useWheelMotion } from '../hooks/useWheelMotion'
@@ -29,6 +29,7 @@ export default function Home() {
   const compact = useMediaQuery('(max-width: 700px)')
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [categoryIndex, setCategoryIndex] = useState(2)
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
   const category = CATEGORIES[categoryIndex]
   const [generation, setGeneration] = useState(0)
   const [sourcePhrases, setSourcePhrases] = useState(FALLBACK)
@@ -247,6 +248,7 @@ export default function Home() {
   }
 
   function onKeyDown(event: globalThis.KeyboardEvent) {
+    if (['Tab', 'Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) setKeyboardFocus(true)
     if (event.target instanceof HTMLElement && (event.target.matches('input, textarea, select') || event.target.isContentEditable)) return
     if (event.altKey || event.ctrlKey || event.metaKey) return
     if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof Node && !wheelRef.current?.contains(event.target) && !categoriesRef.current?.contains(event.target) && event.target !== document.body) return
@@ -300,6 +302,7 @@ export default function Home() {
   }, [])
 
   function pointerDown(event: ReactPointerEvent, categoryWheel: boolean) {
+    setKeyboardFocus(false)
     if (event.pointerType === 'mouse' && event.button !== 0) return
     suppressClick.current = 0
     gesture.current = { dragged: false, id: event.pointerId, x: event.clientX, y: event.clientY, lastY: event.clientY, time: event.timeStamp, category: categoryWheel, axis: categoryWheel ? compact ? 'x' : 'y' : null }
@@ -342,6 +345,13 @@ export default function Home() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
   }
 
+  function activateCentred(event: ReactMouseEvent) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    event.preventDefault()
+    const item = items[Math.round(motion.positionRef.current)]
+    if (item) activate(item)
+  }
+
   function renderInk(item: WheelItem, group: Category) {
     return <span className="home-item-ink"><span>{item.label}</span>
         {group === 'Theme' && <span className="home-theme-swatches" aria-hidden="true">{Object.entries(themes.find(theme => theme.id === item.themeId) ?? {}).filter(([key]) => ['background', 'primary', 'secondary', 'highlight'].includes(key)).map(([key, colour]) => <i key={key} style={{ backgroundColor: String(colour) }} />)}</span>}
@@ -364,21 +374,21 @@ export default function Home() {
       const className = `home-word ${group === 'phi' ? 'home-word--phrase' : ''} ${(old ? row.index === centreIndex : focused) ? 'is-focused' : ''}`
       return <div className="home-wheel-row" key={row.item.id} style={style} aria-hidden={!focused}>
         {old || group === 'phi' ? <span className={className}>{word}</span>
-          : row.item.href ? <a className={className} href={row.item.href} tabIndex={focused ? 0 : -1} aria-label={row.item.label} onClick={event => { event.preventDefault(); if (focused) activate(row.item) }}>{word}</a>
-          : <button type="button" className={className} tabIndex={focused ? 0 : -1} aria-label={group === 'Theme' ? `Apply ${row.item.label} theme` : row.item.label} onClick={() => { if (focused) activate(row.item) }}>{word}</button>}
+          : row.item.href ? <a className={className} href={row.item.href} tabIndex={focused ? 0 : -1} aria-label={row.item.label}>{word}</a>
+          : <button type="button" className={className} tabIndex={focused ? 0 : -1} aria-label={group === 'Theme' ? `Apply ${row.item.label} theme` : row.item.label}>{word}</button>}
       </div>
     })
   }
 
-  return <main className="home-stage home-navigation" data-category={category}>
-    <p id="home-wheel-help" className="home-phrase-announcement">{compact ? 'Swipe left or right to choose a category.' : 'Scroll or swipe the right wheel vertically to choose a category.'} Scroll up or down to choose an item. Tap the centred item or press Enter to activate. Arrow keys move along both axes.</p>
+  return <main className="home-stage home-navigation" data-category={category} data-input={keyboardFocus ? 'keyboard' : 'pointer'}>
+    <p id="home-wheel-help" className="home-phrase-announcement">{compact ? 'Swipe left or right to choose a category.' : 'Scroll or swipe the right wheel vertically to choose a category.'} Scroll up or down to choose an item. Tap anywhere in the item wheel or press Enter to activate the centred item. Arrow keys move along both axes.</p>
     <div ref={wheelRef} className={`home-phrase-wheel-zone ${category === 'phi' ? 'is-phrases' : 'is-navigation'}`} tabIndex={0} role="region" aria-label={`${category} word wheel`} aria-describedby="home-wheel-help"
-      onPointerDown={event => pointerDown(event, false)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+      onClick={activateCentred} onPointerDown={event => pointerDown(event, false)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
       {outgoing.map(layer => <div className={`home-phrase-wall home-ripple-out ${layer.category === 'phi' ? 'home-phrase-wall--phrases' : ''}`} key={layer.id} aria-hidden="true" inert>{renderRows(layer.rows, layer.category, true)}</div>)}
       <div className={`home-phrase-wall ${category === 'phi' ? 'home-phrase-wall--phrases' : ''} ${generation && !reduced ? 'home-ripple-in' : ''}`} key={generation}>
         {renderRows(rows, category)}
       </div>
-      {category === 'Theme' && <p className="home-wheel-feedback" aria-hidden="true">{message || 'Scroll to preview · Tap to apply'}</p>}
+      {category === 'Theme' && <p className="home-wheel-feedback" aria-hidden="true">{message || 'Scroll to preview · Tap anywhere to apply'}</p>}
       <span ref={probeRef} className="home-size-probe" aria-hidden="true">phi</span>
       <div ref={measurementRef} className="home-word-measure" aria-hidden="true" inert>
         {(category === 'phi' ? sourcePhrases.map((label, index) => ({ id: String(index), label })) : items).map(item => <span key={item.id} className={`home-word ${category === 'phi' ? 'home-word--phrase' : ''}`}>{renderInk(item, category)}</span>)}
