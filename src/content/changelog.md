@@ -3,6 +3,18 @@ Most recent changes first
 
 ---
 
+## Themes
+Added some cool ass themes to the website because neon gold on black was gonna get boring eventually
+
+---
+
+## Chatroom
+Now there's a chatroom with emojis GIFs games and an ai bot in there
+
+Have fun (a bit slow on the school computers, because they suck)
+
+---
+
 ## The new new music player
 Added:
 - queue

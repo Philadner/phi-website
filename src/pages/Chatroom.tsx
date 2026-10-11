@@ -25,7 +25,7 @@ import type { ChatMessage, ChatSession } from '../lib/chat'
 import '../stylesheets/Chatroom.css'
 
 const EmojiPicker = lazy(() => import('emoji-picker-react'))
-type History = { messages: ChatMessage[]; hasMore: boolean; clearedThrough: number }
+type History = { messages: ChatMessage[]; hasMore: boolean; clearedThrough: number; people?: Person[] }
 type Person = { id: string; username: string }
 
 function mergeMessages(previous: ChatMessage[], incoming: ChatMessage[]) {
@@ -123,7 +123,8 @@ export default function Chatroom() {
     let syncing = false
     const url = import.meta.env.VITE_SUPABASE_URL?.trim()
     const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)?.trim()
-    const client = url && key ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }) : null
+    const demo = document.documentElement.dataset.themeDemo === 'true'
+    const client = !demo && url && key ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }) : null
 
     async function sync() {
       if (syncing || !active) return
@@ -134,6 +135,10 @@ export default function Chatroom() {
         while (more && active) {
           const data = await chatRequest<History>(first ? '' : `?after=${historyCursor.current}`, undefined, controller.signal)
           if (!active) return
+          if (demo && data.people) {
+            setPeople(data.people)
+            setPresence({ count: data.people.length, live: true })
+          }
           setHistoryFloor((old) => Math.max(old, data.clearedThrough || 0))
           receive(data.messages)
           historyCursor.current = Math.max(historyCursor.current || 0, ...data.messages.map((message) => message.id))
