@@ -81,4 +81,3 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) { --news-input-backgro
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tightness-page { --tracker-line: var(--theme-text); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button { background: transparent; border-color: transparent; }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button:hover { background: color-mix(in srgb, var(--highlight) 12%, var(--background)); }
-
