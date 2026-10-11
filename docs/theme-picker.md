@@ -6,7 +6,7 @@ Selecting a theme immediately previews it on the live site without saving. Apply
 
 There are 19 choices: phi, 17 album palettes from the supplied specification, and hub as the final choice. phi uses the original labs CSS gold (`#FFD700`) styling, including its original backgrounds and glow colours. hub uses black, white, grey and orange (`#FF9900`). `src/lib/themes.json` is the palette source of truth.
 
-`AlbumThemes.css`, `ThemePages.css` and `ThemeDetails.css` scope colour overrides to non-phi themes. Existing page stylesheets, layouts, typography, corner radii, glow effects, glass effects and animations are preserved. The rainbow Jay Game banner is preserved exactly, including its colours and animations. 1998 mode retains its own stylesheet. See `theme-contrast.md` for measured palette limitations.
+`AlbumThemes.css`, `ThemePages.css` and `ThemeDetails.css` scope colour overrides to non-phi themes. Existing page stylesheets, layouts, typography, corner radii, glow effects, glass effects and animations are preserved. The rainbow Jay Game banner is preserved exactly, including its colours and animations. The 1998 toggle and mode have been removed; legacy `/1998` URLs redirect to the regular home page. See `theme-contrast.md` for measured palette limitations.
 
 Validation:
 
@@ -24,3 +24,5 @@ Open `/theme-lab` on the PR preview. Links open actual page components with expl
 Derived text, muted, border and action roles use only existing palette colours. Menus and player surfaces match the selected background. Gameplay colours, charts and media artwork remain distinct where colour conveys their meaning. No page geometry or typography is changed.
 
 Repeat the browser matrix against `npm run dev` using `node scripts/test-theme-pages.mjs`. Playwright is optional: install it separately and set `PHI_PLAYWRIGHT_MODULE` to its `index.mjs`; set `PHI_CHROMIUM` to a system Chromium binary if needed. `PHI_TEST_URL` defaults to `http://localhost:5173`. This checks all 19 palettes on populated chat/music at mobile and desktop widths, page errors, horizontal overflow, themed surfaces, short mobile picker viewports, actual mobile playback and swipe handling. Track pointer capture begins only after horizontal movement, so ordinary taps reach the play button.
+
+The sidebar was visually reviewed in menu and picker states across all 19 themes on mobile and desktop. Non-phi drawers use a translucent palette background with the original blur, readable headings and transparent close/back controls.

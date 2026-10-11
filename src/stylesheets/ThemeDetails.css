@@ -85,3 +85,34 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) { --news-input-backgro
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tightness-page { --tracker-line: var(--theme-text); }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button { background: transparent; border-color: transparent; }
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .EmojiPickerReact button:hover { background: color-mix(in srgb, var(--highlight) 12%, var(--background)); }
+
+/* The drawer is a readable palette surface; retain its original backdrop blur. */
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar {
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  border-left-color: var(--theme-border);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-header {
+  color: var(--theme-text);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .close-btn,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-back,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .menu-btn {
+  background: transparent;
+  color: var(--theme-text);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a:not(.gameshow-banner):hover {
+  color: var(--theme-accent);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option {
+  color: var(--theme-text);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option small {
+  color: var(--theme-muted);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__list,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-trigger {
+  border-color: var(--theme-border);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar .theme-picker__option:has(:checked) {
+  outline-color: var(--theme-accent);
+}

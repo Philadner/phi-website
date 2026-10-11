@@ -25,6 +25,13 @@ try {
           const colours = await page.locator(selector).evaluate(el => ({ actual: getComputedStyle(el).backgroundColor, expected: getComputedStyle(document.documentElement).backgroundColor }))
           assert.equal(colours.actual, colours.expected, `${theme.id}: unthemed surface`)
         }
+        if (route.startsWith('/chat')) {
+          await page.getByRole('button', { name: 'Open menu', exact: true }).click()
+          await page.locator('.theme-trigger').click()
+          const actions = await page.getByRole('button', { name: 'Apply', exact: true }).boundingBox()
+          assert.ok(actions.y >= 0 && actions.y + actions.height < viewport.height, `${theme.id}: clipped picker actions`)
+          if (theme.id !== 'phi') assert.equal(await page.locator('.close-btn').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)')
+        }
         assert.deepEqual(errors, [], `${theme.id} ${route}`)
         await page.close()
         checked++
@@ -69,6 +76,15 @@ try {
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'hub')
     await page.close()
   }
+  const legacy = await browser.newPage()
+  await legacy.addInitScript(() => { localStorage.setItem('phi.mode.1998', '1'); localStorage.setItem('phi.theme', 'igor') })
+  await legacy.goto(base + '/1998', { waitUntil: 'domcontentloaded' })
+  await legacy.waitForURL(base + '/')
+  await legacy.getByRole('button', { name: 'Open menu', exact: true }).click()
+  assert.equal(await legacy.evaluate(() => document.documentElement.dataset.theme), 'igor')
+  assert.equal(await legacy.evaluate(() => document.documentElement.hasAttribute('data-1998')), false)
+  assert.equal(await legacy.locator('.mode-1998-btn, #phi-1998-css').count(), 0)
+  await legacy.close()
   console.log('PASS: all 19 themes on populated chat/music at mobile and desktop sizes; mobile picker preview, visibility and cancellation')
 } finally {
   await browser.close()

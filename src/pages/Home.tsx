@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../stylesheets/home.css";
-import { is1998ModeEnabled } from "../hooks/use1998Mode";
 
 const PHRASE_INTERVAL_MS = 2500;
 const VISIBLE_RADIUS = 10;
@@ -415,7 +414,6 @@ const Home = () => {
   }, [displayPhrases]);
 
   useEffect(() => {
-    if (is1998ModeEnabled()) return;
 
     const container = containerRef.current;
     if (!container) return;

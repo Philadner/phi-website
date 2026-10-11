@@ -41,11 +41,7 @@ export default defineConfig({
             let id;
             try { id = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)}); } catch {}
             const theme = themes.find(theme => theme.id === id) || themes[0];
-            if (localStorage1998()) return;
             (${paintTheme.toString()})(theme, ${contrast.toString()});
-            function localStorage1998() {
-              try { return localStorage.getItem('phi.mode.1998') === '1'; } catch { return false; }
-            }
           })();
         ` }]
       },
