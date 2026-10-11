@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'; // ✅ this line
 import { Analytics } from "@vercel/analytics/react";
 import './index.css'
 import App from './App.tsx'
+import './stylesheets/Themes.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

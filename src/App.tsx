@@ -35,6 +35,8 @@ import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
 import { PhiMark } from './components/PhiMark';
 import './App.css';
+import ThemePicker from './components/ThemePicker';
+import { themes } from './lib/themes';
 
 const Chatroom = lazy(() => import('./pages/Chatroom'));
 
@@ -156,6 +158,9 @@ function RetroLoader() {
 function AppShell() {
   const [loaded, setLoaded] = useState(false);
   const [sideOpen, setSideOpen] = useState(false);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const themeTriggerRef = useRef<HTMLButtonElement>(null);
+  const themeBackRef = useRef<HTMLButtonElement>(null);
   const [mode1998] = use1998Mode();
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
@@ -173,6 +178,12 @@ function AppShell() {
     goToMusicHome,
     setMobileSearchOpen,
   } = useMusicPlayer();
+  const currentTheme = themes.find((theme) => theme.id === document.documentElement.dataset.theme) ?? themes[0];
+
+  useEffect(() => {
+    if (themePickerOpen && sideOpen) themeBackRef.current?.focus();
+  }, [themePickerOpen, sideOpen]);
+
   const toggleModeWithRefresh = () => {
     const next = !mode1998;
     set1998ModeEnabled(next);
@@ -362,7 +373,7 @@ useEffect(() => {
             </button>}
             <button
               className="menu-btn"
-              onClick={() => setSideOpen(true)}
+              onClick={() => { setThemePickerOpen(false); setSideOpen(true); }}
               aria-label="Open menu"
               type="button"
             >
@@ -375,12 +386,22 @@ useEffect(() => {
 
 
       {/* Sidebar */}
-      <aside className={`sidebar ${sideOpen ? "open" : ""}`}>
+      <aside className={`sidebar ${sideOpen ? "open" : ""}`} inert={!sideOpen}>
         <div className="sidebar-header">
-          <span>Site Menu</span>
+          {themePickerOpen && !mode1998 ? <button ref={themeBackRef} type="button" className="theme-back" onClick={() => {
+            setThemePickerOpen(false);
+            requestAnimationFrame(() => themeTriggerRef.current?.focus());
+          }}>← Back</button> : <span>Site Menu</span>}
+          {themePickerOpen && !mode1998 && <span>Themes</span>}
           <button onClick={() => setSideOpen(false)} className="close-btn">×</button>
         </div>
 
+        <div className="sidebar-viewport">
+        <div className={`sidebar-content ${themePickerOpen && !mode1998 ? 'sidebar-content--themes' : ''}`}>
+          <div id="sidebar-themes" className="sidebar-pane sidebar-pane--themes" hidden={mode1998} inert={!themePickerOpen}>
+            {sideOpen && themePickerOpen && !mode1998 && <ThemePicker />}
+          </div>
+          <div className="sidebar-pane sidebar-pane--menu" inert={themePickerOpen && !mode1998}>
         <nav className="sidebar-nav">
           <button
             className="mode-1998-btn sidebar-mode-btn"
@@ -394,6 +415,16 @@ useEffect(() => {
           >
             {modeToggleText}
           </button>
+
+          {!mode1998 && <button ref={themeTriggerRef} className="theme-trigger" type="button"
+            aria-expanded={themePickerOpen} aria-controls="sidebar-themes" onClick={() => setThemePickerOpen(true)}>
+            <span>Theme: {currentTheme.name}</span>
+            <span className="theme-picker__swatches" aria-hidden="true">
+              {[currentTheme.background, currentTheme.primary, currentTheme.secondary, currentTheme.highlight].map((color, index) =>
+                <i key={index} style={{ backgroundColor: color }} />)}
+            </span>
+            <span aria-hidden="true">▾</span>
+          </button>}
 
           {/* always visible in sidebar */}
           <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
@@ -443,6 +474,9 @@ useEffect(() => {
             <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
           </div>
         </nav>
+          </div>
+        </div>
+        </div>
       </aside>
 
       <div

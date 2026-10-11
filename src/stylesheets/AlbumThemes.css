@@ -1,0 +1,787 @@
+/* src/App.css */
+html[data-theme]:not([data-theme="phi"]):not([data-1998]), html[data-theme]:not([data-theme="phi"]):not([data-1998]) body, html[data-theme]:not([data-theme="phi"]):not([data-1998]) #root {
+  background-color: var(--background);
+  color: var(--primary);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) #loader {
+  background-color: var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .HeadingBigLeft {
+  color: var(--highlight);
+  text-shadow: 0 0 5px var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .HeadingLeft {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ClickableHeadingLeft {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .FancyLink {
+  color :var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .phi path {
+  stroke: var(--highlight);
+  filter: drop-shadow(0 0 4px var(--highlight));
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header {
+  background: color-mix(in srgb,
+    color-mix(in srgb, var(--background) calc((1 - var(--p)) * 100%), var(--highlight))
+    calc(var(--bg-o) * 100%), transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .mode-1998-btn {
+  background: color-mix(in srgb, var(--background) 8%, transparent);
+  border: 1px solid var(--secondary);
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .mode-1998-btn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--background) 22%, transparent);
+  border-color: var(--secondary);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .logo {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .topnav a {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header .menu-btn {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-header-search__icon {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-header-search input {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-header-search input::placeholder {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-brand__back {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-brand__back:hover {
+  color: var(--highlight);
+}
+@media (max-width: 900px) {
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-header-search-trigger {
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 8%, transparent);
+    color: var(--primary);
+  }
+}
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .logo {
+  color: var(--highlight);
+  text-shadow: 0 0 5px var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .logo:hover {
+  text-shadow: 0 0 10px var(--highlight);
+  color: var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) nav a {
+  color: var(--primary);
+  text-shadow: 0 0 0px var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) nav a::after {
+  background: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) nav a:hover {
+  color: var(--highlight);
+  text-shadow: 0 0 20px var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) #main-site {
+  background-color: var(--background);
+}
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-header {
+  color: var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .close-btn {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a:hover {
+  color: var(--highlight);
+}
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .overlay {
+  background: color-mix(in srgb, var(--background) 40%, transparent);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
+  color: var(--highlight);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
+  color: var(--highlight);
+}
+@media (max-width: 900px) {    
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .menu-btn {
+    color: var(--highlight);
+  }
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a.sidebar-note {
+  color: var(--secondary);
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .sidebar-nav a.sidebar-note:hover {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .statcard {
+  background: color-mix(in srgb, var(--background) 4%, transparent);
+  border: 1px solid var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ticker-bg {
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  border-top: 1px solid var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ticker-bg:hover {
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+}
+
+/* src/index.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) {
+  background-color: var(--background);
+  color: var(--secondary);
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) a {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) a:hover {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) button {
+  background-color: var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) button:hover {
+  border-color: var(--secondary);
+}
+
+@media (prefers-color-scheme: light) {
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) {
+    color: var(--secondary);
+    background-color: var(--background);
+  }
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) a:hover {
+    color: var(--secondary);
+  }
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) button {
+    background-color: var(--background);
+  }
+}
+
+/* src/stylesheets/MusicPlayer.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-panel,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-pane,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 95%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-kicker {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-results-subtitle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-meta,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-description,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-heading p,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-now-playing {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-queue-toggle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-back-button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer-header button {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 10%, transparent);
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-song-card-play {
+  background: color-mix(in srgb, var(--background) 92%, transparent);
+  color: var(--highlight);
+  border: 1px solid var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-card:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-row:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item:hover {
+  background: color-mix(in srgb, var(--background) 8%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-title {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-artist {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-row.is-current,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item.is-current {
+  background: color-mix(in srgb, var(--background) 12%, transparent);
+  border-color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-number {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-state-card,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-empty-state,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-empty {
+  background: color-mix(in srgb, var(--background) 4%, transparent);
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-state-card--error {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--background) 35%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-copy strong {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-copy span {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-progress {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 8%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-progress__fill {
+  background: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-empty-state svg {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-results-sentinel {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-search-help {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-search-help__button {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 8%, transparent);
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 98%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item {
+  border-bottom: 1px solid var(--secondary);
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--background) 8%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item:disabled {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-bar {
+  --music-accent: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-placeholder {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-icon-button:hover {
+  color: var(--primary);
+}
+
+@media (max-width: 900px) {
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-page__close {
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 6%, transparent);
+    color: var(--primary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form > label {
+    color: var(--secondary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input {
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 8%, transparent);
+    color: var(--secondary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input:focus-within {
+    border-color: var(--secondary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input input {
+    color: var(--primary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__row > button {
+    background: var(--highlight);
+    color: var(--secondary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer-overlay.is-open {
+    background: color-mix(in srgb, var(--background) 55.00000000000001%, transparent);
+  }
+}
+
+@media (max-width: 680px) {
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-song__content {
+    background: var(--background);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action {
+    color: var(--secondary);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action--play-next {
+    background: var(--background);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action--add-queue {
+    background: var(--highlight);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-panel {
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 98%, transparent);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-panel__label strong {
+    color: var(--highlight);
+  }
+}
+
+/* src/stylesheets/AlbumDetail.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumTitle {
+    color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .BackLink {
+    color: var(--highlight);
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 80%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .BackLink:hover {
+    background: color-mix(in srgb, var(--background) 10%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumArtist {
+    color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackRow:hover {
+    background: var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackIndex {
+    color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackName {
+    color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButton {
+    border: 1px solid var(--secondary);
+    background: var(--background);
+    color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButton:not(:disabled):hover {
+    background: var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButtonPrimary {
+    border-color: var(--secondary);
+    background: color-mix(in srgb, var(--background) 12%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackPlayButton {
+    border: 1px solid var(--secondary);
+    background: color-mix(in srgb, var(--background) 8%, transparent);
+    color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackDownload:hover {
+    background: color-mix(in srgb, var(--background) 16%, transparent);
+}
+
+/* src/stylesheets/Chatroom.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header--chat {
+  background: var(--background);
+  border-bottom: 1px solid var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online:hover { color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online i, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li i { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online--live i, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li i { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell button, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people button { color: var(--secondary); border: 1px solid var(--secondary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell button:hover, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people button:hover { border-color: var(--secondary); color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-avatar { background: var(--background); color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--self .chat-avatar { color: var(--highlight); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message-content time { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-you { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--action .chat-markdown { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown a { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown blockquote { border-left: 2px solid var(--secondary); color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown code { background: var(--background); color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown pre { background: var(--background); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown pre code { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown th, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown td { border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown hr { border-top: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer { background: var(--background); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join input { background: var(--background); color: var(--primary); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join-controls button:first-of-type, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-send { background: var(--highlight); color: var(--highlight-text); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join-controls button:first-of-type:hover, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-send:hover { background: var(--highlight); color: var(--highlight-text); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons { border-bottom: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button[aria-expanded="true"], html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button:hover { background: var(--background); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-tool-panel { border: 1px solid var(--secondary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row + .chat-formatting-row { border-top: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row button, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row select { border: 1px solid var(--secondary); color: var(--secondary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item:hover, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item:focus-visible { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item[aria-disabled="true"] { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item small { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-divider { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer textarea { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer textarea::placeholder { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer > span > button { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-error { color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-emoji-panel { background: var(--background); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people {
+  border-left: 1px solid var(--secondary);
+  background: var(--background);
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people::backdrop { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people h2 span { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people p { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li small { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-upload-flight { color: var(--highlight); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-document svg { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-document small { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-attachment-remove { background: var(--background); border-color: var(--secondary); color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-attachment-error { background: var(--background); color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar { border: 1px solid var(--secondary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar select { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button:hover, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button:focus-visible { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar select { background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-badge { border: 1px solid var(--secondary); color: var(--highlight); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--mentioned { border-left: 2px solid var(--secondary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention { color: var(--primary); background: var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-reply-preview { border-left: 1px solid var(--secondary); color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-replying { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context { border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context label { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context input { accent-color: var(--highlight); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-context-result { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-status { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote { background: var(--background); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote small { color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote button[aria-pressed="true"] { border-color: var(--secondary); color: var(--highlight); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote p { color: var(--primary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker { background: var(--background); border: 1px solid var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker button:hover, html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker button:focus-visible { background: var(--background); }
+
+/* src/stylesheets/Research.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-page {
+  background: var(--background);
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-kicker {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-intro h1,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-header h1 {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-copy,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-subtitle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__subtitle {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-copy code,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty code {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 2%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__link:hover {
+  background: color-mix(in srgb, var(--background) 5%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__meta,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-meta {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card h2,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty h2 {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-tags span {
+  border: 1px solid var(--secondary);
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty p {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-back {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-back:hover {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose {
+  color: var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h2,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h3,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h4 {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose a {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose strong {
+  color: var(--primary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose code {
+  color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose pre {
+  border: 1px solid var(--secondary);
+  background: color-mix(in srgb, var(--background) 3%, transparent);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose blockquote {
+  border-left: 2px solid var(--secondary);
+  color: var(--secondary);
+}
+
+/* src/stylesheets/QuickLinks.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) :where(.quicklinks) a {
+    color :var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) :where(.quicklinks) a:hover {
+    color: var(--highlight);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]){
+  --bg:var(--background);
+  --panel:var(--background);
+  --border:var(--secondary);
+  --text:var(--primary);
+  --muted:var(--secondary);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.red   { border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.green { border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.blue  { border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.gold  { border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge{
+  background: var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.danger{ background: color-mix(in srgb, var(--background) 12%, transparent); color:var(--primary); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.ok    { background: color-mix(in srgb, var(--background) 10%, transparent); color:var(--secondary); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.info  { background: color-mix(in srgb, var(--background) 10%, transparent); color:var(--secondary); border-color: var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-chip:hover{ border-color:var(--secondary); background:var(--background); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-input{
+  background:var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-input:focus{ border-color:var(--secondary); }
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-button{
+  border:1px solid var(--secondary);
+}
+
+/* src/stylesheets/home.css */
+
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .home-stage {
+  background:
+    radial-gradient(circle at 83% 50%, color-mix(in srgb, var(--highlight) 2.5%, transparent), transparent 25%),
+    var(--background);
+}
+
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .phi-floating {
+  color: var(--highlight);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--highlight) 52%, transparent);
+}
+
+@media (max-width: 700px) {
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .home-stage {
+    background:
+      radial-gradient(circle at 50% 86%, color-mix(in srgb, var(--highlight) 2.5%, transparent), transparent 28%),
+      var(--background);
+  }
+
+  html[data-theme]:not([data-theme="phi"]):not([data-1998]) .phi-floating {
+    text-shadow: 0 0 13px color-mix(in srgb, var(--highlight) 50%, transparent) !important;
+  }
+}

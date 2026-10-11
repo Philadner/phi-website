@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { themes, contrast, paintTheme, THEME_STORAGE_KEY } from './src/lib/themes'
 import {
   getMusicAlbumPayload,
   getMusicArtistPayload,
@@ -31,6 +32,24 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    {
+      name: 'phi-theme-before-paint',
+      transformIndexHtml() {
+        return [{ tag: 'script', injectTo: 'head-prepend', children: `
+          (() => {
+            const themes = ${JSON.stringify(themes)};
+            let id;
+            try { id = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)}); } catch {}
+            const theme = themes.find(theme => theme.id === id) || themes[0];
+            if (localStorage1998()) return;
+            (${paintTheme.toString()})(theme, ${contrast.toString()});
+            function localStorage1998() {
+              try { return localStorage.getItem('phi.mode.1998') === '1'; } catch { return false; }
+            }
+          })();
+        ` }]
+      },
+    },
     {
       name: 'music-api-dev-middleware',
       configureServer(server) {

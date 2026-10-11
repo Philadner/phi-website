@@ -41,7 +41,7 @@
           display: flex;
           justify-content: center;
           align-items: center;
-          background: #111;
+          background: var(--loader-background, #111);
           z-index: 9999;
         }
         
@@ -55,7 +55,7 @@
 
         #preloader .phi path {
           fill: none;
-          stroke: gold;
+          stroke: var(--loader-highlight, gold);
           stroke-width: 2;
           stroke-dasharray: 1000;
           stroke-dashoffset: 1000;
@@ -64,7 +64,7 @@
             scaleDraw 2.5s ease forwards,
             chase 10s linear 2.5s infinite;
           transform-origin: center;
-          filter: drop-shadow(0 0 4px gold);
+          filter: drop-shadow(0 0 4px var(--loader-highlight, gold));
         }
 
       
