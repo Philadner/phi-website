@@ -7,6 +7,10 @@ export function gifReference(value: unknown): ChatGifRef | null {
   return { id: gif.id, title: gif.title }
 }
 export async function giphyFetch(path: string, query: Record<string, string> = {}, signal?: AbortSignal) {
+  if (typeof document !== 'undefined' && document.documentElement.dataset.themeDemo === 'true') {
+    const response = await fetch(`/api/theme-demo-gifs?${new URLSearchParams({ path, ...query })}`, { signal })
+    return response.json()
+  }
   const key = (import.meta as { env?: { VITE_GIPHY_API_KEY?: string } }).env?.VITE_GIPHY_API_KEY?.trim()
   if (!key) throw new Error('GIF search is not configured yet.')
   const url = new URL(`https://api.giphy.com/v1/gifs/${path}`)

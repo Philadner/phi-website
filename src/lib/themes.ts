@@ -28,6 +28,16 @@ export function paintTheme(theme: Theme, contrastRatio = contrast) {
   const buttonText = candidates.reduce((best, color) =>
     contrastRatio(color, theme.highlight) > contrastRatio(best, theme.highlight) ? color : best)
   root.style.setProperty('--highlight-text', buttonText)
+  const bestOn = (background: string) => candidates.reduce((best, color) =>
+    contrastRatio(color, background) > contrastRatio(best, background) ? color : best)
+  const text = contrastRatio(theme.primary, theme.background) >= 4.5 ? theme.primary : bestOn(theme.background)
+  root.style.setProperty('--theme-text', text)
+  root.style.setProperty('--theme-muted', contrastRatio(theme.secondary, theme.background) >= 4.5 ? theme.secondary : text)
+  root.style.setProperty('--theme-border', contrastRatio(theme.secondary, theme.background) >= 3 ? theme.secondary : text)
+  root.style.setProperty('--theme-accent', contrastRatio(theme.highlight, theme.background) >= 4.5 ? theme.highlight : text)
+  const action = contrastRatio(buttonText, theme.highlight) >= 4.5 ? theme.highlight : theme.primary
+  root.style.setProperty('--action-background', action)
+  root.style.setProperty('--action-text', bestOn(action))
   if (theme.id === 'phi') {
     root.style.removeProperty('--loader-background')
     root.style.removeProperty('--loader-highlight')

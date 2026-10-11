@@ -22,7 +22,7 @@ assert.equal(getSavedTheme().id, 'phi')
 saved = 'igor'
 assert.equal(getSavedTheme().id, 'igor')
 assert.equal(contrast('#000000', '#FFFFFF'), 21)
-const report = ['# Album theme contrast audit', '', 'Ratios use WCAG relative luminance. AA targets: 4.5:1 normal text, 3:1 large text. The 17 album palettes are preserved exactly. hub adds a black/white/grey/orange palette (#FF9900 highlight) as the final option. phi retains the original labs CSS gold theme (#FFD700), with its original surface and text colours. Its swatch represents the original dark background, white foreground, darkgoldenrod detail and CSS gold accent. The label on filled highlight controls uses whichever existing palette token offers the highest contrast. Currents, 808s & Heartbreak, DAMN. and CALL ME IF YOU GET LOST have no available 4.5:1 button foreground, so the new picker Apply button uses bold text at 19px (the 3:1 large-text threshold). Existing control typography is preserved; the ratios below identify limitations in smaller existing controls.', '', '| Theme | Primary / background | Secondary / background | Button / highlight |', '|---|---:|---:|---:|']
+const report = ['# Album theme contrast audit', '', 'Ratios use WCAG relative luminance. AA targets: 4.5:1 normal text, 3:1 large text. The 17 album palettes are preserved exactly. hub adds a black/white/grey/orange palette (#FF9900 highlight) as the final option. phi retains the original labs CSS gold theme (#FFD700), with its original surface and text colours. Its swatch represents the original dark background, white foreground, darkgoldenrod detail and CSS gold accent. The label on filled highlight controls uses whichever existing palette token offers the highest contrast. Currents, 808s & Heartbreak, DAMN. and CALL ME IF YOU GET LOST have no available 4.5:1 button foreground, so the new picker Apply button uses bold text at 19px (the 3:1 large-text threshold). Existing control typography is preserved. Themed page actions use highlight when it supports normal-text AA, otherwise primary with the best palette foreground.', '', '| Theme | Primary / background | Secondary / background | Button / highlight |', '|---|---:|---:|---:|']
 for (const theme of themes) {
   paintTheme(theme)
   assert.equal(document.documentElement.dataset.theme, theme.id)
@@ -31,12 +31,16 @@ for (const theme of themes) {
   const foreground = properties.get('--highlight-text')
   assert.ok([theme.background, theme.primary, theme.secondary, theme.highlight].includes(foreground))
   assert.ok(contrast(foreground, theme.highlight) >= 3, theme.name)
+  const colours = [theme.background, theme.primary, theme.secondary, theme.highlight]
+  for (const token of ['--theme-text', '--theme-muted', '--theme-border', '--theme-accent', '--action-background', '--action-text']) assert.ok(colours.includes(properties.get(token)), token)
+  assert.ok(contrast(properties.get('--theme-text'), theme.background) >= Math.min(4.5, Math.max(...colours.map(colour => contrast(colour, theme.background)))))
+  assert.ok(contrast(properties.get('--action-text'), properties.get('--action-background')) >= 4.5, theme.name)
   report.push(`| ${theme.name} | ${contrast(theme.primary, theme.background).toFixed(2)} | ${contrast(theme.secondary, theme.background).toFixed(2)} | ${contrast(foreground, theme.highlight).toFixed(2)} |`)
 }
 document.documentElement.dataset = {}
 localStorage.getItem = () => { throw new Error('Storage disabled') }
 assert.equal(getSavedTheme().id, 'phi')
-report.push('', 'channel ORANGE primary text fails even the large-text target. MBDTF primary text and several secondary colours fail normal-text AA. These are palette limitations, not silently adjusted colours. Proposed accessible alternatives can use the highlight token for body text in channel ORANGE and primary for supporting text where primary reaches 4.5:1; these require design review before changing the approved visual semantics.', '', '1998 mode retains its separate stylesheet. Album themes apply to the modern site, including shared music and chat chrome; game pieces, chart signals and media artwork retain their semantic colours.', '')
+report.push('', 'channel ORANGE primary text fails even the large-text target. MBDTF primary text and several secondary colours fail normal-text AA. These are palette limitations, not silently adjusted colours. Themed pages now derive readable text roles from the existing four colours: primary when it passes normal-text AA, otherwise the best colour against the background; supporting text falls back to that role. No palette values are changed. MBDTF has no normal-text AA foreground against its specified background, so it retains the highest available contrast.', '', '1998 mode retains its separate stylesheet. Album themes apply to the modern site, including shared music and chat chrome; game pieces, chart signals and media artwork retain their semantic colours.', '')
 if (process.argv.includes('--write-audit')) writeFileSync(new URL('../docs/theme-contrast.md', import.meta.url), report.join('\n'))
 console.log('PASS: 19 palettes, unknown/stored/blocked-storage fallback, paint/mode updates, and AA large-text button foregrounds for every theme')
 

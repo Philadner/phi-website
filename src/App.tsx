@@ -39,6 +39,7 @@ import ThemePicker from './components/ThemePicker';
 import { themes } from './lib/themes';
 
 const Chatroom = lazy(() => import('./pages/Chatroom'));
+const ThemeLab = lazy(() => import('./previews/ThemeLab'));
 
 function ModernLoader() {
   return (
@@ -427,6 +428,7 @@ useEffect(() => {
           </button>}
 
           {/* always visible in sidebar */}
+          {document.documentElement.dataset.themeDemo === 'true' && <a href="/theme-lab">Demo data · Theme lab ↗</a>}
           <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
           <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
           <Link to="/chat" onClick={() => setSideOpen(false)}>Chatroom</Link>
@@ -487,6 +489,7 @@ useEffect(() => {
       {loaded && (
         <>
           <Routes>
+            <Route path="/theme-lab" element={<Suspense fallback={<p>Opening theme lab…</p>}><ThemeLab /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/1998" element={<Toggle1998 />} />
             <Route path="/1998/:rest" element={<Navigate to="/" replace />} />

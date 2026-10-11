@@ -298,9 +298,9 @@ function DylanTightness() {
             </g>
 
             <path d={areaPath} fill="url(#dylan-tightness-area)" />
-            <path d={path} fill="none" stroke="#f6fbff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7" />
+            <path d={path} fill="none" stroke="var(--tracker-line, #f6fbff)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7" />
             <line className="dylan-now-line" x1="1000" x2="1000" y1="24" y2="284" />
-            <circle cx="1000" cy={(260 - currentValue * 2.35).toFixed(1)} r="10" fill="#ffffff" />
+            <circle cx="1000" cy={(260 - currentValue * 2.35).toFixed(1)} r="10" fill="var(--tracker-line, #ffffff)" />
           </svg>
         </div>
 

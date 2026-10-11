@@ -1,4 +1,6 @@
 @import './AlbumThemes.css';
+@import './ThemePages.css';
+@import './ThemeDetails.css';
 
 /* Colours only: existing layout, geometry, glass and glow effects stay intact. */
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) { background: var(--background); color: var(--primary); }
