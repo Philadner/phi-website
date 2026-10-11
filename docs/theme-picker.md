@@ -1,28 +1,19 @@
-# Sidebar themes
+# Homepage navigation and themes
 
-The sidebar Theme row opens a dedicated pane with four-colour swatches, theme names and fixed light/dark modes. The menu slides right out of the clipped sidebar as themes slide in from the left (180ms ease-out). Back returns to the menu, restores keyboard focus and discards unsaved previews. Reduced-motion preferences disable the transition.
+The homepage has two wheels: categories (Socials, Projects, phi, Navigate, Theme) and a vertical item wheel. Categories scroll vertically in the right column on desktop and horizontally at the bottom on mobile. phi is the default and retains its shuffled community phrases, automatic cycling and single-line width filtering. Navigation and theme names wrap at their full focused width before the complete block scales down; their line breaks stay fixed during selection. Off-screen items remain available through scrolling.
 
-Selecting a theme immediately previews it on the live site without saving. Apply saves the theme ID; a blocking head script restores its palette before paint. Storage errors retain the applied theme for the current visit. Cancel, Back and closing the drawer restore the last applied theme. The drawer uses the dynamic viewport height and bottom safe-area inset to keep Apply visible on mobile while the theme list scrolls independently.
+Swipe, scroll or use arrow keys to select categories and items. Tap anywhere in the large item wheel or press Enter to activate the centred item. Swipes only scroll and never activate. Touch taps have no highlight box; keyboard focus remains visible. The Home button across the website returns to `/`, or resets an existing homepage to phi. The old sidebar is removed; its destinations are in Navigate. Games remain available there on mobile, including the rainbow Jay Game banner.
 
-There are 19 choices: phi, 17 album palettes from the supplied specification, and hub as the final choice. phi uses the original labs CSS gold (`#FFD700`) styling, including its original backgrounds and glow colours. hub uses black, white, grey and orange (`#FF9900`). `src/lib/themes.json` is the palette source of truth.
+Scrolling through Theme immediately previews each palette. Activate the centred theme to apply and save it. Leaving Theme without applying restores the previous palette. A blocking head script restores saved colours before paint. If browser storage is unavailable, applying still works for the current visit.
 
-`AlbumThemes.css`, `ThemePages.css` and `ThemeDetails.css` scope colour overrides to non-phi themes. Existing page stylesheets, layouts, typography, corner radii, glow effects, glass effects and animations are preserved. The rainbow Jay Game banner is preserved exactly, including its colours and animations. The 1998 toggle and mode have been removed; legacy `/1998` URLs redirect to the regular home page. See `theme-contrast.md` for measured palette limitations.
+There are 19 choices: original CSS-gold phi, 17 album palettes, and hub last. `src/lib/themes.json` is the palette source. Page layouts and gameplay colours remain intact. Legacy `/1998` routes redirect to the regular homepage.
 
-Validation:
+Category changes use overlapping centre-out ripples, with the new centre appearing before the outgoing list finishes. Reduced motion disables ripples and uses immediate selection. Haptic requests are 8ms for manual vertical selection, 14ms for category changes and 18ms for activation. Automatic cycling, initialization, hovering and snapping do not add ticks. Unsupported vibration APIs are ignored.
 
-- `npm run test:themes`
-- `npx vite build`
-- `node scripts/test-themes.mjs --check-build`
-- Chromium checks: every palette; preview/apply/cancel/back; reload; blocked storage; keyboard controls; mobile; music/chat routes; slide direction, clipping and reduced motion.
+## Local demos and validation
 
-`npm run build` passes; the existing ChatMarkdown className types were corrected to arrays. The repository-wide lint baseline still contains unrelated errors. Focused lint for the picker, theme helper, fixtures and theme lab passes.
+`/theme-lab` links to actual page components with `?theme-demo=1` fixtures for chat, music, news, stats and tracker. Chat messages, games and silent audio playback are local; demo mode disables chat realtime. Normal visits do not load fixtures.
 
-## Local page demos
+Run `npm run build`, `npm run lint`, `npm run test:themes`, and `npm run test:home-navigation`. The browser checks require separately installed Playwright; set `PHI_PLAYWRIGHT_MODULE` to its `index.mjs` and optionally `PHI_CHROMIUM` to a Chromium binary. `PHI_TEST_URL` defaults to `http://localhost:5173` with the development server running.
 
-Open `/theme-lab` on the PR preview. Links open actual page components with explicit `?theme-demo=1` fixtures: populated/empty/error chat, guest join, music album/artist/search, news, stats and tracker pages. Chat messages, game moves and silent 24-second audio playback are local. Demo mode disables Supabase chat realtime and serves API requests from this tab; unsupported demo actions return an explanatory error. Normal visits do not load fixtures. Return to phi exits demo mode.
-
-Derived text, muted, border and action roles use only existing palette colours. Menus and player surfaces match the selected background. Gameplay colours, charts and media artwork remain distinct where colour conveys their meaning. No page geometry or typography is changed.
-
-Repeat the browser matrix against `npm run dev` using `node scripts/test-theme-pages.mjs`. Playwright is optional: install it separately and set `PHI_PLAYWRIGHT_MODULE` to its `index.mjs`; set `PHI_CHROMIUM` to a system Chromium binary if needed. `PHI_TEST_URL` defaults to `http://localhost:5173`. This checks all 19 palettes on populated chat/music at mobile and desktop widths, page errors, horizontal overflow, themed surfaces, short mobile picker viewports, actual mobile playback and swipe handling. Track pointer capture begins only after horizontal movement, so ordinary taps reach the play button.
-
-The sidebar was visually reviewed in menu and picker states across all 19 themes on mobile and desktop. Non-phi drawers use a translucent palette background with the original blur, readable headings and transparent close/back controls.
+`node scripts/test-theme-pages.mjs` checks all 19 palettes on populated chat/music at mobile and desktop sizes, playback and swipes, Home navigation, short/landscape viewports and legacy mode removal. The homepage suite checks phrase filtering and cycling, keyboard and pointer interactions, haptic requests, all themes, preview cancellation, stable full-size wrapping, reduced motion and rapid category changes. Hardware vibration feel still requires a supported physical device. See `theme-contrast.md` for existing palette limitations.
