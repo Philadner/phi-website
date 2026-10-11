@@ -1298,7 +1298,6 @@ function SwipeableSong({
           horizontal: false,
           cancelled: false,
         }
-        event.currentTarget.setPointerCapture(event.pointerId)
       }}
       onPointerMove={(event) => {
         const gesture = gestureRef.current
@@ -1314,6 +1313,7 @@ function SwipeableSong({
             return
           }
           gesture.horizontal = true
+          event.currentTarget.setPointerCapture(event.pointerId)
         }
 
         event.preventDefault()

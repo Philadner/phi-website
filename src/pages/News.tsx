@@ -36,6 +36,7 @@ function News() {
   }, [author, content, submitting, title]);
 
   const apiUrl = useMemo(() => {
+    if (document.documentElement.dataset.themeDemo === 'true') return '/api/theme-demo-news';
     return (
       (import.meta.env.VITE_NEWS_API_URL as string | undefined) ??
       "https://api.phi.me.uk/kv/news"
@@ -132,9 +133,9 @@ function News() {
           style={{
             padding: "10px 14px",
             borderRadius: 12,
-            border: "1px solid gold",
-            background: showAdd ? "gold" : "transparent",
-            color: showAdd ? "black" : "gold",
+            border: "1px solid var(--news-border, gold)",
+            background: showAdd ? "var(--news-action-background, gold)" : "transparent",
+            color: showAdd ? "var(--news-action-text, black)" : "var(--news-text, gold)",
             cursor: "pointer",
             fontWeight: 800,
             whiteSpace: "nowrap",
@@ -154,7 +155,7 @@ function News() {
             maxWidth: 900,
             margin: "0 auto",
             padding: 16,
-            border: "1px solid gold",
+            border: "1px solid var(--news-border, gold)",
             borderRadius: 16,
           }}
         >
@@ -167,9 +168,9 @@ function News() {
                 flex: "1 1 280px",
                 padding: 10,
                 borderRadius: 12,
-                border: "1px solid rgba(255,215,0,0.6)",
-                background: "rgba(0,0,0,0.5)",
-                color: "gold",
+                border: "1px solid var(--news-border, rgba(255,215,0,0.6))",
+                background: "var(--news-input-background, rgba(0,0,0,0.5))",
+                color: "var(--news-text, gold)",
                 outline: "none",
               }}
             />
@@ -181,9 +182,9 @@ function News() {
                 flex: "1 1 200px",
                 padding: 10,
                 borderRadius: 12,
-                border: "1px solid rgba(255,215,0,0.6)",
-                background: "rgba(0,0,0,0.5)",
-                color: "gold",
+                border: "1px solid var(--news-border, rgba(255,215,0,0.6))",
+                background: "var(--news-input-background, rgba(0,0,0,0.5))",
+                color: "var(--news-text, gold)",
                 outline: "none",
               }}
             />
@@ -200,9 +201,9 @@ function News() {
               width: "100%",
               padding: 10,
               borderRadius: 12,
-              border: "1px solid rgba(255,215,0,0.6)",
-              background: "rgba(0,0,0,0.5)",
-              color: "gold",
+              border: "1px solid var(--news-border, rgba(255,215,0,0.6))",
+              background: "var(--news-input-background, rgba(0,0,0,0.5))",
+              color: "var(--news-text, gold)",
               outline: "none",
               resize: "vertical",
               boxSizing: "border-box",
@@ -216,9 +217,9 @@ function News() {
               style={{
                 padding: "10px 14px",
                 borderRadius: 12,
-                border: "1px solid gold",
-                background: canSubmit ? "gold" : "rgba(255,215,0,0.2)",
-                color: canSubmit ? "black" : "rgba(255,215,0,0.8)",
+                border: "1px solid var(--news-border, gold)",
+                background: canSubmit ? "var(--news-action-background, gold)" : "var(--news-input-background, rgba(255,215,0,0.2))",
+                color: canSubmit ? "var(--news-action-text, black)" : "var(--news-text, rgba(255,215,0,0.8))",
                 cursor: canSubmit ? "pointer" : "not-allowed",
                 fontWeight: 800,
               }}
@@ -226,7 +227,7 @@ function News() {
               {submitting ? "Posting..." : "Post"}
             </button>
 
-            {submitMsg ? <span style={{ color: "gold" }}>{submitMsg}</span> : null}
+            {submitMsg ? <span style={{ color: "var(--news-text, gold)" }}>{submitMsg}</span> : null}
           </div>
         </form>
       ) : null}
@@ -234,13 +235,13 @@ function News() {
       <div className="SpaceDiv" />
 
       {error ? (
-        <p className="BodyTextLeft" style={{ color: "gold" }}>
+        <p className="BodyTextLeft" style={{ color: "var(--news-text, gold)" }}>
           {error}
         </p>
       ) : null}
 
       {loading ? (
-        <p className="BodyTextLeft" style={{ color: "gold" }}>
+        <p className="BodyTextLeft" style={{ color: "var(--news-text, gold)" }}>
           Loading...
         </p>
       ) : null}

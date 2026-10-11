@@ -12,7 +12,7 @@ function remarkChatFonts() {
       if (node.name !== 'font') return
       const font = node.attributes?.family || 'sans'
       if (!fonts.has(font)) return
-      node.data = { ...node.data, hName: 'span', hProperties: { className: `chat-font-${font}` } }
+      node.data = { ...node.data, hName: 'span', hProperties: { className: [`chat-font-${font}`] } }
     })
   }
 }
@@ -27,7 +27,7 @@ function remarkChatMentions() {
       let cursor = 0
       for (const match of matches) {
         if (match.index! > cursor) nodes.push({ type: 'text', value: node.value.slice(cursor, match.index) })
-        nodes.push({ type: 'link', url: '', children: [{ type: 'text', value: match[0] }], data: { hName: 'span', hProperties: { className: 'chat-mention' } } })
+        nodes.push({ type: 'link', url: '', children: [{ type: 'text', value: match[0] }], data: { hName: 'span', hProperties: { className: ['chat-mention'] } } })
         cursor = match.index! + match[0].length
       }
       if (cursor < node.value.length) nodes.push({ type: 'text', value: node.value.slice(cursor) })

@@ -1,0 +1,1337 @@
+/* Palette overrides only. Keep the original dimensions, typography and interactions. */
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-shell {
+    background: radial-gradient(circle at top, color-mix(in srgb, var(--highlight) 16%, transparent), transparent 40%),
+    linear-gradient(180deg, var(--background) 0%, var(--background) 100%)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-panel,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-main-pane,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    background: color-mix(in srgb, var(--background) 95%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-kicker {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-results-subtitle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-meta,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-album-description,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-heading p,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-now-playing {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-queue-toggle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-back-button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer-header button {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 20%, transparent);
+    background: color-mix(in srgb, var(--highlight) 10%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-card {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 2%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-song-card-play {
+    background: color-mix(in srgb, var(--background) 92%, transparent);
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 40%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-card:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-row:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item:hover {
+    background: color-mix(in srgb, var(--theme-text) 8%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item-title,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-title {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item-artist,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-artist {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-result-meta {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-row {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 4%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-row.is-current,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item.is-current {
+    background: color-mix(in srgb, var(--highlight) 12%, transparent);
+    border-color: color-mix(in srgb, var(--theme-border) 28%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-number {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-track-action {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-state-card,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-empty-state,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-empty {
+    background: color-mix(in srgb, var(--theme-text) 4%, transparent);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-state-card--error {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--background) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-copy strong {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-copy span {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-progress {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 8%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-loading-progress__fill {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-empty-state svg {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-item {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 4%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-results-sentinel {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-search-help {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-search-help__button {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 45%, transparent);
+    background: color-mix(in srgb, var(--highlight) 8%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 14%, transparent);
+    background: color-mix(in srgb, var(--background) 98%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--theme-text) 8%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-context-menu__item:disabled {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-bar {
+    --music-accent: var(--action-background);
+    background: color-mix(in srgb, var(--background) 96%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--theme-border) 8%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-track-tile {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-bottom-placeholder {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-icon-button {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-icon-button:hover {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-progress {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-progress-slider,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-volume-slider {
+    background: linear-gradient(
+    to right,
+    var(--music-accent) 0 var(--music-range-progress, 0%),
+    color-mix(in srgb, var(--theme-text) 26%, transparent) var(--music-range-progress, 0%) 100%
+  )
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-volume {
+    color: var(--theme-text)
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-page {
+        background: radial-gradient(circle at top right, color-mix(in srgb, var(--highlight) 16%, transparent), transparent 42%),
+      var(--background)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-page__close {
+        border: 1px solid color-mix(in srgb, var(--theme-border) 12%, transparent);
+        background: color-mix(in srgb, var(--theme-text) 6%, transparent);
+        color: var(--theme-text)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form > label {
+        color: var(--theme-text)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input {
+        border: 1px solid color-mix(in srgb, var(--theme-border) 16%, transparent);
+        background: color-mix(in srgb, var(--theme-text) 8%, transparent);
+        color: var(--theme-text)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input:focus-within {
+        border-color: color-mix(in srgb, var(--theme-border) 72%, transparent)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__input input {
+        color: var(--theme-text)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-search-form__row > button {
+        background: var(--action-background);
+        color: var(--theme-muted)
+    }
+}
+@media (max-width: 900px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-queue-drawer-overlay.is-open {
+        background: color-mix(in srgb, var(--background) 55%, transparent)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-song__content {
+        background: var(--background)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action {
+        color: var(--theme-muted)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action--play-next {
+        background: var(--theme-text)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-swipe-action--add-queue {
+        background: var(--action-background)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-panel {
+        border: 1px solid color-mix(in srgb, var(--theme-border) 32%, transparent);
+        background: color-mix(in srgb, var(--background) 98%, transparent)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-panel__label strong {
+        color: var(--theme-accent)
+    }
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .music-mobile-volume-slider {
+        background: linear-gradient(
+      to right,
+      var(--action-background) 0 var(--music-range-progress, 0%),
+      color-mix(in srgb, var(--theme-text) 22%, transparent) var(--music-range-progress, 0%) 100%
+    )
+    }
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .site-header--chat {
+    background: var(--background);
+    border-bottom: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online:hover {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online i,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li i {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-online--live i,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li i {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people button {
+    color: var(--theme-text);
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell button:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people button:hover {
+    border-color: var(--theme-border);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell :focus-visible,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people :focus-visible {
+    outline: 2px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-feed {
+    scrollbar-color: var(--theme-border) transparent
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-avatar {
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--self .chat-avatar {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message-content time {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-you {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--action .chat-markdown {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown a {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown blockquote {
+    border-left: 2px solid var(--theme-border);
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown code {
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown pre {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown pre code {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown th,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown td {
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-markdown hr {
+    border-top: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join input {
+    background: var(--background);
+    color: var(--theme-text);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join-controls button:first-of-type,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-send {
+    background: var(--action-background);
+    color: var(--theme-muted);
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-join-controls button:first-of-type:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-send:hover {
+    background: var(--action-background);
+    color: var(--theme-muted);
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons {
+    border-bottom: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button[aria-expanded="true"],
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-buttons button:hover {
+    background: var(--background);
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-tool-panel {
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row + .chat-formatting-row {
+    border-top: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-formatting-row select {
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item:focus-visible {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item[aria-disabled="true"] {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-item small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-stuff-divider {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer textarea {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer textarea::placeholder {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-composer-footer > span > button {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-character-count {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-error {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-emoji-panel {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people {
+    border-left: 1px solid var(--theme-border);
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people::backdrop {
+    background: color-mix(in srgb, var(--background) 40%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people h2 span {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people p {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-people li small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-upload-progress {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-upload-circles > span {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-upload-flight {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-attachment {
+    border: 1px solid var(--theme-border);
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-document svg {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-document small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-attachment-remove {
+    background: color-mix(in srgb, var(--background) 93.33%, transparent);
+    border-color: var(--theme-border);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-attachment-error {
+    background: color-mix(in srgb, var(--background) 96.08%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell--dragging .chat-composer,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell--dragging .chat-join {
+    outline: 2px dashed var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar {
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar select {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar button:focus-visible {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar select {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-selection-toolbar :focus-visible {
+    outline: 2px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-badge {
+    border: 1px solid var(--theme-border);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--mentioned {
+    border-left: 2px solid var(--theme-border);
+    background: color-mix(in srgb, var(--highlight) 3.92%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-message--jumped {
+    outline: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--highlight) 7.06%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-shell .chat-reply-preview {
+    border-left: 1px solid var(--theme-border);
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-replying {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context {
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context label {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-context input {
+    accent-color: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-context-result {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-ai-status {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote button[aria-pressed="true"] {
+    border-color: var(--theme-border);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-clear-vote p {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker button:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-mention-picker button:focus-visible {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-stuff,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list {
+    scrollbar-color: var(--theme-border) transparent
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list .game-picker-back {
+    color: var(--theme-muted);
+    border-bottom: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list .game-picker-back:hover {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-option > span:last-child:not(:first-child) {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-option small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list .game-picker-option:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list .game-picker-option[aria-pressed="true"] {
+    background: var(--background);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-list .game-picker-option[aria-pressed="true"] > span:last-child {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-detail {
+    border-left: 1px solid var(--theme-border);
+    scrollbar-color: var(--theme-border) transparent
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-preview-art {
+    border-bottom: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-copy h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker-copy p {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker .game-picker-action button {
+    border: 1px solid var(--theme-border);
+    background: var(--action-background);
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker .game-picker-action button:hover {
+    background: var(--action-background);
+    border-color: var(--theme-border);
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .game-picker .game-picker-action button:disabled {
+    background: var(--background);
+    border-color: var(--theme-border);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card {
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-disclaimer {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card > header > span {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-players {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-current {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card input,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card select {
+    background: var(--background);
+    color: var(--theme-text);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-controls label,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-control {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-muted,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-moves {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card .chat-game-resign {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-card .chat-simple-board--tictactoe button {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-simple-board--connect4 {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-connect-disc {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-simple-board--connect4 .chat-connect-drop {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-wordle-grid span {
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-wordle-opponents > div > strong {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-battleship-boards h4 {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-uno-top small {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-game-controls input[type="checkbox"] {
+    accent-color: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-picker {
+    background: var(--background);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-picker header input {
+    background: var(--background);
+    color: var(--theme-text);
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-results span {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-picker footer a {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-picker footer strong {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif a {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif figcaption {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .chat-gif-draft > button {
+    background: color-mix(in srgb, var(--background) 93.33%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tightness-page {
+    background: linear-gradient(color-mix(in srgb, var(--highlight) 3.5%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 80% 4%, color-mix(in srgb, var(--highlight) 14%, transparent), transparent 28%),
+    linear-gradient(180deg, var(--background) 0%, var(--dt-bg) 36%, var(--background) 100%)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-readout,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tracker-card,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-graph-panel {
+    background: color-mix(in srgb, var(--background) 92%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-hero h1 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-readout {
+    background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--highlight) 9%, transparent) 0 1px, transparent 1px 5px),
+    linear-gradient(90deg, color-mix(in srgb, var(--highlight) 22%, transparent), color-mix(in srgb, var(--highlight) 4%, transparent))
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-readout__label,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-panel-head p {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tracker-card::before {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--highlight) 8%, transparent), transparent 68%)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tracker-card h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-now,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-live-pill {
+    background: color-mix(in srgb, var(--highlight) 16%, transparent);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-tracker-card strong {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-refresh {
+    border: 1px solid var(--theme-border);
+    background: color-mix(in srgb, var(--highlight) 16%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-refresh:hover:not(:disabled) {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-panel-head h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-live-pill {
+    background: color-mix(in srgb, var(--highlight) 12%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-chart-wrap {
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-chart-grid line {
+    stroke: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--loose {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--online {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--apex {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--game {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--nubby {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-zone--elden {
+    fill: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-now-line {
+    stroke: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-legend__loose {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-legend__apex {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-legend__game {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .dylan-legend__nubby {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-shell {
+    color: var(--fm-var(--theme-text));
+    background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--background) 17%, transparent), transparent 42%),
+    var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-shell::before {
+    background-image: linear-gradient(color-mix(in srgb, var(--highlight) 2.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--highlight) 2.5%, transparent) 1px, transparent 1px)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-header {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent);
+    background: color-mix(in srgb, var(--background) 76%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-back {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 18%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-back:hover {
+    border-color: color-mix(in srgb, var(--theme-border) 65%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-brand-index {
+    color: var(--theme-accent);
+    border-right: 1px solid color-mix(in srgb, var(--theme-border) 38%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-brand p {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-brand h1 {
+    color: var(--fm-var(--theme-text))
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-clock {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-sidebar-heading {
+    color: var(--theme-accent);
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 15%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-layer-list button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-reset,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-locate {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-layer-list button span {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-layer-list button i {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-layer-list button:hover {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--highlight) 4.5%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-reset {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 17%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-reset:hover {
+    border-color: color-mix(in srgb, var(--theme-border) 55%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-control {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 17%, transparent);
+    background: color-mix(in srgb, var(--highlight) 2.5%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-control > div:first-child {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-control input {
+    background: linear-gradient(90deg, var(--fm-green), color-mix(in srgb, var(--highlight) 12%, transparent))
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-control input::-webkit-slider-thumb {
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-control input::-moz-range-thumb {
+    border: 1px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-buttons button {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 18%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-detail-buttons button:hover {
+    border-color: color-mix(in srgb, var(--theme-border) 60%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-viewport-frame {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 42%, transparent);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-ctrl-group {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 42%, transparent);
+    background: color-mix(in srgb, var(--background) 82%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-ctrl-group button {
+    border-color: color-mix(in srgb, var(--theme-border) 20%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-ctrl-attrib {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--background) 70%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-ctrl-attrib a {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map-label {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--background) 70%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-location-marker {
+    border: 2px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-location-marker::after {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 58%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-address-pin {
+    border: 1px solid var(--theme-border);
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-address-pin::after {
+    border: 1px solid var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-address-pin span {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 35%, transparent);
+    background: color-mix(in srgb, var(--background) 88%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-coordinate-ping {
+    border: 2px solid var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-coordinate-ping::before,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-coordinate-ping::after {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-popup-content {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 42%, transparent);
+    background: color-mix(in srgb, var(--background) 94%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-map .maplibregl-popup-tip {
+    border-top-color: color-mix(in srgb, var(--theme-border) 42%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-key-error {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 30%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--background) 52%, transparent), color-mix(in srgb, var(--background) 88%, transparent))
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command:focus-within {
+    border-color: color-mix(in srgb, var(--theme-border) 78%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command label span {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command input::placeholder {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command button {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 35%, transparent);
+    background: color-mix(in srgb, var(--highlight) 4%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--highlight) 10%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-command-status {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry-block {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 15%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry span,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry-grid span {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry strong,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry-grid strong {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-signal-bars {
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 15%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-signal-bars i {
+    background: linear-gradient(to top, color-mix(in srgb, var(--highlight) 18%, transparent), color-mix(in srgb, var(--highlight) 75%, transparent))
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-locate {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-locate:hover {
+    border-color: color-mix(in srgb, var(--theme-border) 65%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry-note {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-telemetry-note span {
+    color: var(--theme-accent)
+}
+@media (max-width: 680px) {
+    html[data-theme]:not([data-theme="phi"]):not([data-1998]) .filtermap-layer-list button {
+        border: 1px solid color-mix(in srgb, var(--theme-border) 12%, transparent)
+    }
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-screen {
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-topbar {
+    background: var(--background);
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-phi-mark path {
+    stroke: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-status-dot {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-status-dot--fallback {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-status-dot--live {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-icon-button {
+    color: var(--theme-accent);
+    background: color-mix(in srgb, var(--highlight) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 34%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-icon-button:hover,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-icon-button--active {
+    color: var(--theme-muted);
+    background: var(--action-background);
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-ai-help h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-ai-help li {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-ai-help__text .presentation-letter {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-ai-check {
+    color: var(--theme-muted);
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--dad-site img {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 42%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--dad-site p {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-gold {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--developers p {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--no h1,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--plain-no h1 {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--no p {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-corner-title {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--claude img {
+    background: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-red {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--mistake p {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--issue-two h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--trust-stat p,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--confession p,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--confession h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--confession p span {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-slide--confession h2 {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-kicker {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-lede {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-status-row,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-signal {
+    color: var(--theme-text);
+    background: color-mix(in srgb, var(--theme-text) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 14%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-status-row--subtle {
+    color: var(--theme-text);
+    background: color-mix(in srgb, var(--theme-text) 5%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-dot {
+    background: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-dot--live {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-signal span,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-readout span {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pairing-counter {
+    color: var(--theme-muted);
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-qr-drawer {
+    background: var(--background);
+    border-left: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-qr-panel {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-qr-panel img {
+    background: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .presentation-qr-panel span {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-send-bar {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-send-bar--sending {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-send-bar--sent {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-send-bar--error {
+    background: var(--highlight)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-form label {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-form input {
+    color: var(--theme-text);
+    background: color-mix(in srgb, var(--theme-text) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-form button,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-controls button {
+    color: var(--theme-muted);
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-pair-message {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-notes-meta {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-notes-meta strong {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-notes {
+    color: var(--theme-text);
+    background: color-mix(in srgb, var(--theme-text) 7%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 13%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-bottom-controls button {
+    color: var(--theme-muted);
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-bottom-controls button:active {
+    background: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .remote-readout {
+    color: var(--theme-text);
+    background: color-mix(in srgb, var(--theme-text) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 14%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumTitle {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumPage {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .BackLink {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent);
+    background: color-mix(in srgb, var(--background) 80%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .BackLink:hover {
+    background: color-mix(in srgb, var(--highlight) 10%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .AlbumArtist {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackRow {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackRow:hover {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackIndex {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackName {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButton {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 14%, transparent);
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButton:not(:disabled):hover {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TransportButtonPrimary {
+    border-color: color-mix(in srgb, var(--theme-border) 45%, transparent);
+    background: color-mix(in srgb, var(--highlight) 12%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .NowPlaying {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackPlayButton {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 24%, transparent);
+    background: color-mix(in srgb, var(--highlight) 8%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackProgress {
+    accent-color: var(--action-background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackTime {
+    color: var(--theme-muted)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackDownload {
+    color: var(--theme-accent);
+    border: 1px solid color-mix(in srgb, var(--theme-border) 24%, transparent);
+    background: color-mix(in srgb, var(--highlight) 8%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .TrackDownload:hover {
+    background: color-mix(in srgb, var(--highlight) 16%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-page {
+    background: var(--background);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-kicker {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-intro h1,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-header h1 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-copy,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-subtitle,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__subtitle {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-copy code,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty code {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 28%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 2%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__link:hover {
+    background: color-mix(in srgb, var(--highlight) 5%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card__meta,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-post-meta {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-card h2,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty h2 {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-tags span {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 34%, transparent);
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-empty p {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-back {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-back:hover {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h2,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h3,
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose h4 {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose a {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose strong {
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose code {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose pre {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 22%, transparent);
+    background: color-mix(in srgb, var(--theme-text) 3%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .research-prose blockquote {
+    border-left: 2px solid color-mix(in srgb, var(--theme-border) 50%, transparent);
+    color: var(--theme-text)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) :where(.quicklinks) a {
+    color: var(--theme-accent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.red {
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.green {
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.blue {
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-card.gold {
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.danger {
+    background: color-mix(in srgb, var(--highlight) 12%, transparent);
+    color: var(--theme-accent);
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.ok {
+    background: color-mix(in srgb, var(--highlight) 10%, transparent);
+    color: var(--theme-accent);
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-badge.info {
+    background: color-mix(in srgb, var(--highlight) 10%, transparent);
+    color: var(--theme-accent);
+    border-color: color-mix(in srgb, var(--theme-border) 35%, transparent)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-chip:hover {
+    border-color: var(--theme-border);
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-input {
+    background: var(--background)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-input:focus {
+    border-color: var(--theme-border)
+}
+html[data-theme]:not([data-theme="phi"]):not([data-1998]) .pp-button {
+    border: 1px solid color-mix(in srgb, var(--theme-border) 10%, transparent);
+    background: linear-gradient(180deg, var(--background), var(--background))
+}

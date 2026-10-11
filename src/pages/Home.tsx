@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "../stylesheets/home.css";
-import { is1998ModeEnabled } from "../hooks/use1998Mode";
 
 const PHRASE_INTERVAL_MS = 2500;
 const VISIBLE_RADIUS = 10;
@@ -415,7 +414,6 @@ const Home = () => {
   }, [displayPhrases]);
 
   useEffect(() => {
-    if (is1998ModeEnabled()) return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -526,6 +524,7 @@ const Home = () => {
       <div ref={phraseWheelZoneRef} className="home-phrase-wheel-zone" aria-hidden="true" />
       <div ref={phraseWallRef} className="home-phrase-wall" aria-hidden="true">
         {phraseRows.map((row) => {
+          const originalPhi = document.documentElement.dataset.theme === "phi";
           const red = Math.round(80 + 175 * row.centreProximity);
           const green = Math.round(80 + 141 * row.centreProximity);
           const blue = Math.round(80 - 29 * row.centreProximity);
@@ -536,11 +535,13 @@ const Home = () => {
               key={`${row.phraseIndex}:${row.relativeIndex}`}
               className="home-phrase-line"
               style={{
-                color: `rgb(${red} ${green} ${blue})`,
+                color: originalPhi ? `rgb(${red} ${green} ${blue})` : `color-mix(in srgb, var(--secondary) ${100 * (1 - row.centreProximity)}%, var(--highlight))`,
                 fontSize: `${row.fontSize}px`,
                 opacity,
                 textShadow: row.centreProximity > 0.01
-                  ? `0 0 ${4 + row.centreProximity * 22}px rgba(255, 221, 51, ${0.15 + row.centreProximity * 0.42})`
+                  ? originalPhi
+                    ? `0 0 ${4 + row.centreProximity * 22}px rgba(255, 221, 51, ${0.15 + row.centreProximity * 0.42})`
+                    : `0 0 ${4 + row.centreProximity * 22}px color-mix(in srgb, var(--highlight) ${100 * (0.15 + row.centreProximity * 0.42)}%, transparent)`
                   : "none",
                 transform: `translate3d(var(--home-phrase-x), calc(-50% + ${row.y}px), 0)`,
                 zIndex: Math.round(row.centreProximity * 100),
