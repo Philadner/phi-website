@@ -64,7 +64,7 @@ try {
     await page.keyboard.press('ArrowRight')
     await category(page, 'Theme')
     await page.waitForTimeout(480)
-    assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word').count(), 19)
+    assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word').count(), themes.length)
     for (let index = 0; index < themes.length; index++) {
       if (index) await page.keyboard.press('ArrowDown')
       await settle(page, themes[index].name)
@@ -82,12 +82,12 @@ try {
       }
     }
     // Unsaved preview restores on category exit and on a route change.
-    await page.keyboard.press('ArrowUp'); await settle(page, themes[17].name)
-    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), themes[17].id)
+    await page.keyboard.press('ArrowUp'); await settle(page, themes[themes.length - 2].name)
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), themes[themes.length - 2].id)
     await page.keyboard.press('ArrowLeft')
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'hub')
     await page.keyboard.press('ArrowRight'); await page.waitForTimeout(480)
-    await page.keyboard.press('ArrowUp'); await settle(page, themes[17].name)
+    await page.keyboard.press('ArrowUp'); await settle(page, themes[themes.length - 2].name)
     await page.getByRole('button',{name:'Home',exact:true}).click()
     await category(page, 'phi')
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'hub')
@@ -97,7 +97,7 @@ try {
     assert.equal(await page.locator('.home-ripple-out').count(), 0)
     assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out)').count(), 1)
     assert.deepEqual(errors, [])
-    console.log(`PASS: ${viewport.width}px keyboard, routes, phrase filtering/auto, haptics, all 19 themes, wrapping, preview cancellation and rapid switches`)
+    console.log(`PASS: ${viewport.width}px keyboard, routes, phrase filtering/auto, haptics, all ${themes.length} themes, wrapping, preview cancellation and rapid switches`)
     await page.close()
   }
   const {page, errors} = await create({width:320,height:568}, 'igor', true)

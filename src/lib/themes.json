@@ -162,6 +162,33 @@
     "highlight": "#D8C68A"
   },
   {
+    "id": "brat",
+    "name": "BRAT",
+    "mode": "light",
+    "background": "#8ACE00",
+    "primary": "#000000",
+    "secondary": "#333333",
+    "highlight": "#000000"
+  },
+  {
+    "id": "a-broken-frame",
+    "name": "A Broken Frame",
+    "mode": "dark",
+    "background": "#365B64",
+    "primary": "#AEBCBD",
+    "secondary": "#AE8859",
+    "highlight": "#922923"
+  },
+  {
+    "id": "the-now-now",
+    "name": "The Now Now",
+    "mode": "light",
+    "background": "#2FE2DE",
+    "primary": "#000000",
+    "secondary": "#333333",
+    "highlight": "#E4548B"
+  },
+  {
     "id": "hub",
     "name": "hub",
     "mode": "dark",

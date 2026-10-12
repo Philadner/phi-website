@@ -79,7 +79,7 @@ try {
   assert.equal(await legacy.evaluate(() => document.documentElement.hasAttribute('data-1998')), false)
   assert.equal(await legacy.locator('.mode-1998-btn, #phi-1998-css').count(), 0)
   await legacy.close()
-  console.log('PASS: all 19 themes on populated chat/music at mobile and desktop sizes; home navigation, responsive wheels and legacy mode removal')
+  console.log(`PASS: all ${palettes.length} themes on populated chat/music at mobile and desktop sizes; home navigation, responsive wheels and legacy mode removal`)
 } finally {
   await browser.close()
 }

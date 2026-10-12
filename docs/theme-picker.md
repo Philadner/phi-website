@@ -6,7 +6,7 @@ Swipe, scroll or use arrow keys to select categories and items. Tap anywhere in 
 
 Scrolling through Theme immediately previews each palette. Activate the centred theme to apply and save it. Leaving Theme without applying restores the previous palette. A blocking head script restores saved colours before paint. If browser storage is unavailable, applying still works for the current visit.
 
-There are 19 choices: original CSS-gold phi, 17 album palettes, and hub last. `src/lib/themes.json` is the palette source. Page layouts and gameplay colours remain intact. Legacy `/1998` routes redirect to the regular homepage.
+There are 22 choices: original CSS-gold phi, 20 album palettes, and hub last. `src/lib/themes.json` is the palette source. BRAT uses green `#8ACE00` with black text; A Broken Frame uses the four supplied swatches; The Now Now uses cover blue `#2FE2DE`, black text and pink `#E4548B`. Page layouts and gameplay colours remain intact. Legacy `/1998` routes redirect to the regular homepage.
 
 Category changes use overlapping centre-out ripples, with the new centre appearing before the outgoing list finishes. Reduced motion disables ripples and uses immediate selection. Haptic requests are 8ms for manual vertical selection, 14ms for category changes and 18ms for activation. Automatic cycling, initialization, hovering and snapping do not add ticks. Unsupported vibration APIs are ignored.
 
@@ -16,4 +16,4 @@ Category changes use overlapping centre-out ripples, with the new centre appeari
 
 Run `npm run build`, `npm run lint`, `npm run test:themes`, and `npm run test:home-navigation`. The browser checks require separately installed Playwright; set `PHI_PLAYWRIGHT_MODULE` to its `index.mjs` and optionally `PHI_CHROMIUM` to a Chromium binary. `PHI_TEST_URL` defaults to `http://localhost:5173` with the development server running.
 
-`node scripts/test-theme-pages.mjs` checks all 19 palettes on populated chat/music at mobile and desktop sizes, playback and swipes, Home navigation, short/landscape viewports and legacy mode removal. The homepage suite checks phrase filtering and cycling, keyboard and pointer interactions, haptic requests, all themes, preview cancellation, stable full-size wrapping, reduced motion and rapid category changes. Hardware vibration feel still requires a supported physical device. See `theme-contrast.md` for existing palette limitations.
+`node scripts/test-theme-pages.mjs` checks all available palettes on populated chat/music at mobile and desktop sizes, playback and swipes, Home navigation, short/landscape viewports and legacy mode removal. The homepage suite checks phrase filtering and cycling, keyboard and pointer interactions, haptic requests, all themes, preview cancellation, stable full-size wrapping, reduced motion and rapid category changes. Hardware vibration feel still requires a supported physical device. See `theme-contrast.md` for existing palette limitations.
