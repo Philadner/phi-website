@@ -1,0 +1,200 @@
+[
+  {
+    "id": "phi",
+    "name": "phi",
+    "mode": "dark",
+    "background": "#0D0D0D",
+    "primary": "#FFFFFF",
+    "secondary": "#B8860B",
+    "highlight": "#FFD700"
+  },
+  {
+    "id": "igor",
+    "name": "IGOR",
+    "mode": "light",
+    "background": "#F3C3D4",
+    "primary": "#1A1718",
+    "secondary": "#A95675",
+    "highlight": "#E85C8C"
+  },
+  {
+    "id": "chromakopia",
+    "name": "CHROMAKOPIA",
+    "mode": "dark",
+    "background": "#142A1D",
+    "primary": "#E4E8C9",
+    "secondary": "#829A74",
+    "highlight": "#C4D57A"
+  },
+  {
+    "id": "graduation",
+    "name": "Graduation",
+    "mode": "dark",
+    "background": "#2F1168",
+    "primary": "#F7F0FF",
+    "secondary": "#7D63C4",
+    "highlight": "#FF8B1F"
+  },
+  {
+    "id": "to-pimp-a-butterfly",
+    "name": "To Pimp a Butterfly",
+    "mode": "light",
+    "background": "#F0F0F0",
+    "primary": "#101010",
+    "secondary": "#696969",
+    "highlight": "#A8A8A8"
+  },
+  {
+    "id": "gkmc-deluxe",
+    "name": "GKMC Deluxe",
+    "mode": "dark",
+    "background": "#1F3441",
+    "primary": "#EAF5FF",
+    "secondary": "#8FA9BB",
+    "highlight": "#9ED2FF"
+  },
+  {
+    "id": "currents",
+    "name": "Currents",
+    "mode": "dark",
+    "background": "#18162A",
+    "primary": "#F5F2FF",
+    "secondary": "#746FA2",
+    "highlight": "#E63E67"
+  },
+  {
+    "id": "808s-heartbreak",
+    "name": "808s & Heartbreak",
+    "mode": "dark",
+    "background": "#313944",
+    "primary": "#F3F5F7",
+    "secondary": "#BEC5CC",
+    "highlight": "#E12D4F"
+  },
+  {
+    "id": "yeezus",
+    "name": "Yeezus",
+    "mode": "light",
+    "background": "#FFFFFF",
+    "primary": "#0A0A0A",
+    "secondary": "#6E6E6E",
+    "highlight": "#D6001C"
+  },
+  {
+    "id": "my-beautiful-dark-twisted-fantasy-mbdtf",
+    "name": "My Beautiful Dark Twisted Fantasy (MBDTF)",
+    "mode": "light",
+    "background": "#D31624",
+    "primary": "#101010",
+    "secondary": "#73121B",
+    "highlight": "#F1CB62"
+  },
+  {
+    "id": "channel-orange",
+    "name": "channel ORANGE",
+    "mode": "light",
+    "background": "#FF7A00",
+    "primary": "#FFF6EA",
+    "secondary": "#FFD0A3",
+    "highlight": "#1B1B1B"
+  },
+  {
+    "id": "this-old-dog",
+    "name": "This Old Dog",
+    "mode": "dark",
+    "background": "#554B18",
+    "primary": "#FFF0A8",
+    "secondary": "#CDBE61",
+    "highlight": "#FFE15A"
+  },
+  {
+    "id": "flower-boy",
+    "name": "Flower Boy",
+    "mode": "light",
+    "background": "#E4F5FF",
+    "primary": "#231B15",
+    "secondary": "#8B6D5A",
+    "highlight": "#F5BE2E"
+  },
+  {
+    "id": "gnx",
+    "name": "GNX",
+    "mode": "dark",
+    "background": "#0E0E0E",
+    "primary": "#EAEAEA",
+    "secondary": "#808080",
+    "highlight": "#C7C7C7"
+  },
+  {
+    "id": "damn",
+    "name": "DAMN.",
+    "mode": "dark",
+    "background": "#120C0C",
+    "primary": "#FF2636",
+    "secondary": "#B6A4A4",
+    "highlight": "#F01525"
+  },
+  {
+    "id": "blonde",
+    "name": "Blonde",
+    "mode": "light",
+    "background": "#E6E9E3",
+    "primary": "#1D2320",
+    "secondary": "#6E7A73",
+    "highlight": "#85C89A"
+  },
+  {
+    "id": "kids-see-ghosts",
+    "name": "Kids See Ghosts",
+    "mode": "light",
+    "background": "#E9E4D6",
+    "primary": "#1A2A4D",
+    "secondary": "#C45D89",
+    "highlight": "#F08A24"
+  },
+  {
+    "id": "call-me-if-you-get-lost",
+    "name": "CALL ME IF YOU GET LOST",
+    "mode": "dark",
+    "background": "#4D6459",
+    "primary": "#F1ECDD",
+    "secondary": "#B8C0A9",
+    "highlight": "#D8C68A"
+  },
+  {
+    "id": "brat",
+    "name": "BRAT",
+    "mode": "light",
+    "background": "#8ACE00",
+    "primary": "#000000",
+    "secondary": "#333333",
+    "highlight": "#000000"
+  },
+  {
+    "id": "a-broken-frame",
+    "name": "A Broken Frame",
+    "mode": "dark",
+    "background": "#365B64",
+    "primary": "#AEBCBD",
+    "secondary": "#AE8859",
+    "highlight": "#922923"
+  },
+  {
+    "id": "the-now-now",
+    "name": "The Now Now",
+    "mode": "light",
+    "background": "#2FE2DE",
+    "primary": "#000000",
+    "secondary": "#333333",
+    "highlight": "#E4548B"
+  },
+  {
+    "id": "hub",
+    "name": "hub",
+    "mode": "dark",
+    "background": "#000000",
+    "primary": "#FFFFFF",
+    "secondary": "#808080",
+    "highlight": "#FF9900"
+  }
+]

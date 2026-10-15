@@ -1,0 +1,5 @@
+@import './AlbumThemes.css';
+@import './ThemePages.css';
+@import './ThemeDetails.css';
+
+html[data-theme]:not([data-theme="phi"]) :is(.page, #main-site) { background-color: var(--background); }

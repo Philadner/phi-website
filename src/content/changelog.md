@@ -3,10 +3,15 @@ Most recent changes first
 
 ---
 
-## The new new new music player
-Added:
- - songs playing a lot faster (from 30 seconds to 6 seconds to start)
- - mobile ui looks really nice now, easy queue control
+## Themes
+Added some cool ass themes to the website because neon gold on black was gonna get boring eventually
+
+---
+
+## Chatroom
+Now there's a chatroom with emojis GIFs games and an ai bot in there
+
+Have fun (a bit slow on the school computers, because they suck)
 
 ---
 

@@ -1,566 +1,405 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "../stylesheets/home.css";
-import { is1998ModeEnabled } from "../hooks/use1998Mode";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { useWheelMotion } from '../hooks/useWheelMotion'
+import { CATEGORIES, HOME_RESET_EVENT, NAVIGATION, PROJECTS, SOCIALS, tick } from '../lib/homeNavigation'
+import type { Category, WheelItem } from '../lib/homeNavigation'
+import { getSavedTheme, paintTheme, themes, THEME_STORAGE_KEY } from '../lib/themes'
+import '../stylesheets/home.css'
 
-const PHRASE_INTERVAL_MS = 2500;
-const VISIBLE_RADIUS = 10;
-const SMALL_PHRASE_SIZE = 12;
-const SMALL_STACK_STEP = 14;
-
-const FALLBACK_PHRASES = [
-  "welcome",
-  "epic website",
-  "the system knows",
-  "with much effort",
-  "we love you",
-  "2763",
-];
-
+const RADIUS = 10
+const FALLBACK = ['welcome', 'epic website', 'the system knows', 'with much effort', 'we love you', '2763']
 function shuffle<T>(items: T[]) {
-  const shuffled = [...items];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  const deck = [...items]
+  for (let index = deck.length - 1; index > 0; index--) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    ;[deck[index], deck[swap]] = [deck[swap], deck[index]]
   }
-
-  return shuffled;
+  return deck
 }
 
-function samePhrases(left: string[], right: string[]) {
-  return left.length === right.length && left.every((phrase, index) => phrase === right[index]);
-}
+type Layer = { id: number; category: Category; rows: WordRow[] }
+type WordRow = { item: WheelItem; index: number; scale: number; opacity: number; y: number; distance: number }
+type Gesture = { id: number; x: number; y: number; lastY: number; time: number; axis: 'x' | 'y' | null; dragged: boolean; category: boolean }
 
-const Home = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const phraseWallRef = useRef<HTMLDivElement>(null);
-  const phraseWheelZoneRef = useRef<HTMLDivElement>(null);
-  const phiRef = useRef<HTMLDivElement>(null);
-  const phiPosition = useRef({ x: 0, y: 0 });
-  const phiTarget = useRef({ x: 0, y: 0 });
-  const scrollPositionRef = useRef(0);
-  const phraseDeckRef = useRef<string[]>([]);
-  const lastDrawnPhraseRef = useRef<string | null>(null);
-  const phraseTapeRef = useRef<Map<number, string>>(new Map());
+export default function Home() {
+  const navigate = useNavigate()
+  const mobile = useMediaQuery('(max-width: 900px)')
+  const compact = useMediaQuery('(max-width: 700px)')
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const [categoryIndex, setCategoryIndex] = useState(2)
+  const [keyboardFocus, setKeyboardFocus] = useState(false)
+  const category = CATEGORIES[categoryIndex]
+  const [generation, setGeneration] = useState(0)
+  const [sourcePhrases, setSourcePhrases] = useState(FALLBACK)
+  const [phrases, setPhrases] = useState(FALLBACK)
+  const [phraseTape, setPhraseTape] = useState(new Map<number, string>())
+  const deck = useRef<string[]>([])
+  const lastPhrase = useRef('')
+  const tape = useRef(new Map<number, string>())
+  const wheelRef = useRef<HTMLDivElement>(null)
+  const categoriesRef = useRef<HTMLDivElement>(null)
+  const measurementRef = useRef<HTMLDivElement>(null)
+  const probeRef = useRef<HTMLSpanElement>(null)
+  const [metrics, setMetrics] = useState({ font: 52, heights: [] as number[] })
+  const applied = useRef(getSavedTheme())
+  const categoryRef = useRef<Category>(category)
+  categoryRef.current = category
+  const [message, setMessage] = useState('')
+  const [outgoing, setOutgoing] = useState<Layer[]>([])
+  const layersRef = useRef<Layer[]>([])
+  const timers = useRef(new Set<number>())
+  const sequence = useRef(0)
+  const gesture = useRef<Gesture | null>(null)
+  const suppressClick = useRef(0)
+  const wheelAccumulator = useRef({ x: 0, y: 0, time: 0 })
+  const [categoryDrag, setCategoryDrag] = useState(0)
 
-  const [sourcePhrases, setSourcePhrases] = useState<string[]>([]);
-  const [displayPhrases, setDisplayPhrases] = useState<string[]>([]);
-  const [phraseTape, setPhraseTape] = useState<Map<number, string>>(new Map());
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const [heroSize, setHeroSize] = useState(144);
-
-  const slots = useMemo(
-    () => Array.from({ length: VISIBLE_RADIUS * 2 + 1 }, (_, index) => index - VISIBLE_RADIUS),
-    [],
-  );
-
-  const drawPhrase = useCallback(() => {
-    if (!displayPhrases.length) return "";
-
-    if (!phraseDeckRef.current.length) {
-      const freshDeck = shuffle(displayPhrases);
-      if (
-        freshDeck.length > 1
-        && freshDeck[freshDeck.length - 1] === lastDrawnPhraseRef.current
-      ) {
-        [freshDeck[0], freshDeck[freshDeck.length - 1]] = [
-          freshDeck[freshDeck.length - 1],
-          freshDeck[0],
-        ];
-      }
-      phraseDeckRef.current = freshDeck;
+  const items = useMemo<WheelItem[]>(() => {
+    if (category === 'Socials') return SOCIALS
+    if (category === 'Projects') return PROJECTS
+    if (category === 'Theme') return themes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
+    if (category === 'Navigate') {
+      const destinations = NAVIGATION.filter(item => mobile || !item.game)
+      return document.documentElement.dataset.themeDemo === 'true'
+        ? [...destinations, { id: 'theme-lab', label: 'Theme lab', href: '/theme-lab' }]
+        : destinations
     }
-
-    const phrase = phraseDeckRef.current.pop() ?? "";
-    lastDrawnPhraseRef.current = phrase;
-    return phrase;
-  }, [displayPhrases]);
+    return []
+  }, [category, mobile])
+  const initial = category === 'Theme' ? Math.max(0, themes.findIndex(theme => theme.id === applied.current.id)) : 0
+  const motion = useWheelMotion({
+    resetKey: `${category}:${generation}:${category === 'phi' ? phrases.join('\0') : items.length}`,
+    min: category === 'phi' ? -Infinity : 0,
+    max: category === 'phi' ? Infinity : Math.max(0, items.length - 1),
+    initial, auto: category === 'phi' && phrases.length > 1, reduced,
+  })
+  const { settle } = motion
+  const selectedIndex = Math.round(motion.position)
+  const selected = category === 'phi'
+    ? { id: `phrase-${selectedIndex}`, label: phraseTape.get(selectedIndex) ?? phrases[0] ?? '' }
+    : items[selectedIndex] ?? items[initial]
 
   useEffect(() => {
-    document.body.classList.add("body--home-lock");
-    return () => document.body.classList.remove("body--home-lock");
-  }, []);
+    document.body.classList.add('body--home-lock')
+    const activeTimers = timers.current
+    return () => {
+      document.body.classList.remove('body--home-lock')
+      activeTimers.forEach(clearTimeout)
+      if (categoryRef.current === 'Theme') paintTheme(applied.current)
+    }
+  }, [])
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    fetch("https://api.phi.me.uk/kv/phrases", { signal: controller.signal })
-      .then((response) => response.json())
-      .then((data) => {
-        const phrases: unknown[] = Array.isArray(data)
-          ? data
-          : (data && typeof data === "object" && "phrases" in data && Array.isArray(data.phrases)
-            ? data.phrases
-            : []);
-        const cleanPhrases = Array.from(
-          new Set<string>(
-            phrases
-              .filter((phrase: unknown): phrase is string => typeof phrase === "string")
-              .map((phrase: string) => phrase.trim())
-              .filter(Boolean),
-          ),
-        );
-
-        setSourcePhrases(shuffle(cleanPhrases.length ? cleanPhrases : FALLBACK_PHRASES));
+    const controller = new AbortController()
+    fetch('https://api.phi.me.uk/kv/phrases', { signal: controller.signal })
+      .then(response => response.json())
+      .then((data: unknown) => {
+        const values: unknown[] = Array.isArray(data) ? data
+          : data && typeof data === 'object' && 'phrases' in data && Array.isArray(data.phrases) ? data.phrases : []
+        const clean = [...new Set(values.filter((value): value is string => typeof value === 'string').map(value => value.trim()).filter(Boolean))]
+        setSourcePhrases(shuffle(clean.length ? clean : FALLBACK))
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setSourcePhrases(shuffle(FALLBACK_PHRASES));
-      });
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setSourcePhrases(shuffle(FALLBACK))
+      })
+    return () => controller.abort()
+  }, [])
 
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const wall = phraseWallRef.current;
-    const phi = phiRef.current;
-    if (!container || !wall || !phi || !sourcePhrases.length) return;
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    let measurementFrame = 0;
-
+  // Measure at FULL size. Navigation wraps once at that width, then the entire
+  // block scales; its line breaks cannot jump as it moves towards the centre.
+  // Community phrases retain the original single-line width filtering.
+  useLayoutEffect(() => {
     const measure = () => {
-      const containerBounds = container.getBoundingClientRect();
-      const wallBounds = wall.getBoundingClientRect();
-      const phiBounds = phi.getBoundingClientRect();
-      const phiStyles = window.getComputedStyle(phi);
-      const focusSize = Number.parseFloat(phiStyles.fontSize) || 144;
-      const mobileLayout = containerBounds.width <= 700;
-      const maximumPhraseWidth = mobileLayout
-        ? Math.max(80, containerBounds.width - 32)
-        : Math.max(
-          80,
-          phiBounds.left
-            - Math.max(28, containerBounds.width * 0.035)
-            - (wallBounds.left + Math.max(24, Math.min(containerBounds.width * 0.05, 76))),
-        );
-
-      setHeroSize(focusSize);
-
-      if (!context) {
-        setDisplayPhrases(sourcePhrases);
-        return;
+      const measurement = measurementRef.current
+      const probe = probeRef.current
+      if (!measurement || !probe) return
+      const font = parseFloat(getComputedStyle(probe).fontSize)
+      const nodes = [...measurement.children] as HTMLElement[]
+      setMetrics(previous => {
+        const heights = nodes.map(node => node.offsetHeight)
+        return previous.font === font && previous.heights.join() === heights.join() ? previous : { font, heights }
+      })
+      if (category === 'phi') {
+        const fitting = sourcePhrases.filter((_, index) => nodes[index]?.scrollWidth <= measurement.clientWidth)
+        const next = fitting.length ? fitting : ['phi']
+        setPhrases(previous => previous.join('\0') === next.join('\0') ? previous : next)
       }
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    if (wheelRef.current) observer.observe(wheelRef.current)
+    if (probeRef.current) observer.observe(probeRef.current)
+    return () => observer.disconnect()
+  }, [category, items, sourcePhrases])
 
-      context.font = `850 ${focusSize}px ${phiStyles.fontFamily}`;
-      const letterSpacing = focusSize * -0.055;
-      const fittingPhrases = sourcePhrases.filter((phrase) => {
-        const measuredWidth = context.measureText(phrase).width
-          + Math.max(0, phrase.length - 1) * letterSpacing;
-        return measuredWidth <= maximumPhraseWidth;
-      });
-      const nextPhrases = fittingPhrases.length
-        ? fittingPhrases
-        : sourcePhrases.filter((phrase) => phrase.length <= 8);
+  const draw = useCallback(() => {
+    if (!deck.current.length) {
+      deck.current = shuffle(phrases)
+      if (deck.current.length > 1 && deck.current[deck.current.length - 1] === lastPhrase.current) {
+        ;[deck.current[0], deck.current[deck.current.length - 1]] = [deck.current[deck.current.length - 1], deck.current[0]]
+      }
+    }
+    const phrase = deck.current.pop() ?? 'phi'
+    lastPhrase.current = phrase
+    return phrase
+  }, [phrases])
+  useEffect(() => {
+    deck.current = []
+    lastPhrase.current = ''
+    const next = new Map<number, string>()
+    for (let index = -RADIUS - 4; index <= RADIUS + 4; index++) next.set(index, draw())
+    tape.current = next
+    setPhraseTape(next)
+  }, [draw])
+  useEffect(() => {
+    if (category !== 'phi') return
+    const next = new Map(tape.current)
+    let changed = false
+    for (let index = selectedIndex - RADIUS - 4; index <= selectedIndex + RADIUS + 4; index++) {
+      if (!next.has(index)) { next.set(index, draw()); changed = true }
+    }
+    // Bound the infinite tape while retaining ample scroll history.
+    for (const index of next.keys()) if (Math.abs(index - selectedIndex) > 100) next.delete(index)
+    if (changed) { tape.current = next; setPhraseTape(next) }
+  }, [category, selectedIndex, draw])
 
-      setDisplayPhrases((current) => samePhrases(current, nextPhrases) ? current : nextPhrases);
-    };
+  const rows = useMemo<WordRow[]>(() => {
+    const first = category === 'phi' ? Math.floor(motion.position) - RADIUS : 0
+    const last = category === 'phi' ? Math.ceil(motion.position) + RADIUS : items.length - 1
+    const result: WordRow[] = []
+    let centre = 0
+    let previousHeight = 0
+    for (let index = first; index <= last; index++) {
+      const distance = Math.abs(index - motion.position)
+      const focus = Math.pow(Math.max(0, 1 - distance), 2.45)
+      const scale = .5 + .5 * focus
+      const item = category === 'phi' ? { id: `phrase-${index}`, label: phraseTape.get(index) ?? '' } : items[index]
+      const height = (category === 'phi' ? metrics.font * .92 : metrics.heights[index] ?? metrics.font * .92) * scale
+      if (index > first) centre += (previousHeight + height) / 2 + Math.max(12, metrics.font * .12)
+      previousHeight = height
+      result.push({ item, index, scale, distance, y: centre, opacity: category === 'phi' ? Math.max(.08, .24 - distance * .018) + .76 * focus : Math.max(.28, .78 - distance * .09) + .22 * focus })
+    }
+    const floor = Math.floor(motion.position)
+    const lower = result.find(row => row.index === floor)?.y ?? 0
+    const upper = result.find(row => row.index === floor + 1)?.y ?? lower
+    const reference = lower + (upper - lower) * (motion.position - floor)
+    return result.map(row => ({ ...row, y: row.y - reference }))
+  }, [category, motion.position, items, metrics, phraseTape])
+  const rowsRef = useRef(rows)
+  rowsRef.current = rows
 
-    const scheduleMeasurement = () => {
-      window.cancelAnimationFrame(measurementFrame);
-      measurementFrame = window.requestAnimationFrame(measure);
-    };
-
-    const resizeObserver = new ResizeObserver(scheduleMeasurement);
-    resizeObserver.observe(container);
-    resizeObserver.observe(wall);
-    resizeObserver.observe(phi);
-    scheduleMeasurement();
-
-    return () => {
-      window.cancelAnimationFrame(measurementFrame);
-      resizeObserver.disconnect();
-    };
-  }, [sourcePhrases]);
+  const changeCategory = useCallback((next: number, haptic = true, reset = false) => {
+    const index = Math.max(0, Math.min(CATEGORIES.length - 1, next))
+    if (index === categoryIndex && !reset) return
+    if (haptic && index !== categoryIndex) tick(14)
+    if (category === 'Theme') paintTheme(applied.current)
+    if (wheelRef.current?.contains(document.activeElement)) wheelRef.current.focus({ preventScroll: true })
+    settle()
+    if (!reduced && index !== categoryIndex) {
+      const layer = { id: ++sequence.current, category, rows: rowsRef.current }
+      // Keep only the newest outgoing waves; older waves are already transparent.
+      layersRef.current = [...layersRef.current.slice(-2), layer]
+      setOutgoing(layersRef.current)
+      const timer = window.setTimeout(() => {
+        layersRef.current = layersRef.current.filter(old => old.id !== layer.id)
+        setOutgoing(layersRef.current)
+        timers.current.delete(timer)
+      }, 440)
+      timers.current.add(timer)
+    } else { layersRef.current = []; setOutgoing([]) }
+    setMessage('')
+    setCategoryDrag(0)
+    setCategoryIndex(index)
+    setGeneration(value => value + 1)
+  }, [categoryIndex, category, settle, reduced])
 
   useEffect(() => {
-    scrollPositionRef.current = 0;
-    setScrollPosition(0);
-    phraseDeckRef.current = [];
-    lastDrawnPhraseRef.current = null;
-
-    if (!displayPhrases.length) {
-      const emptyTape = new Map<number, string>();
-      phraseTapeRef.current = emptyTape;
-      setPhraseTape(emptyTape);
-      return;
-    }
-
-    const initialTape = new Map<number, string>();
-    for (let index = -VISIBLE_RADIUS - 4; index <= VISIBLE_RADIUS + 4; index += 1) {
-      initialTape.set(index, drawPhrase());
-    }
-    phraseTapeRef.current = initialTape;
-    setPhraseTape(initialTape);
-  }, [displayPhrases, drawPhrase]);
+    const reset = () => changeCategory(2, false, true)
+    window.addEventListener(HOME_RESET_EVENT, reset)
+    return () => window.removeEventListener(HOME_RESET_EVENT, reset)
+  }, [changeCategory])
 
   useEffect(() => {
-    if (displayPhrases.length < 2) return;
-
-    const wheelZone = phraseWheelZoneRef.current;
-    if (!wheelZone) return;
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const mobileLayout = window.matchMedia("(max-width: 700px)");
-    let animationFrame = 0;
-    let autoTimer = 0;
-    let wheelResetTimer = 0;
-    let wheelAccumulator = 0;
-    let wheelTickCount = 0;
-    let wheelTickDirection = 0;
-    let targetPosition: number | null = null;
-    let velocity = 0;
-    let dragging = false;
-    let lastFrameTime = performance.now();
-    let pointerY = 0;
-    let pointerTime = 0;
-    let dragStepPixels = 64;
-    let cancelled = false;
-
-    const setPosition = (nextPosition: number) => {
-      const previousPosition = scrollPositionRef.current;
-      const movingForward = nextPosition > previousPosition;
-      const crossedFocus = movingForward
-        ? Math.floor(nextPosition + 0.000001) > Math.floor(previousPosition + 0.000001)
-        : Math.ceil(nextPosition - 0.000001) < Math.ceil(previousPosition - 0.000001);
-
-      scrollPositionRef.current = nextPosition;
-      setScrollPosition(nextPosition);
-
-      if (crossedFocus && mobileLayout.matches && "vibrate" in navigator) {
-        navigator.vibrate(7);
-      }
-    };
-
-    const resetAutoTimer = () => {
-      window.clearTimeout(autoTimer);
-      autoTimer = window.setTimeout(() => {
-        if (dragging) {
-          resetAutoTimer();
-          return;
-        }
-
-        const base = targetPosition ?? Math.round(scrollPositionRef.current);
-        targetPosition = base - 1;
-      }, PHRASE_INTERVAL_MS);
-    };
-
-    const queueStep = (direction: number) => {
-      const base = targetPosition ?? Math.round(scrollPositionRef.current);
-      const nextTarget = base - direction;
-      resetAutoTimer();
-
-      if (reducedMotion.matches) {
-        targetPosition = nextTarget;
-        velocity = 0;
-        setPosition(nextTarget);
-        targetPosition = null;
-        return;
-      }
-
-      targetPosition = nextTarget;
-    };
-
-    const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      resetAutoTimer();
-      window.clearTimeout(wheelResetTimer);
-      wheelResetTimer = window.setTimeout(() => {
-        wheelAccumulator = 0;
-        wheelTickCount = 0;
-        wheelTickDirection = 0;
-      }, 450);
-
-      const pixelDelta = event.deltaMode === WheelEvent.DOM_DELTA_PIXEL
-        ? event.deltaY
-        : event.deltaY * 40;
-
-      if (Math.abs(pixelDelta) >= 50) {
-        const direction = pixelDelta > 0 ? 1 : -1;
-        if (wheelTickDirection !== direction) {
-          wheelTickCount = 0;
-          wheelTickDirection = direction;
-        }
-
-        wheelTickCount += 1;
-        if (wheelTickCount >= 3) {
-          queueStep(direction);
-          wheelTickCount = 0;
-        }
-        wheelAccumulator = 0;
-        return;
-      }
-
-      wheelAccumulator += pixelDelta;
-      if (Math.abs(wheelAccumulator) < 90) return;
-
-      queueStep(wheelAccumulator > 0 ? 1 : -1);
-      wheelAccumulator %= 90;
-    };
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (!mobileLayout.matches) return;
-
-      event.preventDefault();
-      wheelZone.setPointerCapture(event.pointerId);
-      dragging = true;
-      targetPosition = null;
-      velocity = 0;
-      pointerY = event.clientY;
-      pointerTime = event.timeStamp;
-      dragStepPixels = Math.max(52, Math.min(window.innerHeight * 0.09, 78));
-      resetAutoTimer();
-    };
-
-    const onPointerMove = (event: PointerEvent) => {
-      if (!dragging) return;
-
-      event.preventDefault();
-      const elapsedSeconds = Math.max(0.008, (event.timeStamp - pointerTime) / 1000);
-      const deltaPosition = -(event.clientY - pointerY) / dragStepPixels;
-      const nextPosition = scrollPositionRef.current + deltaPosition;
-      const immediateVelocity = deltaPosition / elapsedSeconds;
-
-      velocity = velocity * 0.52 + immediateVelocity * 0.48;
-      setPosition(nextPosition);
-      pointerY = event.clientY;
-      pointerTime = event.timeStamp;
-    };
-
-    const finishPointer = (event: PointerEvent, cancelledPointer = false) => {
-      if (!dragging) return;
-
-      dragging = false;
-      if (wheelZone.hasPointerCapture(event.pointerId)) {
-        wheelZone.releasePointerCapture(event.pointerId);
-      }
-
-      velocity = cancelledPointer ? 0 : Math.max(-18, Math.min(18, velocity));
-      targetPosition = Math.abs(velocity) < 0.28
-        ? Math.round(scrollPositionRef.current)
-        : null;
-      resetAutoTimer();
-    };
-
-    const onPointerCancel = (event: PointerEvent) => finishPointer(event, true);
-
-    const animate = (now: number) => {
-      if (cancelled) return;
-
-      const elapsedSeconds = Math.min(0.032, Math.max(0.001, (now - lastFrameTime) / 1000));
-      lastFrameTime = now;
-
-      if (!dragging) {
-        if (targetPosition !== null) {
-          const displacement = targetPosition - scrollPositionRef.current;
-          velocity += displacement * 600 * elapsedSeconds;
-          velocity *= Math.exp(-50 * elapsedSeconds);
-          velocity = Math.max(-24, Math.min(24, velocity));
-
-          if (Math.abs(displacement) < 0.0015 && Math.abs(velocity) < 0.025) {
-            setPosition(targetPosition);
-            velocity = 0;
-            targetPosition = null;
-          } else {
-            const nextPosition = scrollPositionRef.current + velocity * elapsedSeconds;
-            const wouldOvershoot = Math.sign(targetPosition - nextPosition) !== Math.sign(displacement);
-
-            if (wouldOvershoot) {
-              setPosition(targetPosition);
-              velocity = 0;
-              targetPosition = null;
-            } else {
-              setPosition(nextPosition);
-            }
-          }
-        } else if (Math.abs(velocity) > 0.02) {
-          setPosition(scrollPositionRef.current + velocity * elapsedSeconds);
-          velocity *= Math.exp(-4.6 * elapsedSeconds);
-
-          if (Math.abs(velocity) < 0.24) {
-            targetPosition = Math.round(scrollPositionRef.current);
-          }
-        } else {
-          const snappedPosition = Math.round(scrollPositionRef.current);
-          if (Math.abs(snappedPosition - scrollPositionRef.current) > 0.001) {
-            targetPosition = snappedPosition;
-          }
-        }
-      }
-
-      animationFrame = window.requestAnimationFrame(animate);
-    };
-
-    wheelZone.addEventListener("wheel", onWheel, { passive: false });
-    wheelZone.addEventListener("pointerdown", onPointerDown);
-    wheelZone.addEventListener("pointermove", onPointerMove);
-    wheelZone.addEventListener("pointerup", finishPointer);
-    wheelZone.addEventListener("pointercancel", onPointerCancel);
-    resetAutoTimer();
-    animationFrame = window.requestAnimationFrame(animate);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(autoTimer);
-      window.clearTimeout(wheelResetTimer);
-      window.cancelAnimationFrame(animationFrame);
-      wheelZone.removeEventListener("wheel", onWheel);
-      wheelZone.removeEventListener("pointerdown", onPointerDown);
-      wheelZone.removeEventListener("pointermove", onPointerMove);
-      wheelZone.removeEventListener("pointerup", finishPointer);
-      wheelZone.removeEventListener("pointercancel", onPointerCancel);
-    };
-  }, [displayPhrases]);
-
-  useEffect(() => {
-    if (is1998ModeEnabled()) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    let animationFrame = 0;
-
-    const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType && event.pointerType !== "mouse") return;
-
-      const bounds = container.getBoundingClientRect();
-      const normalX = (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2);
-      const normalY = (event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2);
-      const maximumDrift = 18;
-
-      phiTarget.current.x = Math.max(-1, Math.min(1, normalX)) * maximumDrift;
-      phiTarget.current.y = Math.max(-1, Math.min(1, normalY)) * maximumDrift;
-    };
-
-    const resetTarget = () => {
-      phiTarget.current.x = 0;
-      phiTarget.current.y = 0;
-    };
-
-    const animatePhi = () => {
-      const smoothing = 0.075;
-      phiPosition.current.x += (phiTarget.current.x - phiPosition.current.x) * smoothing;
-      phiPosition.current.y += (phiTarget.current.y - phiPosition.current.y) * smoothing;
-
-      const x = phiPosition.current.x;
-      const y = phiPosition.current.y;
-      const phi = phiRef.current;
-
-      if (phi) {
-        phi.style.transform = `translate3d(-50%, -50%, 0) translate3d(${x}px, ${y}px, 0) rotateX(${-y * 0.12}deg) rotateY(${x * 0.12}deg)`;
-        phi.style.textShadow = `0 0 ${16 + Math.abs(x) * 0.18 + Math.abs(y) * 0.18}px rgba(255, 221, 51, 0.52)`;
-      }
-
-      animationFrame = window.requestAnimationFrame(animatePhi);
-    };
-
-    container.addEventListener("pointermove", onPointerMove);
-    container.addEventListener("pointerleave", resetTarget);
-    animationFrame = window.requestAnimationFrame(animatePhi);
-
-    return () => {
-      container.removeEventListener("pointermove", onPointerMove);
-      container.removeEventListener("pointerleave", resetTarget);
-      window.cancelAnimationFrame(animationFrame);
-    };
-  }, []);
-
-  const centredPhraseIndex = Math.round(scrollPosition);
-  useEffect(() => {
-    if (!displayPhrases.length) return;
-
-    const nextTape = new Map(phraseTapeRef.current);
-    let changed = false;
-
-    for (
-      let index = centredPhraseIndex - VISIBLE_RADIUS - 4;
-      index <= centredPhraseIndex + VISIBLE_RADIUS + 4;
-      index += 1
-    ) {
-      if (nextTape.has(index)) continue;
-      nextTape.set(index, drawPhrase());
-      changed = true;
+    if (category !== 'Theme') return
+    const theme = themes[Math.round(motion.positionRef.current)]
+    if (theme) {
+      paintTheme(theme)
+      if (theme.id !== applied.current.id) setMessage('')
     }
+  }, [category, selectedIndex, generation, motion.positionRef])
 
-    if (changed) {
-      phraseTapeRef.current = nextTape;
-      setPhraseTape(nextTape);
+  function activate(item: WheelItem) {
+    if (performance.now() < suppressClick.current) return
+    if (item.themeId) {
+      const theme = themes.find(value => value.id === item.themeId)!
+      applied.current = theme
+      paintTheme(theme)
+      try { localStorage.setItem(THEME_STORAGE_KEY, theme.id); setMessage(`${theme.name} applied and saved.`) }
+      catch { setMessage(`${theme.name} applied for this visit. Browser storage is unavailable.`) }
+      tick(18)
+    } else if (item.category) { tick(18); changeCategory(CATEGORIES.indexOf(item.category), false, true) }
+    else if (item.href) {
+      tick(18)
+      if (item.external) window.location.assign(item.href)
+      else navigate(item.href)
     }
-  }, [centredPhraseIndex, displayPhrases.length, drawPhrase]);
+  }
 
-  const activePhrase = displayPhrases.length
-    ? (phraseTape.get(centredPhraseIndex) ?? "")
-    : "";
+  function onKeyDown(event: globalThis.KeyboardEvent) {
+    if (['Tab', 'Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) setKeyboardFocus(true)
+    if (event.target instanceof HTMLElement && (event.target.matches('input, textarea, select') || event.target.isContentEditable)) return
+    if (event.altKey || event.ctrlKey || event.metaKey) return
+    if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof Node && !wheelRef.current?.contains(event.target) && !categoriesRef.current?.contains(event.target) && event.target !== document.body) return
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault(); wheelRef.current?.focus({ preventScroll: true }); changeCategory(categoryIndex + (event.key === 'ArrowRight' ? 1 : -1))
+    } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault(); wheelRef.current?.focus({ preventScroll: true }); motion.step(event.key === 'ArrowDown' ? 1 : -1)
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      suppressClick.current = 0
+      const item = items[Math.round(motion.positionRef.current)]
+      if (item) activate(item)
+    }
+  }
 
-  const phraseRows = useMemo(() => {
-    if (!displayPhrases.length) return [];
+  const keyboardHandler = useRef(onKeyDown)
+  keyboardHandler.current = onKeyDown
+  useEffect(() => {
+    const handle = (event: globalThis.KeyboardEvent) => keyboardHandler.current(event)
+    window.addEventListener('keydown', handle)
+    return () => window.removeEventListener('keydown', handle)
+  }, [])
 
-    const rows = slots.map((relativeIndex) => {
-      const unwrappedPhraseIndex = centredPhraseIndex + relativeIndex;
-      const position = unwrappedPhraseIndex - scrollPosition;
-      const distanceFromCentre = Math.abs(position);
-      const centreProximity = Math.pow(Math.max(0, 1 - distanceFromCentre), 2.45);
-      const edgeFade = Math.max(0, 1 - Math.pow(distanceFromCentre / (VISIBLE_RADIUS + 0.35), 4));
-      const fontSize = SMALL_PHRASE_SIZE + (heroSize - SMALL_PHRASE_SIZE) * centreProximity;
-      const focusCorridor = heroSize * 0.46 + 18;
-      const corridorPosition = Math.max(-1, Math.min(1, position));
+  const handlers = useRef({ categoryIndex, changeCategory, step: motion.step })
+  handlers.current = { categoryIndex, changeCategory, step: motion.step }
+  useEffect(() => {
+    const upper = wheelRef.current
+    const lower = categoriesRef.current
+    if (!upper || !lower) return
+    const scroll = (event: WheelEvent, horizontalOnly: boolean) => {
+      event.preventDefault()
+      const state = wheelAccumulator.current
+      const now = performance.now()
+      if (now - state.time > 220) { state.x = 0; state.y = 0 }
+      state.time = now
+      const multiplier = event.deltaMode === 1 ? 40 : event.deltaMode === 2 ? 400 : 1
+      const horizontal = horizontalOnly || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      const axis = horizontal ? 'x' : 'y'
+      state[axis] += (horizontal ? event.deltaX || event.deltaY : event.deltaY) * multiplier
+      if (Math.abs(state[axis]) < (horizontal ? 70 : 80)) return
+      const direction = Math.sign(state[axis])
+      state[axis] = 0
+      if (horizontal) handlers.current.changeCategory(handlers.current.categoryIndex + direction)
+      else handlers.current.step(direction)
+    }
+    const verticalWheel = (event: WheelEvent) => scroll(event, false)
+    const horizontalWheel = (event: WheelEvent) => scroll(event, true)
+    upper.addEventListener('wheel', verticalWheel, { passive: false })
+    lower.addEventListener('wheel', horizontalWheel, { passive: false })
+    return () => { upper.removeEventListener('wheel', verticalWheel); lower.removeEventListener('wheel', horizontalWheel) }
+  }, [])
 
-      return {
-        relativeIndex,
-        phraseIndex: unwrappedPhraseIndex,
-        phrase: phraseTape.get(unwrappedPhraseIndex) ?? "",
-        centreProximity,
-        edgeFade,
-        fontSize,
-        y: position * SMALL_STACK_STEP + corridorPosition * focusCorridor,
-      };
-    });
+  function pointerDown(event: ReactPointerEvent, categoryWheel: boolean) {
+    setKeyboardFocus(false)
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    suppressClick.current = 0
+    gesture.current = { dragged: false, id: event.pointerId, x: event.clientX, y: event.clientY, lastY: event.clientY, time: event.timeStamp, category: categoryWheel, axis: categoryWheel ? compact ? 'x' : 'y' : null }
+  }
+  function pointerMove(event: ReactPointerEvent) {
+    const state = gesture.current
+    if (!state || state.id !== event.pointerId) return
+    const dx = event.clientX - state.x
+    const dy = event.clientY - state.y
+    if (!state.dragged && Math.max(Math.abs(dx), Math.abs(dy)) < 8) return
+    if (!state.axis) state.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (!state.dragged) {
+      event.currentTarget.setPointerCapture(event.pointerId)
+      if (state.axis === 'y' && !state.category) motion.begin()
+    }
+    if (state.category || state.axis === 'x') {
+      setCategoryDrag(Math.max(-180, Math.min(180, state.axis === 'x' ? dx : dy)))
+    } else {
+      motion.drag(-(event.clientY - state.lastY) / Math.max(52, metrics.font * .7), (event.timeStamp - state.time) / 1000)
+    }
+    state.dragged = true
+    event.preventDefault()
+    state.lastY = event.clientY
+    state.time = event.timeStamp
+  }
+  function pointerEnd(event: ReactPointerEvent, cancel = false) {
+    const state = gesture.current
+    if (!state || state.id !== event.pointerId) return
+    const moved = state.dragged
+    if (moved) {
+      suppressClick.current = performance.now() + 320
+      if (state.axis === 'y' && !state.category) motion.end(cancel)
+      else {
+        const delta = state.axis === 'x' ? event.clientX - state.x : event.clientY - state.y
+        if (!cancel && Math.abs(delta) >= 40) changeCategory(categoryIndex + (delta < 0 ? 1 : -1))
+      }
+    }
+    gesture.current = null
+    setCategoryDrag(0)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+  }
 
-    return rows;
-  }, [centredPhraseIndex, displayPhrases.length, heroSize, phraseTape, scrollPosition, slots]);
+  function activateCentred(event: ReactMouseEvent) {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    event.preventDefault()
+    const item = items[Math.round(motion.positionRef.current)]
+    if (item) activate(item)
+  }
 
-  return (
-    <div ref={containerRef} className="home-stage">
-      <div ref={phraseWheelZoneRef} className="home-phrase-wheel-zone" aria-hidden="true" />
-      <div ref={phraseWallRef} className="home-phrase-wall" aria-hidden="true">
-        {phraseRows.map((row) => {
-          const red = Math.round(80 + 175 * row.centreProximity);
-          const green = Math.round(80 + 141 * row.centreProximity);
-          const blue = Math.round(80 - 29 * row.centreProximity);
-          const opacity = row.edgeFade * (0.24 + 0.76 * row.centreProximity);
-
-          return (
-            <span
-              key={`${row.phraseIndex}:${row.relativeIndex}`}
-              className="home-phrase-line"
-              style={{
-                color: `rgb(${red} ${green} ${blue})`,
-                fontSize: `${row.fontSize}px`,
-                opacity,
-                textShadow: row.centreProximity > 0.01
-                  ? `0 0 ${4 + row.centreProximity * 22}px rgba(255, 221, 51, ${0.15 + row.centreProximity * 0.42})`
-                  : "none",
-                transform: `translate3d(var(--home-phrase-x), calc(-50% + ${row.y}px), 0)`,
-                zIndex: Math.round(row.centreProximity * 100),
-              }}
-            >
-              {row.phrase}
-            </span>
-          );
-        })}
-      </div>
-
-      <span className="home-phrase-announcement" role="status" aria-live="polite">
-        {activePhrase}
+  function renderInk(item: WheelItem, group: Category) {
+    return <span className="home-item-ink"><span>{item.label}</span>
+        {group === 'Theme' && <span className="home-theme-swatches" aria-hidden="true">{Object.entries(themes.find(theme => theme.id === item.themeId) ?? {}).filter(([key]) => ['background', 'primary', 'secondary', 'highlight'].includes(key)).map(([key, colour]) => <i key={key} style={{ backgroundColor: String(colour) }} />)}</span>}
+        {item.id === 'jay' && <span className="gameshow-banner home-jay-banner" aria-hidden="true"><span className="gameshow-text">Jay Game</span><span className="gameshow-divider">Play in browser</span></span>}
       </span>
+  }
 
-      <div ref={phiRef} className="phi-floating" aria-label="phi">
-        phi
+  function renderRows(wordRows: WordRow[], group: Category, old = false) {
+    const centreIndex = old
+      ? wordRows.reduce<WordRow | undefined>((best, row) => !best || row.distance < best.distance ? row : best, undefined)?.index ?? 0
+      : selectedIndex
+    return wordRows.map(row => {
+      const focused = !old && row.index === selectedIndex
+      const style = {
+        '--word-scale': row.scale, '--ripple-offset': `${Math.sign(row.y) * 18}px`,
+        '--ripple-delay': `${Math.min(4, Math.abs(row.index - centreIndex)) * 22}ms`,
+        opacity: row.opacity, transform: `translate3d(var(--home-phrase-x), ${row.y}px, 0)`, zIndex: focused ? 10 : 1,
+      } as CSSProperties
+      const word = renderInk(row.item, group)
+      const className = `home-word ${group === 'phi' ? 'home-word--phrase' : ''} ${(old ? row.index === centreIndex : focused) ? 'is-focused' : ''}`
+      return <div className="home-wheel-row" key={row.item.id} style={style} aria-hidden={!focused}>
+        {old || group === 'phi' ? <span className={className}>{word}</span>
+          : row.item.href ? <a className={className} href={row.item.href} tabIndex={focused ? 0 : -1} aria-label={row.item.label}>{word}</a>
+          : <button type="button" className={className} tabIndex={focused ? 0 : -1} aria-label={group === 'Theme' ? `Apply ${row.item.label} theme` : row.item.label}>{word}</button>}
+      </div>
+    })
+  }
+
+  return <main className="home-stage home-navigation" data-category={category} data-input={keyboardFocus ? 'keyboard' : 'pointer'}>
+    <p id="home-wheel-help" className="home-phrase-announcement">{compact ? 'Swipe left or right to choose a category.' : 'Scroll or swipe the right wheel vertically to choose a category.'} Scroll up or down to choose an item. Tap anywhere in the item wheel or press Enter to activate the centred item. Arrow keys move along both axes.</p>
+    <div ref={wheelRef} className={`home-phrase-wheel-zone ${category === 'phi' ? 'is-phrases' : 'is-navigation'}`} tabIndex={0} role="region" aria-label={`${category} word wheel`} aria-describedby="home-wheel-help"
+      onClick={activateCentred} onPointerDown={event => pointerDown(event, false)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+      {outgoing.map(layer => <div className={`home-phrase-wall home-ripple-out ${layer.category === 'phi' ? 'home-phrase-wall--phrases' : ''}`} key={layer.id} aria-hidden="true" inert>{renderRows(layer.rows, layer.category, true)}</div>)}
+      <div className={`home-phrase-wall ${category === 'phi' ? 'home-phrase-wall--phrases' : ''} ${generation && !reduced ? 'home-ripple-in' : ''}`} key={generation}>
+        {renderRows(rows, category)}
+      </div>
+      {category === 'Theme' && <p className="home-wheel-feedback" aria-hidden="true">{message || 'Scroll to preview · Tap anywhere to apply'}</p>}
+      <span ref={probeRef} className="home-size-probe" aria-hidden="true">phi</span>
+      <div ref={measurementRef} className="home-word-measure" aria-hidden="true" inert>
+        {(category === 'phi' ? sourcePhrases.map((label, index) => ({ id: String(index), label })) : items).map(item => <span key={item.id} className={`home-word ${category === 'phi' ? 'home-word--phrase' : ''}`}>{renderInk(item, category)}</span>)}
       </div>
     </div>
-  );
-};
-
-export default Home;
+    <div ref={categoriesRef} className={`home-category-wheel ${categoryDrag ? 'is-dragging' : ''}`} role="group" aria-label="Homepage categories" aria-describedby="home-wheel-help"
+      onPointerDown={event => pointerDown(event, true)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+      {CATEGORIES.map((name, index) => <button key={name} type="button" className="home-category" aria-pressed={index === categoryIndex} aria-label={`${name} category`} tabIndex={index === categoryIndex ? 0 : -1}
+        style={{ '--category-position': index - categoryIndex, '--category-drag': `${categoryDrag}px`, '--category-opacity': Math.max(.24, .68 - Math.abs(index - categoryIndex) * .13) } as CSSProperties}
+        onClick={() => { if (performance.now() >= suppressClick.current) changeCategory(index) }}>{name}</button>)}
+    </div>
+    <span className="home-phrase-announcement" role="status" aria-live={category === 'phi' ? 'off' : 'polite'}>{message || `${category}: ${selected?.label ?? ''}${category === 'Theme' ? '. Previewing; activate to save.' : ''}`}</span>
+  </main>
+}

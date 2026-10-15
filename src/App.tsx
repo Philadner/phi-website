@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faMagnifyingGlass, faHouse } from "@fortawesome/free-solid-svg-icons";
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -19,7 +19,6 @@ import Wpadmin from './pages/wp-admin';
 import News from './pages/News';
 import JayGame from './pages/JayGame';
 import DatingGame from './pages/DatingGame';
-import Toggle1998 from './pages/Toggle1998';
 import Presentation from './pages/Presentation';
 import Remote from './pages/Remote';
 import DylanTightness from './pages/DylanTightness';
@@ -30,13 +29,13 @@ import { lazy, Suspense } from 'react';
 import ChatPresenceProvider from './components/ChatPresenceProvider';
 import { useChatPresence } from './lib/chat';
 import ChatUploadProgress from './components/ChatUploadProgress';
-import use1998Mode from './hooks/use1998Mode';
-import { set1998ModeEnabled } from './hooks/use1998Mode';
 import { MusicPlayerProvider, useMusicPlayer } from './components/MusicPlayerContext';
 import { PhiMark } from './components/PhiMark';
 import './App.css';
+import { HOME_RESET_EVENT, tick } from './lib/homeNavigation';
 
 const Chatroom = lazy(() => import('./pages/Chatroom'));
+const ThemeLab = lazy(() => import('./previews/ThemeLab'));
 
 function ModernLoader() {
   return (
@@ -48,115 +47,8 @@ function ModernLoader() {
   );
 }
 
-function RetroLoader() {
-  const text = "phi";
-  const [typedChars, setTypedChars] = useState(0);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setTypedChars((n) => (n < text.length ? n + 1 : n));
-    }, 140);
-    return () => window.clearInterval(timer);
-  }, [text.length]);
-
-  return (
-    <div
-      id="loader"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#c0c0c0",
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          width: "min(520px, 80vw)",
-          background: "#d4d0c8",
-          borderTop: "2px solid #ffffff",
-          borderLeft: "2px solid #ffffff",
-          borderRight: "2px solid #404040",
-          borderBottom: "2px solid #404040",
-          padding: "22px 20px 16px",
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            color: "#000000",
-            fontFamily: "'Press Start 2P', 'VT323', 'Lucida Console', 'Courier New', monospace",
-            fontSize: "clamp(28px, 6vw, 52px)",
-            letterSpacing: "0.14em",
-            textTransform: "lowercase",
-            lineHeight: 1.1,
-            textShadow: "1px 1px 0 #ffffff",
-            imageRendering: "pixelated",
-            minHeight: "1.4em",
-          }}
-        >
-          {text.slice(0, typedChars)}
-          <span
-            className="retro-loader-anim"
-            style={{
-              display: "inline-block",
-              width: "0.6ch",
-              marginLeft: "0.06em",
-              opacity: typedChars >= text.length ? 1 : 0.85,
-              animation: "phi-retro-cursor 0.65s steps(1, end) infinite",
-            }}
-          >
-            _
-          </span>
-        </p>
-
-        <div
-          aria-hidden="true"
-          style={{
-            marginTop: "1.1rem",
-            height: "20px",
-            borderTop: "2px solid #404040",
-            borderLeft: "2px solid #404040",
-            borderRight: "2px solid #ffffff",
-            borderBottom: "2px solid #ffffff",
-            background: "#808080",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            className="retro-loader-anim"
-            style={{
-              height: "100%",
-              width: "100%",
-              background:
-                "repeating-linear-gradient(90deg, #ff0040 0 14px, #ff8a00 14px 28px, #ffe100 28px 42px, #28d428 42px 56px, #00b7ff 56px 70px, #3d4dff 70px 84px, #a23cff 84px 98px)",
-              backgroundSize: "280px 100%",
-              animation: "phi-retro-rainbow 0.85s linear infinite",
-            }}
-          />
-        </div>
-
-      </div>
-
-      <style>{`
-        @keyframes phi-retro-rainbow {
-          from { background-position: 0 0; }
-          to { background-position: 280px 0; }
-        }
-        @keyframes phi-retro-cursor {
-          50% { opacity: 0; }
-        }
-      `}</style>
-    </div>
-  );
-}
 function AppShell() {
   const [loaded, setLoaded] = useState(false);
-  const [sideOpen, setSideOpen] = useState(false);
-  const [mode1998] = use1998Mode();
   const location = useLocation();
   const isMusicMode = location.pathname.startsWith("/musicpl");
   const isChatMode = location.pathname === '/chat';
@@ -164,7 +56,6 @@ function AppShell() {
   const isPresentationDemo = location.pathname === "/presentation" || location.pathname === "/remote";
   const wasMusicModeRef = useRef(isMusicMode);
   const headerRef = useRef<HTMLElement | null>(null);
-  const modeToggleText = mode1998 ? "TAKE ME BACK" : "TURN ON NEW DESIGN";
   const {
     searchQuery,
     setSearchQuery,
@@ -173,21 +64,10 @@ function AppShell() {
     goToMusicHome,
     setMobileSearchOpen,
   } = useMusicPlayer();
-  const toggleModeWithRefresh = () => {
-    const next = !mode1998;
-    set1998ModeEnabled(next);
-    window.location.reload();
-  };
-
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 1000);
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    document.body.classList.toggle('body--lock', sideOpen);
-    return () => document.body.classList.remove('body--lock');
-  }, [sideOpen]);
 
   useEffect(() => {
     document.body.classList.toggle('body--music-lock', isMusicMode);
@@ -284,10 +164,15 @@ useEffect(() => {
 
   
   const navigate = useNavigate();
+  const goHome = () => {
+    tick(18);
+    if (location.pathname === '/') window.dispatchEvent(new Event(HOME_RESET_EVENT));
+    else navigate('/');
+  };
   
   return (
     <div className={loaded ? 'loaded page' : 'page'}>
-      {!loaded && (mode1998 ? <RetroLoader /> : <ModernLoader />)}
+      {!loaded && <ModernLoader />}
 
       {!isPresentationDemo && <header ref={headerRef} className={`site-header ${isMusicMode ? "site-header--music" : ""} ${isChatMode ? 'site-header--chat' : ''}`}>
         <div className="site-header__inner">
@@ -308,7 +193,6 @@ useEffect(() => {
                 className="logo"
                 onClick={() => {
                   goToMusicHome();
-                  setSideOpen(false);
                 }}
               >
                 <span className="music-brand__wordmark">phi(music)</span>
@@ -316,7 +200,7 @@ useEffect(() => {
               </Link>
             </div>
           ) : (
-            <Link to="/" className="logo titlebar-content">phi(l)</Link>
+            <Link to="/" className="logo titlebar-content" onClick={event => { event.preventDefault(); goHome(); }}>phi(l)</Link>
           )}
 
           {isMusicMode ? (
@@ -360,13 +244,8 @@ useEffect(() => {
             {isChatMode && <button type="button" className={`chat-online ${chatPresence.live ? 'chat-online--live' : ''}`} aria-label={chatPresence.live ? `${chatPresence.count} online — show active users` : 'Show active users'} aria-expanded={peopleOpen} aria-controls="chat-active-users" onClick={() => setPeopleOpen(!peopleOpen)}>
               <i aria-hidden="true" />{chatPresence.live ? `${chatPresence.count} online` : 'Connecting…'}
             </button>}
-            <button
-              className="menu-btn"
-              onClick={() => setSideOpen(true)}
-              aria-label="Open menu"
-              type="button"
-            >
-              ☰
+            <button className="site-home" onClick={goHome} aria-label="Home" type="button" title="Home">
+              <FontAwesomeIcon icon={faHouse} />
             </button>
           </div>
         </div>
@@ -374,87 +253,14 @@ useEffect(() => {
       {!isPresentationDemo && <div className="header-spacer" />}
 
 
-      {/* Sidebar */}
-      <aside className={`sidebar ${sideOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <span>Site Menu</span>
-          <button onClick={() => setSideOpen(false)} className="close-btn">×</button>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button
-            className="mode-1998-btn sidebar-mode-btn"
-            type="button"
-            aria-pressed={mode1998}
-            onClick={() => {
-              toggleModeWithRefresh();
-              setSideOpen(false);
-            }}
-            title="Toggle 1998 mode"
-          >
-            {modeToggleText}
-          </button>
-
-          {/* always visible in sidebar */}
-          <Link to="/" onClick={() => setSideOpen(false)}>Home</Link>
-          <Link to="/about" onClick={() => setSideOpen(false)}>About</Link>
-          <Link to="/chat" onClick={() => setSideOpen(false)}>Chatroom</Link>
-          <Link to="/changelog" onClick={() => setSideOpen(false)}>Changelog</Link>
-          <Link to="/realchangelog" onClick={() => setSideOpen(false)}>Real Changelog</Link>
-          <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-          <Link to="/news" onClick={() => setSideOpen(false)}>News</Link>
-          <Link to="/dylan" onClick={() => setSideOpen(false)}>Dylan Tightness</Link>
-          <Link to="/phil-tightness" onClick={() => setSideOpen(false)}>Phil Tightness</Link>
-          <div
-            className="gameshow-banner"
-            role="button"
-            tabIndex={0}
-            onClick={() => {
-              setSideOpen(false);
-              navigate("/jay");
-              }
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                setSideOpen(false);
-                navigate("/jay");
-              }
-            }}
-          >
-            <span className="gameshow-text">Jay Game</span>
-            <span className="gameshow-divider">Play in browser</span>
-          </div>
-
-          {/* <Link
-            to="/workinhardorhardlyworkin"
-            onClick={() => setSideOpen(false)}
-            className="sidebar-note"
-          >
-            is phil lazy
-          </Link> */}
-          
-          
-
-          {/* only visible on mobile test change */}
-          <div className="sidebar-mobile-only">
-            <Link to="/musicpl" onClick={() => setSideOpen(false)}>Music</Link>
-            <Link to="/games" onClick={() => setSideOpen(false)}>Games</Link>
-            <Link to="/quickl" onClick={() => setSideOpen(false)}>Quick Links</Link>
-            <Link to="/add" onClick={() => setSideOpen(false)}>Add</Link>
-          </div>
-        </nav>
-      </aside>
-
-      <div
-        className={`overlay ${sideOpen ? 'show' : ''}`}
-        onClick={() => setSideOpen(false)}
-      />
+      {isPresentationDemo && <button className="site-home site-home--standalone" onClick={goHome} aria-label="Home" type="button" title="Home"><FontAwesomeIcon icon={faHouse} /></button>}
 
       {loaded && (
         <>
           <Routes>
+            <Route path="/theme-lab" element={<Suspense fallback={<p>Opening theme lab…</p>}><ThemeLab /></Suspense>} />
             <Route path="/" element={<Home />} />
-            <Route path="/1998" element={<Toggle1998 />} />
+            <Route path="/1998" element={<Navigate to="/" replace />} />
             <Route path="/1998/:rest" element={<Navigate to="/" replace />} />
             <Route path="/1998/:rest/*" element={<Navigate to="/" replace />} />
             <Route path="/about" element={<About />} />

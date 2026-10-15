@@ -1,0 +1,6 @@
+.theme-lab { max-width: 960px; padding: 36px 24px; margin: 0 auto; color: var(--primary); }
+.theme-lab p { margin: 20px 0; }
+.theme-lab__links { display: grid; gap: 12px; }
+.theme-lab a { color: var(--primary); }
+.theme-lab__links a { padding: 16px; border: 1px solid var(--secondary); border-radius: 8px; }
+.theme-lab__links a:hover { border-color: var(--highlight); }
