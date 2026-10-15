@@ -3,6 +3,13 @@ Most recent changes first
 
 ---
 
+## The new new new music player
+Added:
+ - songs playing a lot faster (from 30 seconds to 6 seconds to start)
+ - mobile ui looks really nice now, easy queue control
+
+---
+
 ## The new new music player
 Added:
 - queue
@@ -11,9 +18,7 @@ Added:
 - the songs keep playing while you browse songs
 - the ui is quicker and a lot more useful, less fancy tho.
 
-[Click here](https://labs.phi.me.uk/about-musicpl) To find out how it works. It's pretty boring though, you have better things to do.
-It doesn't work at all with the "new design" 
-I'll also add back downloading songs soon, I was going to then i ran out of ai slop usage.
+
 
 ---
 
