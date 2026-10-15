@@ -6,7 +6,8 @@
     "background": "#0D0D0D",
     "primary": "#FFFFFF",
     "secondary": "#B8860B",
-    "highlight": "#FFD700"
+    "highlight": "#FFD700",
+    "text": "#FFFFFF"
   },
   {
     "id": "igor",
@@ -15,7 +16,8 @@
     "background": "#F3C3D4",
     "primary": "#1A1718",
     "secondary": "#A95675",
-    "highlight": "#E85C8C"
+    "highlight": "#E85C8C",
+    "text": "#1A1718"
   },
   {
     "id": "chromakopia",
@@ -24,7 +26,8 @@
     "background": "#142A1D",
     "primary": "#E4E8C9",
     "secondary": "#829A74",
-    "highlight": "#C4D57A"
+    "highlight": "#C4D57A",
+    "text": "#E4E8C9"
   },
   {
     "id": "graduation",
@@ -33,7 +36,8 @@
     "background": "#2F1168",
     "primary": "#F7F0FF",
     "secondary": "#7D63C4",
-    "highlight": "#FF8B1F"
+    "highlight": "#FF8B1F",
+    "text": "#F7F0FF"
   },
   {
     "id": "to-pimp-a-butterfly",
@@ -42,7 +46,8 @@
     "background": "#F0F0F0",
     "primary": "#101010",
     "secondary": "#696969",
-    "highlight": "#A8A8A8"
+    "highlight": "#A8A8A8",
+    "text": "#101010"
   },
   {
     "id": "gkmc-deluxe",
@@ -51,7 +56,8 @@
     "background": "#1F3441",
     "primary": "#EAF5FF",
     "secondary": "#8FA9BB",
-    "highlight": "#9ED2FF"
+    "highlight": "#9ED2FF",
+    "text": "#EAF5FF"
   },
   {
     "id": "currents",
@@ -60,7 +66,8 @@
     "background": "#18162A",
     "primary": "#F5F2FF",
     "secondary": "#746FA2",
-    "highlight": "#E63E67"
+    "highlight": "#E63E67",
+    "text": "#F5F2FF"
   },
   {
     "id": "808s-heartbreak",
@@ -69,7 +76,8 @@
     "background": "#313944",
     "primary": "#F3F5F7",
     "secondary": "#BEC5CC",
-    "highlight": "#E12D4F"
+    "highlight": "#E12D4F",
+    "text": "#F3F5F7"
   },
   {
     "id": "yeezus",
@@ -78,7 +86,8 @@
     "background": "#FFFFFF",
     "primary": "#0A0A0A",
     "secondary": "#6E6E6E",
-    "highlight": "#D6001C"
+    "highlight": "#D6001C",
+    "text": "#0A0A0A"
   },
   {
     "id": "my-beautiful-dark-twisted-fantasy-mbdtf",
@@ -87,7 +96,8 @@
     "background": "#D31624",
     "primary": "#101010",
     "secondary": "#73121B",
-    "highlight": "#F1CB62"
+    "highlight": "#F1CB62",
+    "text": "#FFFFFF"
   },
   {
     "id": "channel-orange",
@@ -96,7 +106,8 @@
     "background": "#FF7A00",
     "primary": "#FFF6EA",
     "secondary": "#FFD0A3",
-    "highlight": "#1B1B1B"
+    "highlight": "#1B1B1B",
+    "text": "#000000"
   },
   {
     "id": "this-old-dog",
@@ -105,7 +116,8 @@
     "background": "#554B18",
     "primary": "#FFF0A8",
     "secondary": "#CDBE61",
-    "highlight": "#FFE15A"
+    "highlight": "#FFE15A",
+    "text": "#FFF0A8"
   },
   {
     "id": "flower-boy",
@@ -114,7 +126,8 @@
     "background": "#E4F5FF",
     "primary": "#231B15",
     "secondary": "#8B6D5A",
-    "highlight": "#F5BE2E"
+    "highlight": "#F5BE2E",
+    "text": "#231B15"
   },
   {
     "id": "gnx",
@@ -123,7 +136,8 @@
     "background": "#0E0E0E",
     "primary": "#EAEAEA",
     "secondary": "#808080",
-    "highlight": "#C7C7C7"
+    "highlight": "#C7C7C7",
+    "text": "#EAEAEA"
   },
   {
     "id": "damn",
@@ -132,7 +146,8 @@
     "background": "#120C0C",
     "primary": "#FF2636",
     "secondary": "#B6A4A4",
-    "highlight": "#F01525"
+    "highlight": "#F01525",
+    "text": "#FF2636"
   },
   {
     "id": "blonde",
@@ -141,7 +156,8 @@
     "background": "#E6E9E3",
     "primary": "#1D2320",
     "secondary": "#6E7A73",
-    "highlight": "#85C89A"
+    "highlight": "#85C89A",
+    "text": "#1D2320"
   },
   {
     "id": "kids-see-ghosts",
@@ -150,7 +166,8 @@
     "background": "#E9E4D6",
     "primary": "#1A2A4D",
     "secondary": "#C45D89",
-    "highlight": "#F08A24"
+    "highlight": "#F08A24",
+    "text": "#1A2A4D"
   },
   {
     "id": "call-me-if-you-get-lost",
@@ -159,7 +176,8 @@
     "background": "#4D6459",
     "primary": "#F1ECDD",
     "secondary": "#B8C0A9",
-    "highlight": "#D8C68A"
+    "highlight": "#D8C68A",
+    "text": "#F1ECDD"
   },
   {
     "id": "brat",
@@ -168,7 +186,8 @@
     "background": "#8ACE00",
     "primary": "#000000",
     "secondary": "#333333",
-    "highlight": "#000000"
+    "highlight": "#000000",
+    "text": "#000000"
   },
   {
     "id": "a-broken-frame",
@@ -177,7 +196,8 @@
     "background": "#365B64",
     "primary": "#AEBCBD",
     "secondary": "#AE8859",
-    "highlight": "#922923"
+    "highlight": "#922923",
+    "text": "#FFFFFF"
   },
   {
     "id": "the-now-now",
@@ -186,7 +206,18 @@
     "background": "#2FE2DE",
     "primary": "#000000",
     "secondary": "#333333",
-    "highlight": "#E4548B"
+    "highlight": "#E4548B",
+    "text": "#000000"
+  },
+  {
+    "id": "mycp",
+    "name": "MyCP",
+    "mode": "light",
+    "background": "#FFFFFF",
+    "primary": "#008064",
+    "secondary": "#3F693C",
+    "highlight": "#FD516B",
+    "text": "#000000"
   },
   {
     "id": "hub",
@@ -195,6 +226,7 @@
     "background": "#000000",
     "primary": "#FFFFFF",
     "secondary": "#808080",
-    "highlight": "#FF9900"
+    "highlight": "#FF9900",
+    "text": "#FFFFFF"
   }
 ]
