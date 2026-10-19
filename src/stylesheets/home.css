@@ -14,6 +14,10 @@ body.body--home-lock { overflow: hidden !important; }
   isolation: isolate;
   -webkit-tap-highlight-color: transparent;
 }
+html[data-theme="mycp"] .home-stage {
+  --wheel-text: var(--primary);
+  --wheel-focus: var(--primary);
+}
 .home-phrase-wheel-zone {
   position: absolute;
   top: calc(80px + env(safe-area-inset-top));
@@ -73,6 +77,24 @@ html[data-theme] .home-navigation.home-stage .home-word.is-focused {
 .home-navigation .home-phrase-wall--phrases .home-word:not(.is-focused) { color: var(--theme-muted, #505050); }
 html[data-theme="phi"] .home-navigation .home-phrase-wall--phrases .home-word:not(.is-focused) { color: #505050; }
 .home-item-ink { display: block; }
+.home-setting-child .home-item-ink { animation: home-word-in 270ms cubic-bezier(.16,1,.3,1) calc(65ms + var(--ripple-delay)) both; }
+.home-setting-text { --setting-ink: var(--wheel-text); position: relative; display: inline-block; max-width: 100%; color: var(--setting-ink); text-shadow: none; }
+.is-focused .home-setting-text { --setting-ink: var(--wheel-focus); }
+.home-setting-outline { display: block; -webkit-text-fill-color: transparent; -webkit-text-stroke: max(1.25px, .025em) var(--setting-ink); }
+.home-setting-fill, .home-setting-strike { position: absolute; inset: 0; display: block; pointer-events: none; }
+.home-setting-fill { -webkit-text-fill-color: var(--setting-ink); clip-path: inset(-.3em 0 -.35em 100%); transition: clip-path 480ms cubic-bezier(.22,.75,.2,1) 65ms; }
+.home-setting-strike { -webkit-text-fill-color: transparent; text-decoration: line-through; text-decoration-color: var(--setting-ink); text-decoration-thickness: .09em; clip-path: inset(0); transition: clip-path 480ms cubic-bezier(.22,.75,.2,1); }
+.home-setting-text[data-enabled="true"] .home-setting-fill { clip-path: inset(-.3em 0 -.35em 0); }
+.home-setting-text[data-enabled="true"] .home-setting-strike { clip-path: inset(0 100% 0 0); }
+.home-navigation[data-category="Settings"] .home-phrase-wheel-zone { width: 46%; }
+.home-settings-tabs { --subtab-reveal: inset(50% 0 50% 0); position: absolute; top: calc(80px + env(safe-area-inset-top)); bottom: max(24px, env(safe-area-inset-bottom)); left: 46%; right: 32%; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 22px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; scroll-snap-type: y mandatory; touch-action: none; animation: home-subtabs-in 380ms cubic-bezier(.16,1,.3,1) both; }
+.home-settings-tabs::-webkit-scrollbar { display: none; }
+.home-settings-tabs { user-select: none; }
+.home-settings-tab { position: absolute; top: calc(50% + var(--subtab-position) * 110px + var(--subtab-drag, 0px)); left: 50%; width: max-content; max-width: calc(100% - 24px); padding: 14px 4px; border: 0; border-radius: 0; background: transparent; color: var(--wheel-text); font: 850 clamp(1.1rem, 2.3vw, 2.25rem)/1.05 system-ui, sans-serif; letter-spacing: -.045em; text-align: center; cursor: pointer; opacity: .55; transform: translate(-50%, -50%) scale(.65); transition: top 390ms cubic-bezier(.16,1,.3,1), left 390ms cubic-bezier(.16,1,.3,1), transform 390ms cubic-bezier(.16,1,.3,1), opacity 250ms; }
+.home-settings-tab[aria-selected="true"] { color: var(--wheel-focus); opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.home-settings-tabs[data-dragging="true"] .home-settings-tab { transition: none; }
+.home-settings-tab:focus-visible { outline: 2px solid var(--wheel-focus); outline-offset: 4px; }
+@keyframes home-subtabs-in { from { opacity: 0; clip-path: var(--subtab-reveal); transform: scale(.75); } to { opacity: 1; clip-path: inset(0); transform: scale(1); } }
 .home-ripple-out { pointer-events: none; }
 .home-ripple-out .home-item-ink { animation: home-word-out 190ms cubic-bezier(.16,1,.3,1) var(--ripple-delay) both; }
 .home-ripple-in .home-item-ink { animation: home-word-in 270ms cubic-bezier(.16,1,.3,1) calc(90ms + var(--ripple-delay)) both; }
@@ -164,8 +186,15 @@ html[data-theme] .home-navigation.home-stage .home-category[aria-pressed="true"]
   .home-category-wheel { top: auto; mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent); left: 0; height: 110px; bottom: calc(12px + env(safe-area-inset-bottom)); --category-step: 148px; --category-size: var(--home-hero-size); }
   .home-theme-swatches { justify-content: center; }
   .home-jay-banner { margin: 12px auto 0; }
+  .home-navigation[data-category="Settings"] .home-phrase-wheel-zone { width: 100%; bottom: calc(210px + env(safe-area-inset-bottom)); }
+  .home-settings-tabs { --subtab-reveal: inset(0 50% 0 50%); top: auto; bottom: calc(126px + env(safe-area-inset-bottom)); left: 0; right: 0; height: 74px; flex-direction: row; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+  .home-settings-tab { top: 50%; left: calc(50% + var(--subtab-position) * 148px + var(--subtab-drag, 0px)); font-size: clamp(1.2rem, 6vw, 1.8rem); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .home-settings-tabs { animation: none; }
+  .home-settings-tab { transition: none; }
+  .home-setting-fill, .home-setting-strike { transition: none; }
+  .home-setting-child .home-item-ink { animation: none; }
   .home-navigation .home-category { transition: none; }
   .home-ripple-in .home-item-ink, .home-ripple-out .home-item-ink { animation: none; }
   .home-navigation .home-word.is-focused, .home-navigation .home-category[aria-pressed="true"] { text-shadow: none; }
@@ -199,4 +228,4 @@ html[data-theme] .home-navigation.home-stage .home-word:not(.is-focused) { color
 html[data-theme="phi"] .home-navigation.home-stage .home-phrase-wall--phrases .home-word:not(.is-focused) { color: #505050; }
 html[data-theme]:not([data-theme="phi"]) .home-navigation.home-stage .home-phrase-wall--phrases .home-word:not(.is-focused) { color: var(--theme-muted); }
 
-.home-wheel-feedback { position: absolute; bottom: 6px; left: 16px; right: 16px; margin: 0; font-size: .75rem; line-height: 1.4; color: var(--wheel-text); opacity: .85; text-align: center; pointer-events: none; }
+.home-wheel-feedback { position: absolute; bottom: 6px; left: 16px; right: 16px; margin: 0; font-size: .75rem; line-height: 1.4; color: var(--theme-text, #fff); opacity: .85; text-align: center; pointer-events: none; }

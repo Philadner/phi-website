@@ -19,6 +19,9 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]) .HeadingLeft {
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .ClickableHeadingLeft {
   color: var(--highlight);
 }
+html[data-theme="mycp"]:not([data-1998]) :is(.HeadingBigLeft, .HeadingLeft, .ClickableHeadingLeft) {
+  color: var(--primary);
+}
 
 html[data-theme]:not([data-theme="phi"]):not([data-1998]) .FancyLink {
   color :var(--theme-accent);
@@ -321,7 +324,7 @@ html[data-theme]:not([data-theme="phi"]):not([data-1998]){
   --bg:var(--background);
   --panel:var(--background);
   --border:var(--secondary);
-  --text:var(--primary);
+  --text:var(--theme-text);
   --muted:var(--secondary);
 }
 

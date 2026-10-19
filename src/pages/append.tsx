@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../stylesheets/home.css"; // uses .home-stage and .phi-floating from Home
 import "../stylesheets/append.css";
+import { PHRASE_MAX_LENGTH } from '../lib/phraseModeration'
 
 const API_URL = "/api/append"; // your Vercel function
 
@@ -50,6 +51,7 @@ const Append: React.FC = () => {
 
     const el = containerRef.current;
     if (!el) return;
+    const desktop = window.matchMedia('(min-width: 701px)')
 
     const onMove = (e: MouseEvent) => {
       const r = el.getBoundingClientRect();
@@ -80,12 +82,14 @@ const Append: React.FC = () => {
 
       const t = phiRef.current;
       if (t && containerRef.current) {
-        const available = containerRef.current.offsetWidth * 0.9;
+        const zoneWidth = t.parentElement?.clientWidth || containerRef.current.offsetWidth
+        const gutter = Math.min(76, Math.max(24, zoneWidth * .05))
+        const available = desktop.matches ? Math.max(1, zoneWidth - gutter * 2 - 96) : zoneWidth * .9
         const textWidth = Math.max(t.scrollWidth, 1);
-        const scale = Math.min(1, available / textWidth) * baseScale * pop.current;
+        const scale = desktop.matches ? Math.min(baseScale * pop.current, available / textWidth) : Math.min(1, available / textWidth) * baseScale * pop.current;
 
         t.style.transform =
-          `translate(-50%, -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
+          `translate(var(--append-anchor-x, -50%), -50%) translate3d(${pos.current.x}px, ${pos.current.y}px, 0)
            rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)
            scale(${scale})`;
         t.style.textShadow =
@@ -122,23 +126,8 @@ const Append: React.FC = () => {
         body: JSON.stringify({ phrase }),
       });
 
-      // ✅ treat empty body as OK; only gate on resp.ok
-      if (!resp.ok) {
-        // try to read error message if available
-        let errMsg = `HTTP ${resp.status}`;
-        try {
-          const text = await resp.text();
-          if (text) {
-            try {
-              const j = JSON.parse(text);
-              errMsg = j?.error || errMsg;
-            } catch {
-              errMsg = text || errMsg;
-            }
-          }
-        } catch {}
-        throw new Error(errMsg);
-      }
+      const result = await resp.json() as { ok?: boolean; error?: string; notice?: string }
+      if (!resp.ok || result.ok !== true) throw new Error(result.error || `Submission failed (HTTP ${resp.status}).`)
 
       // ---- SUCCESS PATH ----
       // clear input (controlled state)
@@ -153,10 +142,13 @@ const Append: React.FC = () => {
       // keep keyboard up on mobile
       inputRef.current?.focus?.();
 
-      // show success briefly
-      setStatusTemp("✅ success", 500);
-    } catch (err: any) {
-      setStatusTemp("❌ " + (err?.message || "failed"), 2000);
+      if (result.notice) {
+        if (statusTimeoutRef.current) window.clearTimeout(statusTimeoutRef.current)
+        statusTimeoutRef.current = null
+        setStatus(`✅ added. ${result.notice}`)
+      } else setStatusTemp('✅ added to the phrase list', 4000)
+    } catch (err: unknown) {
+      setStatusTemp('❌ ' + (err instanceof Error ? err.message : 'failed'), 10000)
     } finally {
       setLoading(false);
     }
@@ -172,17 +164,19 @@ const Append: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="home-stage"
+      className="home-stage append-stage"
       onClick={focusInput}
       onTouchStart={focusInput}
     >
-      {/* Big yellow text mirrors input live */}
-      <div ref={phiRef} className="phi-floating">
-        {loading ? "Posting…" : (value || "type something...")}
+      <div className="append-status" role="status" aria-live="polite">
+        {status.replace(/^[✅❌]\s*/, '')}
       </div>
 
-      {/* Slot under the yellow text (optional) */}
-      {/* <div className="phi-subtext">helper / status text here</div> */}
+      <div className="append-input-zone">
+        <div ref={phiRef} className="phi-floating">
+          {loading ? "Posting…" : (value || "type something...")}
+        </div>
+      </div>
 
       {/* Hidden-but-focusable input */}
       <input
@@ -203,6 +197,7 @@ const Append: React.FC = () => {
         autoCorrect="on"
         spellCheck
         aria-label="Phrase"
+        maxLength={PHRASE_MAX_LENGTH}
         style={{
           position: "fixed",
           left: 0,
@@ -217,25 +212,6 @@ const Append: React.FC = () => {
         }}
       />
 
-      {/* tiny status line */}
-      <div
-        style={{
-          position: "fixed",
-          top: 8,
-          left: 8,
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          fontSize: 14,
-          color: status.startsWith("✅")
-            ? "#8fff8f"
-            : status.startsWith("❌")
-            ? "#ff8a8a"
-            : "#aaaaaa",
-          userSelect: "none",
-        }}
-        aria-live="polite"
-      >
-        {status}
-      </div>
     </div>
   );
 };

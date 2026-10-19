@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { CATEGORIES as MODERATION_CATEGORIES } from './moderation-lab/core.mjs'
+const phrasePayload = texts => ({ phrases: texts.map((text, index) => ({ id: index + 1, text, hatefulness: { flagged: false, categories: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, false])), category_scores: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, 0])) } })) })
 const { chromium } = await import(process.env.PHI_PLAYWRIGHT_MODULE || 'playwright')
 const themes = JSON.parse(readFileSync(new URL('../src/lib/themes.json', import.meta.url), 'utf8'))
 const base = process.env.PHI_TEST_URL || 'http://localhost:5173'
@@ -23,7 +25,7 @@ async function create(viewport, storage = 'phi', reduced = false) {
     window.hapticTicks = []
     Object.defineProperty(navigator, 'vibrate', { value: duration => { window.hapticTicks.push(duration); return true }, configurable: true })
   }, storage)
-  await page.route('**/kv/phrases', route => route.fulfill({ json: ['hello', 'welcome', '2763', 'this community phrase is deliberately far too long to fit at full size on any screen'] }))
+  await page.route('**/api/phrases*', route => route.fulfill({ json: phrasePayload(['hello', 'welcome', '2763', 'this community phrase is deliberately far too long to fit at full size on any screen']) }))
   await page.goto(base, { waitUntil: 'domcontentloaded' })
   await page.locator('.home-navigation').waitFor()
   await page.waitForTimeout(150)
@@ -62,9 +64,10 @@ try {
     // Full-size wrapping remains fixed as words scale up. No nav items are filtered.
     await page.keyboard.press('ArrowRight')
     await page.keyboard.press('ArrowRight')
-    await category(page, 'Theme')
+    await category(page, 'Settings')
+    assert.deepEqual(await page.getByRole('tab').allTextContents(), ['Theme', 'Hate speech'])
     await page.waitForTimeout(480)
-    assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word').count(), 19)
+    assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word').count(), themes.length)
     for (let index = 0; index < themes.length; index++) {
       if (index) await page.keyboard.press('ArrowDown')
       await settle(page, themes[index].name)
@@ -82,12 +85,12 @@ try {
       }
     }
     // Unsaved preview restores on category exit and on a route change.
-    await page.keyboard.press('ArrowUp'); await settle(page, themes[17].name)
-    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), themes[17].id)
+    await page.keyboard.press('ArrowUp'); await settle(page, themes[themes.length - 2].name)
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), themes[themes.length - 2].id)
     await page.keyboard.press('ArrowLeft')
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'hub')
     await page.keyboard.press('ArrowRight'); await page.waitForTimeout(480)
-    await page.keyboard.press('ArrowUp'); await settle(page, themes[17].name)
+    await page.keyboard.press('ArrowUp'); await settle(page, themes[themes.length - 2].name)
     await page.getByRole('button',{name:'Home',exact:true}).click()
     await category(page, 'phi')
     assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'hub')
@@ -97,7 +100,7 @@ try {
     assert.equal(await page.locator('.home-ripple-out').count(), 0)
     assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out)').count(), 1)
     assert.deepEqual(errors, [])
-    console.log(`PASS: ${viewport.width}px keyboard, routes, phrase filtering/auto, haptics, all 19 themes, wrapping, preview cancellation and rapid switches`)
+    console.log(`PASS: ${viewport.width}px keyboard, routes, phrase filtering/auto, haptics, all ${themes.length} themes, wrapping, preview cancellation and rapid switches`)
     await page.close()
   }
   const {page, errors} = await create({width:320,height:568}, 'igor', true)
@@ -137,7 +140,7 @@ try {
     window.hapticTicks=[]
     Object.defineProperty(navigator,'vibrate',{value:duration=>{window.hapticTicks.push(duration);return true},configurable:true})
   })
-  await pointer.route('**/kv/phrases', route => route.fulfill({json:['hello','welcome','2763']}))
+  await pointer.route('**/api/phrases*', route => route.fulfill({json:phrasePayload(['hello','welcome','2763'])}))
   await pointer.goto(base, {waitUntil:'domcontentloaded'})
   await pointer.locator('.home-navigation').waitFor()
   const cdp = await pointer.context().newCDPSession(pointer)
@@ -185,7 +188,7 @@ try {
   assert.notEqual(await active(pointer).innerText(),'Home')
   assert.equal(new URL(pointer.url()).pathname,'/')
   await pointer.keyboard.press('ArrowRight')
-  await category(pointer,'Theme')
+  await category(pointer,'Settings')
   await pointer.waitForTimeout(480)
   await pointer.keyboard.press('ArrowDown')
   await settle(pointer, themes[1].name)

@@ -26,3 +26,7 @@ target/
 *.sw?
 .vercel
 .env*.local
+.next
+.playwright-mcp
+supabase/.temp/
+supabase/.branches/

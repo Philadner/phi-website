@@ -24,13 +24,13 @@ export function paintTheme(theme: Theme, contrastRatio = contrast) {
   for (const token of ['background', 'primary', 'secondary', 'highlight'] as const) {
     root.style.setProperty(`--${token}`, theme[token])
   }
-  const candidates = [theme.background, theme.primary, theme.secondary, theme.highlight]
+  const candidates = [theme.background, theme.primary, theme.secondary, theme.highlight, theme.text]
   const buttonText = candidates.reduce((best, color) =>
     contrastRatio(color, theme.highlight) > contrastRatio(best, theme.highlight) ? color : best)
   root.style.setProperty('--highlight-text', buttonText)
   const bestOn = (background: string) => candidates.reduce((best, color) =>
     contrastRatio(color, background) > contrastRatio(best, background) ? color : best)
-  const text = contrastRatio(theme.primary, theme.background) >= 4.5 ? theme.primary : bestOn(theme.background)
+  const text = contrastRatio(theme.text, theme.background) >= 4.5 ? theme.text : bestOn(theme.background)
   root.style.setProperty('--theme-text', text)
   root.style.setProperty('--theme-muted', contrastRatio(theme.secondary, theme.background) >= 4.5 ? theme.secondary : text)
   root.style.setProperty('--theme-border', contrastRatio(theme.secondary, theme.background) >= 3 ? theme.secondary : text)
@@ -49,7 +49,7 @@ export function paintTheme(theme: Theme, contrastRatio = contrast) {
     root.style.setProperty('--loader-highlight', theme.highlight)
     root.style.colorScheme = theme.mode
     root.style.backgroundColor = "var(--background)"
-    root.style.color = "var(--primary)"
+    root.style.color = "var(--theme-text)"
   }
   root.dataset.theme = theme.id
 }

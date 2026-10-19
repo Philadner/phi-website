@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties } from 'react'
+import { usePhrases } from '../hooks/usePhrases'
 import clsx from "clsx";
 
 type TickerProps = {
@@ -20,25 +22,20 @@ export default function Ticker({
   const [duration, setDuration] = useState<number>(0);
   const [paused, setPaused] = useState(false);
   const iteratingRef = useRef(false);
+  const phrases = usePhrases()
 
   // --- phrase helpers ---
-  async function getBatch(limit = 40) {
-    const res = await fetch("https://api.phi.me.uk/kv/phrases");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const arr: string[] = await res.json();
+  const getBatch = useCallback((limit = 40) => {
     // shuffle + trim + join
-    const batch = [...arr].sort(() => Math.random() - 0.5).slice(0, limit);
+    const batch = [...phrases].sort(() => Math.random() - 0.5).slice(0, limit);
     return batch.filter(Boolean).join(`  ${separator}  `);
-  }
+  }, [phrases, separator])
 
   // Initial load: two independent batches
-  useEffect(() => {
-    (async () => {
-      const [a, b] = await Promise.all([getBatch(), getBatch()]);
-      setRowA(a);
-      setRowB(b);
-    })().catch(console.error);
-  }, []);
+  useLayoutEffect(() => {
+    setRowA(getBatch())
+    setRowB(getBatch())
+  }, [getBatch]);
 
   // Recompute duration based on the rendered width of copy A.
   // Re-run on resize/orientation/font readiness to avoid mobile jitter after reload.
@@ -72,7 +69,7 @@ export default function Ticker({
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
 
-    const fonts = (document as any).fonts;
+    const fonts = document.fonts;
     if (fonts?.ready) {
       fonts.ready.then(() => measure()).catch(() => {});
     }
@@ -98,12 +95,8 @@ export default function Ticker({
     iteratingRef.current = true;
     // B is now fully visible on the left. Rotate:
     setRowA((prev) => rowB || prev);
-    getBatch()
-      .then(setRowB)
-      .catch(console.error)
-      .finally(() => {
-        iteratingRef.current = false;
-      });
+    setRowB(getBatch())
+    iteratingRef.current = false
   };
 
   const pauseHandlers = {
@@ -126,7 +119,7 @@ export default function Ticker({
         ref={trackRef}
         className="ticker-track"
         data-paused={paused || !duration}
-        style={duration ? ({ ["--ticker-duration" as any]: `${duration}s` }) : undefined}
+        style={duration ? ({ '--ticker-duration': `${duration}s` } as CSSProperties) : undefined}
         onAnimationIteration={handleIter}
         {...pauseHandlers}
         tabIndex={0}

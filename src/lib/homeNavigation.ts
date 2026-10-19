@@ -1,7 +1,19 @@
 export const HOME_RESET_EVENT = 'phi:home'
-export const CATEGORIES = ['Socials', 'Projects', 'phi', 'Navigate', 'Theme'] as const
+export const CATEGORIES = ['Socials', 'Projects', 'phi', 'Navigate', 'Settings'] as const
 export type Category = typeof CATEGORIES[number]
-export type WheelItem = { id: string; label: string; href?: string; category?: Category; themeId?: string; game?: boolean; external?: boolean }
+export const SETTINGS_SUBTABS = [{ id: 'theme', label: 'Theme' }, { id: 'hate-speech', label: 'Hate speech' }] as const
+export type HomeWheelSurface = 'items' | 'main' | 'subtabs'
+export function homeSwipeTarget({ surface, mainIndex, mainCount, subIndex, subCount, direction }: {
+  surface: HomeWheelSurface; mainIndex: number; mainCount: number; subIndex: number; subCount: number; direction: number
+}) {
+  if (!direction) return { mainIndex, subIndex }
+  const nextSub = subIndex + Math.sign(direction)
+  if (surface === 'subtabs') return { mainIndex, subIndex: Math.max(0, Math.min(Math.max(0, subCount - 1), nextSub)) }
+  if (surface === 'items' && subCount > 0 && nextSub >= 0 && nextSub < subCount) return { mainIndex, subIndex: nextSub }
+  const nextMain = Math.max(0, Math.min(mainCount - 1, mainIndex + Math.sign(direction)))
+  return { mainIndex: nextMain, subIndex: nextMain === mainIndex ? subIndex : 0 }
+}
+export type WheelItem = { id: string; label: string; href?: string; category?: Category; settingsTab?: typeof SETTINGS_SUBTABS[number]['id']; themeId?: string; game?: boolean; external?: boolean; setting?: string; settingValue?: boolean; expanded?: boolean; small?: boolean }
 
 export const SOCIALS: WheelItem[] = [
   { id: 'tiktok', label: 'TikTok', href: 'https://tiktok.com/@philadner', external: true },
@@ -27,7 +39,7 @@ export const NAVIGATION: WheelItem[] = [
   { id: 'music', label: 'Music', href: '/musicpl' },
   { id: 'games', label: 'Games', href: '/games', game: true },
   { id: 'add', label: 'Add', href: '/add' },
-  { id: 'theme', label: 'Theme', category: 'Theme' },
+  { id: 'theme', label: 'Theme', category: 'Settings', settingsTab: 'theme' },
 ]
 
 export function tick(duration: 8 | 14 | 18) {

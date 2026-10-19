@@ -23,9 +23,7 @@ Added:
 - the songs keep playing while you browse songs
 - the ui is quicker and a lot more useful, less fancy tho.
 
-[Click here](https://labs.phi.me.uk/about-musicpl) To find out how it works. It's pretty boring though, you have better things to do.
-It doesn't work at all with the "new design" 
-I'll also add back downloading songs soon, I was going to then i ran out of ai slop usage.
+
 
 ---
 
