@@ -29,7 +29,15 @@ export type ModerationResult = {
   reviewed_at?: string
   threshold_version?: number
 }
-export type PhraseRecord = { id: number; text: string; hatefulness: ModerationResult }
+export const SCHOOL_SAFETY_MODEL = 'gpt-6-luna'
+export const SCHOOL_SAFETY_VERSION = 2
+export type SchoolSafetyResult = { school_safe: boolean; reason: string; model: string; prompt_version: number; reviewed_at: string }
+export function isSchoolSafetyResult(value: unknown): value is SchoolSafetyResult {
+  if (!value || typeof value !== 'object') return false
+  const result = value as Partial<SchoolSafetyResult>
+  return typeof result.school_safe === 'boolean' && typeof result.reason === 'string' && result.reason.length <= 240 && (result.school_safe ? result.reason === '' : Boolean(result.reason.trim())) && result.model === SCHOOL_SAFETY_MODEL && (result.prompt_version === 1 || result.prompt_version === SCHOOL_SAFETY_VERSION) && typeof result.reviewed_at === 'string' && Number.isFinite(Date.parse(result.reviewed_at))
+}
+export type PhraseRecord = { id: number; text: string; hatefulness: ModerationResult; school_safety?: SchoolSafetyResult | null }
 export function isModerationResult(value: unknown): value is ModerationResult {
   if (!value || typeof value !== 'object') return false
   const result = value as Partial<ModerationResult>
@@ -50,14 +58,16 @@ export function phraseAllowed(result: unknown): result is ModerationResult {
 export function moderationNotice(issues: ModerationCategory[]) {
   return issues.length ? `your message will be hidden by default unless people turn moderation off. this is because it contains ${issues.map(issue => MODERATION_LABELS[issue]).join(', ')}` : ''
 }
-export type PhrasePreferences = { showFiltered: boolean; moderated: ModerationCategory[] }
-export const DEFAULT_PHRASE_PREFERENCES: PhrasePreferences = { showFiltered: false, moderated: [] }
+export type PhrasePreferences = { showOffensive: boolean; showFiltered: boolean; moderated: ModerationCategory[] }
+export const DEFAULT_PHRASE_PREFERENCES: PhrasePreferences = { showOffensive: false, showFiltered: false, moderated: [] }
 export function parsePhrasePreferences(value: unknown): PhrasePreferences {
   if (!value || typeof value !== 'object') return DEFAULT_PHRASE_PREFERENCES
   const prefs = value as Partial<PhrasePreferences>
-  return { showFiltered: prefs.showFiltered === true, moderated: Array.isArray(prefs.moderated) ? MODERATION_PREFERENCE_CATEGORIES.filter(category => prefs.moderated!.includes(category)) : [] }
+  return { showOffensive: prefs.showOffensive === true, showFiltered: prefs.showFiltered === true, moderated: Array.isArray(prefs.moderated) ? MODERATION_PREFERENCE_CATEGORIES.filter(category => prefs.moderated!.includes(category)) : [] }
 }
 export function phraseVisible(phrase: PhraseRecord, preferences: PhrasePreferences) {
   if (!phraseAllowed(phrase.hatefulness)) return false
-  return !phraseIssues(phrase.hatefulness).some(category => !preferences.showFiltered || preferences.moderated.includes(category))
+  const issues = phraseIssues(phrase.hatefulness)
+  if (issues.length) return !issues.some(category => !preferences.showFiltered || preferences.moderated.includes(category))
+  return isSchoolSafetyResult(phrase.school_safety) && (phrase.school_safety.school_safe || preferences.showOffensive === true)
 }

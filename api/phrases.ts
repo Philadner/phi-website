@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { phraseDatabase } from './_lib/phrases.js'
-import { phraseAllowed, phraseIssues } from '../src/lib/phraseModeration.js'
+import { DEFAULT_PHRASE_PREFERENCES, isSchoolSafetyResult, phraseAllowed, phraseIssues, phraseVisible } from '../src/lib/phraseModeration.js'
 import type { PhraseRecord } from '../src/lib/phraseModeration.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -12,9 +12,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const phrases: PhraseRecord[] = []
     let after = 0
     for (;;) {
-      const { data, error } = await db.from('phrases').select('id,text,hatefulness').gt('id', after).order('id').limit(1000)
+      const { data, error } = await db.from('phrases').select('id,text,hatefulness,school_safety').gt('id', after).order('id').limit(1000)
       if (error) throw error
-      for (const row of data) if (phraseAllowed(row.hatefulness) && (req.query.includeFiltered === '1' || !phraseIssues(row.hatefulness).length)) phrases.push(row)
+      for (const row of data) {
+        if (!phraseAllowed(row.hatefulness)) continue
+        const reviewed = phraseIssues(row.hatefulness).length > 0 || isSchoolSafetyResult(row.school_safety)
+        if (req.query.includeFiltered === '1' ? reviewed : phraseVisible(row, DEFAULT_PHRASE_PREFERENCES)) phrases.push(row)
+      }
       if (data.length < 1000) break
       after = data[data.length - 1].id
     }
