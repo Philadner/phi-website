@@ -16,15 +16,16 @@ const settle = async (page, expected) => {
   return focused && Number(getComputedStyle(focused.parentElement).getPropertyValue('--word-scale')) > .9999
   })
 }
-async function create(viewport, storage = 'phi', reduced = false) {
+async function create(viewport, storage = 'phi', reduced = false, showOffensive = true) {
   const page = await browser.newPage({ viewport, reducedMotion: reduced ? 'reduce' : 'no-preference' })
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.addInitScript(id => {
+  await page.addInitScript(({ id, showOffensive }) => {
+    localStorage.setItem('phi.phrase-moderation.v1', JSON.stringify({ showOffensive }))
     localStorage.setItem('phi.theme', id)
     window.hapticTicks = []
     Object.defineProperty(navigator, 'vibrate', { value: duration => { window.hapticTicks.push(duration); return true }, configurable: true })
-  }, storage)
+  }, { id: storage, showOffensive })
   await page.route('**/api/phrases*', route => route.fulfill({ json: phrasePayload(['hello', 'welcome', '2763', 'this community phrase is deliberately far too long to fit at full size on any screen']) }))
   await page.goto(base, { waitUntil: 'domcontentloaded' })
   await page.locator('.home-navigation').waitFor()
@@ -33,6 +34,36 @@ async function create(viewport, storage = 'phi', reduced = false) {
   return { page, errors }
 }
 try {
+  for (const id of ['mycp', 'hub']) {
+    const { page } = await create({ width: 390, height: 844 }, id, true, false)
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'phi')
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('ArrowRight')
+    await category(page, 'Settings')
+    const choices = page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word')
+    assert.equal(await choices.count(), themes.length - 2)
+    await page.keyboard.press('ArrowRight')
+    await settle(page, 'Show generally offensive content')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('ArrowLeft')
+    await settle(page, 'phi')
+    assert.equal(await choices.count(), themes.length)
+    const index = themes.findIndex(theme => theme.id === id)
+    for (let step = 0; step < index; step++) await page.keyboard.press('ArrowDown')
+    await settle(page, themes[index].name)
+    await page.keyboard.press('Enter')
+    assert.equal(await page.evaluate(() => localStorage.getItem('phi.theme')), id)
+    await page.keyboard.press('ArrowRight')
+    await settle(page, 'Show generally offensive content')
+    await page.keyboard.press('Enter')
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), 'phi')
+    assert.equal(await page.evaluate(() => localStorage.getItem('phi.theme')), 'phi')
+    await page.keyboard.press('ArrowLeft')
+    await settle(page, 'phi')
+    assert.equal(await choices.count(), themes.length - 2)
+    await page.close()
+  }
+  console.log('PASS: MyCP/hub opt-in visibility, preview/apply, disable fallback, and saved-theme fallback')
   for (const viewport of process.argv.includes('--interactions-only') ? [] : [{width:390,height:844}, {width:1280,height:900}]) {
     const { page, errors } = await create(viewport)
     await category(page, 'phi')

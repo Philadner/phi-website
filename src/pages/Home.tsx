@@ -9,7 +9,7 @@ import { MODERATION_PREFERENCE_CATEGORIES, MODERATION_LABELS } from '../lib/phra
 import type { ModerationCategory } from '../lib/phraseModeration'
 import { CATEGORIES, HOME_RESET_EVENT, NAVIGATION, PROJECTS, SOCIALS, SETTINGS_SUBTABS, homeSwipeTarget, tick } from '../lib/homeNavigation'
 import type { Category, HomeWheelSurface, WheelItem } from '../lib/homeNavigation'
-import { getSavedTheme, paintTheme, themes, THEME_STORAGE_KEY } from '../lib/themes'
+import { getSavedTheme, paintTheme, themes, themeVisible, THEME_STORAGE_KEY } from '../lib/themes'
 import '../stylesheets/home.css'
 
 const RADIUS = 10
@@ -58,6 +58,7 @@ export default function Home() {
   const wheelAccumulator = useRef({ x: 0, y: 0, time: 0, surface: 'items' as HomeWheelSurface })
   const [categoryDrag, setCategoryDrag] = useState(0)
   const preferences = usePhrasePreferences()
+  const availableThemes = useMemo(() => themes.filter(theme => themeVisible(theme, preferences.showOffensive)), [preferences.showOffensive])
   const settingsTabsRef = useRef<HTMLDivElement>(null)
   const [settingsTabIndex, setSettingsTabIndex] = useState(0)
   const [subtabDrag, setSubtabDrag] = useState(0)
@@ -67,7 +68,7 @@ export default function Home() {
   const items = useMemo<WheelItem[]>(() => {
     if (category === 'Socials') return SOCIALS
     if (category === 'Projects') return PROJECTS
-    if (themePicker) return themes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
+    if (themePicker) return availableThemes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
     if (category === 'Settings') {
       const settings: WheelItem[] = [
         { id: 'show-offensive', label: 'Show generally offensive content', setting: 'show-offensive', settingValue: preferences.showOffensive, small: true },
@@ -83,8 +84,8 @@ export default function Home() {
         : destinations
     }
     return []
-  }, [category, mobile, preferences, themePicker])
-  const initial = themePicker ? Math.max(0, themes.findIndex(theme => theme.id === applied.current.id)) : 0
+  }, [category, mobile, preferences, themePicker, availableThemes])
+  const initial = themePicker ? Math.max(0, availableThemes.findIndex(theme => theme.id === applied.current.id)) : 0
   const motion = useWheelMotion({
     resetKey: `${category}:${generation}:${category === 'Settings' ? settingsTabIndex : ''}:${category === 'phi' ? phrases.join('\0') : items.map(item => item.id).join(',')}`,
     min: category === 'phi' ? -Infinity : 0,
@@ -241,13 +242,21 @@ export default function Home() {
   }, [changeCategory])
 
   useEffect(() => {
+    if (!availableThemes.some(theme => theme.id === applied.current.id)) {
+      applied.current = availableThemes[0]
+      paintTheme(applied.current)
+      try { localStorage.setItem(THEME_STORAGE_KEY, applied.current.id) } catch { /* Keep the fallback for this visit. */ }
+    }
+  }, [availableThemes])
+
+  useEffect(() => {
     if (!themePicker) return
-    const theme = themes[Math.round(motion.positionRef.current)]
+    const theme = availableThemes[Math.round(motion.positionRef.current)]
     if (theme) {
       paintTheme(theme)
       if (theme.id !== applied.current.id) setMessage('')
     }
-  }, [themePicker, selectedIndex, generation, motion.positionRef])
+  }, [themePicker, selectedIndex, generation, motion.positionRef, availableThemes])
 
   function activate(item: WheelItem) {
     if (performance.now() < suppressClick.current) return
@@ -266,7 +275,8 @@ export default function Home() {
         setMessage(`${shown ? 'Hiding' : 'Showing'} ${MODERATION_LABELS[setting]}.`)
       }
     } else if (item.themeId) {
-      const theme = themes.find(value => value.id === item.themeId)!
+      const theme = availableThemes.find(value => value.id === item.themeId)
+      if (!theme) return
       applied.current = theme
       paintTheme(theme)
       try { localStorage.setItem(THEME_STORAGE_KEY, theme.id); setMessage(`${theme.name} applied and saved.`) }

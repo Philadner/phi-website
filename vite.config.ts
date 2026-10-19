@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import phraseListHandler from './api/phrases'
 import appendPhraseHandler from './api/append'
 import react from '@vitejs/plugin-react'
-import { themes, contrast, paintTheme, THEME_STORAGE_KEY } from './src/lib/themes'
+import { themes, contrast, paintTheme, themeVisible, THEME_STORAGE_KEY } from './src/lib/themes'
 import {
   getMusicAlbumPayload,
   getMusicArtistPayload,
@@ -75,8 +75,10 @@ export default defineConfig({
           (() => {
             const themes = ${JSON.stringify(themes)};
             let id;
+            let showOffensive = false;
             try { id = localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)}); } catch {}
-            const theme = themes.find(theme => theme.id === id) || themes[0];
+            try { showOffensive = JSON.parse(localStorage.getItem('phi.phrase-moderation.v1') || 'null')?.showOffensive === true; } catch {}
+            const theme = themes.find(theme => theme.id === id && (${themeVisible.toString()})(theme, showOffensive)) || themes[0];
             (${paintTheme.toString()})(theme, ${contrast.toString()});
           })();
         ` }]
