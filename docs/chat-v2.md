@@ -2,8 +2,11 @@
 
 The public lobby lives at `/chat`. Guests pick a unique username (2–24 ASCII
 letters, numbers, spaces, underscores or hyphens). An opaque, HttpOnly cookie
-remembers their identity for 30 days. Names are reserved until that identity
-expires; these are guest identities, not verified accounts.
+remembers their identity for 30 days. Names are only claimed while an identity
+is active: joins, messages and the ten-second room heartbeat refresh a
+40-second lease. After inactivity anyone can reuse the name. Returning cookies
+reclaim an available name or prompt for a new one if it is now in use. Mentions
+resolve only to active identities; these are guests, not verified accounts.
 
 ## Core release
 

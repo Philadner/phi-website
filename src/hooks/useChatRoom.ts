@@ -3,15 +3,17 @@ import type { AiRequest, ChatRoomState, ClearVote } from '../lib/chatFeatures'
 import type { ChatMessage, ChatSession } from '../lib/chat'
 
 type RoomResult = { room: ChatRoomState; clearedThrough: number; vote: ClearVote | null; requests: AiRequest[] }
+class UsernameTakenError extends Error {}
 
 async function request<T>(path: string, body?: Record<string, unknown>) {
   const response = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
   const data = await response.json().catch(() => null)
+  if (response.status === 409 && data?.code === 'username_taken') throw new UsernameTakenError(data.error)
   if (!response.ok || !data) throw new Error(data?.error || 'Could not reach chat.')
   return data as T
 }
 
-export default function useChatRoom(session: ChatSession | null, receive: (messages: ChatMessage[]) => void) {
+export default function useChatRoom(session: ChatSession | null, receive: (messages: ChatMessage[]) => void, nameTaken: () => void) {
   const [room, setRoom] = useState<ChatRoomState>({ cleared_through: 0, clear_revision: 0, ai_name: 'AI' })
   const [floor, setFloor] = useState(0)
   const [vote, setVote] = useState<ClearVote | null>(null)
@@ -36,17 +38,19 @@ export default function useChatRoom(session: ChatSession | null, receive: (messa
     try {
       const data = await request<RoomResult>('/api/chat-room')
       if (active.current) apply(data)
-    } catch { /* History already reports outages; keep existing room state. */ }
+    } catch (reason) { if (active.current && reason instanceof UsernameTakenError) nameTaken() }
     finally { pollBusy.current = false }
-  }, [apply])
+  }, [apply, nameTaken])
 
   useEffect(() => {
     active.current = true
     void refresh()
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh() }, 10000)
     const focus = () => void refresh()
+    const visibility = () => { if (document.visibilityState === 'visible') void refresh() }
     window.addEventListener('focus', focus)
-    return () => { active.current = false; window.clearInterval(timer); window.removeEventListener('focus', focus) }
+    document.addEventListener('visibilitychange', visibility)
+    return () => { active.current = false; window.clearInterval(timer); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility) }
   }, [session?.id, refresh])
 
   const runAi = useCallback(async (id: number, grant?: { contextCount?: 5 | 20; withImages?: boolean; decline?: boolean }) => {

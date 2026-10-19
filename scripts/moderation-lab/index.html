@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>phi · moderation lab</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header><span class="wordmark">phi(lab)</span><span class="badge">LOCAL ONLY</span></header>
+  <main>
+    <section class="intro"><p class="eyebrow">PHRASE MODERATION / CALIBRATION</p><h1>Find the line.</h1><p>Score your samples once. Move the thresholds until the filter feels right.</p></section>
+    <div class="workspace">
+      <div>
+        <section class="card">
+          <h2>01 / Your samples</h2>
+          <label for="key">OpenAI API key</label><input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+          <p class="hint">Kept in this page’s memory. Sent through this local server to OpenAI only when you run moderation.</p>
+          <label for="samples">One phrase per line, or paste a JSON string array</label><textarea id="samples" rows="9" placeholder="welcome&#10;epic website&#10;your sample here"></textarea>
+          <div class="actions"><button id="run" class="primary" disabled>Run moderation</button><button id="load" disabled>Load current phrase list</button></div>
+          <p class="hint">Loading the list only reads it. Running sends every sample to OpenAI using <code>omni-moderation-latest</code>. Nothing changes on the website.</p>
+          <p id="status" role="status" aria-live="polite">Starting lab…</p>
+        </section>
+        <section class="card results-card">
+          <div class="heading"><h2>03 / Live preview</h2><select id="view" aria-label="Filter results"><option value="all">All samples</option><option value="flagged">Above your thresholds</option><option value="clear">Below your thresholds</option></select></div>
+          <p id="summary" aria-live="polite">Run moderation to see your results.</p>
+          <p id="stale" hidden>Sample text has changed. Run moderation again to update these results.</p>
+          <div id="results"></div>
+        </section>
+      </div>
+      <aside class="card">
+        <h2>02 / Tune the thresholds</h2>
+        <p class="hint">Lower = stricter. Red means a score is at or above your threshold. Scores describe confidence in a category, not how severe a phrase is.</p>
+        <p class="hint">All sliders start at <strong>0.5 as a tuning starting point</strong>, not OpenAI’s own decision boundaries. Compare the OpenAI flag on each result.</p>
+        <div id="sliders"></div>
+        <div class="actions"><button id="export" disabled class="primary">Export thresholds</button><button id="session" disabled>Export scored samples</button><button id="reset">Reset sliders</button></div>
+        <label class="file-label" for="import">Restore thresholds or scored samples</label><input id="import" type="file" accept="application/json,.json">
+        <p class="hint">Thresholds are remembered locally. Samples, scores and API keys are only saved when you explicitly export them. Moving sliders makes no API calls.</p>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

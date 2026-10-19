@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status === 429 ? 429 : 422).json({ error: message })
     }
     const result = parseAiOutput(payload)
-    const { data: people, error: peopleError } = await db.from('chat_sessions').select('id,username').gt('expires_at', new Date().toISOString()).limit(500)
+    const { data: people, error: peopleError } = await db.from('chat_sessions').select('id,username').gt('expires_at', new Date().toISOString()).gt('last_seen_at', new Date(Date.now() - 40000).toISOString()).limit(500)
     if (peopleError) throw new Error('Mentions could not load.')
     const names = mentionNames(result.Message)
     const mentions = (people || []).filter((person) => names.includes(person.username.toLowerCase())).map((person) => person.id)

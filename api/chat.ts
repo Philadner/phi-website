@@ -23,9 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       if (req.query.action === 'session') {
         if (!token) return res.status(200).json({ session: null })
-        const { data, error } = await db.from('chat_sessions').select('id,username,cleared_through').eq('token_hash', hash(token)).gt('expires_at', new Date().toISOString()).maybeSingle()
+        const { data, error } = await db.rpc('resume_chat_session', { p_token_hash: hash(token) })
+        if (error?.code === '23505') return res.status(409).json({ error: 'That username is currently in use. Choose another.', code: 'username_taken' })
         if (error) throw error
-        return res.status(200).json({ session: data })
+        const session = data?.[0]
+        return res.status(200).json({ session: session ? { id: session.id, username: session.username, cleared_through: session.cleared_through } : null })
       }
       const before = req.query.before
       const after = req.query.after
@@ -72,12 +74,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!/^[A-Za-z0-9_ -]{2,24}$/.test(username)) {
         return res.status(400).json({ error: 'Use 2–24 letters, numbers, spaces, underscores or hyphens.' })
       }
-      if (/^(system|admin|moderator)$/i.test(username)) return res.status(400).json({ error: 'That username is reserved.' })
       const nextToken = token || randomBytes(32).toString('hex')
       const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()
       const ipHash = createHmac('sha256', key).update(ip).digest('hex')
       const { data, error } = await db.rpc('join_chat', { p_token_hash: hash(nextToken), p_username: username, p_ip_hash: ipHash })
-      if (error?.code === '23505') return res.status(409).json({ error: 'That username is taken. Try another.' })
+      if (error?.code === '23505') return res.status(409).json({ error: 'That username is currently in use. Choose another.', code: 'username_taken' })
       if (error?.code === 'P0001') return res.status(429).json({ error: error.message })
       if (error) throw error
       const session = data[0]
@@ -108,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (replyTo !== null && (!Number.isSafeInteger(replyTo) || replyTo < 1)) return res.status(400).json({ error: 'Invalid reply.' })
       const [{ data: room, error: roomError }, { data: people, error: peopleError }] = await Promise.all([
         db.from('chat_room_state').select('ai_name').eq('id', 1).single(),
-        db.from('chat_sessions').select('id,username').gt('expires_at', new Date().toISOString()).limit(500),
+        db.from('chat_sessions').select('id,username').gt('expires_at', new Date().toISOString()).gt('last_seen_at', new Date(Date.now() - 40000).toISOString()).limit(500),
       ])
       if (roomError || peopleError) throw roomError || peopleError
       const names = mentionNames(content)
@@ -121,6 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const { data, error } = await db.rpc('send_chat_message', { p_token_hash: hash(token), p_client_id: body.clientId, p_content: content, p_kind: kind, p_attachment_ids: attachmentIds, p_reply_to: replyTo, p_mentioned_ids: mentionedIds, p_invokes_ai: invokesAi, p_gif: gif })
       if (error?.code === '28000') return res.status(401).json({ error: error.message })
+      if (error?.code === '23505') return res.status(409).json({ error: 'That username is currently in use. Choose another.', code: 'username_taken' })
       if (error?.code === 'P0001') return res.status(429).json({ error: error.message })
       if (error?.code === '22023') return res.status(400).json({ error: error.message })
       if (error) throw error
