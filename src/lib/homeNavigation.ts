@@ -1,7 +1,7 @@
 export const HOME_RESET_EVENT = 'phi:home'
 export const CATEGORIES = ['Socials', 'Projects', 'phi', 'Navigate', 'Settings'] as const
 export type Category = typeof CATEGORIES[number]
-export const SETTINGS_SUBTABS = [{ id: 'theme', label: 'Theme' }, { id: 'hate-speech', label: 'Hate speech' }] as const
+export const SETTINGS_SUBTABS = [{ id: 'theme', label: 'Theme' }, { id: 'moderation', label: 'Moderation' }] as const
 export type HomeWheelSurface = 'items' | 'main' | 'subtabs'
 export function homeSwipeTarget({ surface, mainIndex, mainCount, subIndex, subCount, direction }: {
   surface: HomeWheelSurface; mainIndex: number; mainCount: number; subIndex: number; subCount: number; direction: number

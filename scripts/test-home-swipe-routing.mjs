@@ -6,7 +6,7 @@ const source = await readFile(new URL('../src/lib/homeNavigation.ts', import.met
 const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 const { homeSwipeTarget, CATEGORIES, SETTINGS_SUBTABS, NAVIGATION } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
 assert.equal(CATEGORIES.includes('Theme'), false)
-assert.deepEqual(SETTINGS_SUBTABS.map(tab => tab.id), ['theme', 'hate-speech'])
+assert.deepEqual(SETTINGS_SUBTABS.map(tab => tab.id), ['theme', 'moderation'])
 assert.equal(NAVIGATION.find(item => item.id === 'theme').category, 'Settings')
 assert.equal(NAVIGATION.find(item => item.id === 'theme').settingsTab, 'theme')
 const move = changes => homeSwipeTarget({ surface: 'items', mainIndex: 2, mainCount: 6, subIndex: 1, subCount: 3, direction: 1, ...changes })

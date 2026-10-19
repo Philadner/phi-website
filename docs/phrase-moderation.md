@@ -44,19 +44,19 @@ OpenAI reference: https://developers.openai.com/api/docs/guides/moderation
   this is because it contains {issue}".
 - Apply filtering to every phrase surface, including Home and Ticker. Default
   to hiding all phrases above the selected category thresholds.
-- Add Settings at the far right of the home horizontal bar. Keep "Show filtered
+- Add Settings at the far right of the home horizontal bar. Keep "Show sensitive
   content" off by
   default. Turning it on exposes individual Show category items, all on. Turning
   one off hides phrases matching that category.
   Settings uses a separate subtab scroller: above the main scroller on mobile,
-  to its left on desktop. Theme comes before Hate speech, and theme preview and
+  to its left on desktop. Theme comes before Moderation, and theme preview and
   application retain the original wheel interaction. Settings items use the normal
   home-menu text size. The secondary wheel appears from its centre outward.
   Support keyboard navigation and reduced motion.
 
 Settings keep the existing scroll-to-focus and click-anywhere interaction.
 Off items use outlined text with a strike-through. Enabling retracts the line
-from right to left, followed 65 ms later by the text fill. Enabling Show filtered
+from right to left, followed 65 ms later by the text fill. Enabling Show sensitive
 content clears the individual hidden-category selections, so every Show item
 starts on. Subtab-only gestures never
 change the main section. Global content swipes visit subtabs first, then advance
@@ -67,7 +67,7 @@ Four categories are hard exclusions at the calibrated thresholds: sexual/minors
 (0.2), violence/graphic (0.4), illicit/violent (0.3), and self-harm/instructions
 (0.2). A score at or above any of these rejects the submission with HTTP 422
 before insertion. These categories have no user preference, cannot be revealed
-with Show filtered content, and are excluded from imports. A database constraint
+with Show sensitive content, and are excluded from imports. A database constraint
 also rejects those rows (including missing or malformed scores for these four
 categories). The hard-exclusion migration removes any existing matches.
 
@@ -83,3 +83,34 @@ list against the exported scores and writes a filtered SQL import and backup und
 `output/*.local` (git-ignored). It never applies the SQL automatically. Specify the
 website project reference explicitly when applying SQL with Supabase CLI; a home
 folder link may point to another project. Keep the legacy list intact during cutover.
+
+## School-safety review
+
+In Settings > Moderation, **Show generally offensive content** appears first and
+is off by default. **Show sensitive content** controls Omni-sensitive phrases;
+its existing individual category controls remain available when enabled.
+The two master settings are independent.
+
+For phrases below every calibrated Omni threshold, the server runs `gpt-6-luna`
+using the approved prompt in `api/_lib/schoolSafety.ts`. Structured results are
+saved in `phrases.school_safety` with the model, prompt version and review time.
+Unsafe phrases are hidden unless Show generally offensive content is enabled.
+Unknown, invalid or obsolete Luna reviews remain hidden even with both options on.
+New submissions fail without insertion if either required review fails.
+The four hard exclusions still reject without insertion, using the notice:
+"Your message has not been posted because what the fuck is this??"
+
+Apply `20261019003000_phrase_school_safety.sql` to the explicit website project
+before deploying this branch. To backfill existing phrases, run
+`node scripts/classify-school-safety.mjs` for counts or add `--apply` to review.
+The script reads `.env.phrases.local`, checks the project reference, saves a
+local ignored snapshot, skips Omni-sensitive phrases and existing valid Luna
+reviews, and retries failed provider calls. Updates are guarded against phrase
+changes during review. Re-running resumes remaining reviews.
+
+Prompt version 2 avoids speculative sexual readings and allows harmless bathroom
+humour, mild banter, compliments and standalone memes. Femboy-themed phrases
+remain hidden under the owner's explicit presentation preference. Existing
+version 1 reviews remain valid: changing the prompt does not trigger a backfill
+or hide previously reviewed phrases. Manual corrections retain their original
+result and review time in a `manual_review` audit field.
