@@ -7,7 +7,7 @@ const palettes = JSON.parse(readFileSync(new URL('../src/lib/themes.json', impor
 const source = readFileSync(new URL('../src/lib/themes.ts', import.meta.url), 'utf8')
   .replace("import palettes from './themes.json'", `const palettes = ${JSON.stringify(palettes)}`)
 const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext } }).outputText
-const { themes, contrast, paintTheme, getSavedTheme } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
+const { themes, contrast, paintTheme, getSavedTheme, themeVisible } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
 const properties = new Map()
 globalThis.document = { documentElement: { dataset: {}, style: { setProperty: (key, value) => properties.set(key, value), removeProperty: key => properties.delete(key) } } }
 let saved = null
@@ -23,6 +23,15 @@ assert.equal(getSavedTheme().id, 'phi')
 saved = 'igor'
 assert.equal(getSavedTheme().id, 'igor')
 assert.equal(contrast('#000000', '#FFFFFF'), 21)
+assert.equal(themes.filter(theme => themeVisible(theme, false)).length, 21)
+for (const id of ['mycp', 'hub']) {
+  saved = id
+  localStorage.getItem = key => key === 'phi.theme' ? saved : null
+  assert.equal(getSavedTheme().id, 'phi', `${id} requires offensive content enabled`)
+  localStorage.getItem = key => key === 'phi.theme' ? saved : JSON.stringify({ showOffensive: true })
+  assert.equal(getSavedTheme().id, id)
+}
+
 const report = ['# Theme contrast audit', '', 'Each theme has four palette colours plus an independent text colour. Body text must meet 4.5:1 contrast against its background. Existing readable primary text colours are retained; other themes use black or white. MyCP preserves its original white, green, dark green and pink palette with black body text. Control labels can also use the text colour for contrast. phi retains its original CSS styling.', '', '| Theme | Body / background | Primary / background | Secondary / background | Button / highlight |', '|---|---:|---:|---:|---:|']
 for (const theme of themes) {
   paintTheme(theme)
@@ -52,17 +61,17 @@ if (process.argv.includes('--check-build')) {
   const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8')
   const bootstrap = html.match(/<script>([\s\S]*?)<\/script>/)?.[1]
   assert.ok(bootstrap, 'blocking head script exists')
-  for (const id of [...themes.map(theme => theme.id), 'unknown', null, 'blocked']) {
+  for (const showOffensive of [false, true]) for (const id of [...themes.map(theme => theme.id), 'unknown', null, 'blocked']) {
     const values = new Map()
     const root = { dataset: {}, style: { setProperty: (key, value) => values.set(key, value), removeProperty: key => values.delete(key) } }
     vm.runInNewContext(bootstrap, {
       document: { documentElement: root },
       localStorage: { getItem: key => {
         if (id === 'blocked') throw new Error('blocked')
-        return key === 'phi.theme' ? id : null
+        return key === 'phi.theme' ? id : JSON.stringify({ showOffensive })
       } },
     })
-    const expected = themes.find(theme => theme.id === id) ?? themes[0]
+    const expected = themes.find(theme => theme.id === id && themeVisible(theme, showOffensive)) ?? themes[0]
     assert.equal(root.dataset.theme, expected.id)
     assert.equal(values.get('--background'), expected.background)
     assert.equal(values.get('--theme-text'), expected.text)

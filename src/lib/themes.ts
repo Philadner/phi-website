@@ -5,6 +5,11 @@ export const themes = palettes
 export type Theme = typeof themes[number]
 export const THEME_STORAGE_KEY = 'phi.theme'
 
+// Self-contained so the before-paint bootstrap uses the same visibility rule.
+export function themeVisible(theme: Theme, showOffensive: boolean) {
+  return showOffensive || (theme.id !== 'mycp' && theme.id !== 'hub')
+}
+
 export function contrast(a: string, b: string) {
   const luminance = (hex: string) => {
     const channels = [1, 3, 5].map((offset) => {
@@ -56,7 +61,9 @@ export function paintTheme(theme: Theme, contrastRatio = contrast) {
 
 export function getSavedTheme() {
   try {
-    return themes.find((theme) => theme.id === (document.documentElement.dataset.theme ?? localStorage.getItem(THEME_STORAGE_KEY))) ?? themes[0]
+    let showOffensive = false
+    try { showOffensive = JSON.parse(localStorage.getItem('phi.phrase-moderation.v1') ?? 'null')?.showOffensive === true } catch { /* Hidden unless explicitly enabled. */ }
+    return themes.find((theme) => themeVisible(theme, showOffensive) && theme.id === (document.documentElement.dataset.theme ?? localStorage.getItem(THEME_STORAGE_KEY))) ?? themes[0]
   } catch {
     return themes[0]
   }
