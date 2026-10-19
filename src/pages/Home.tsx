@@ -69,7 +69,10 @@ export default function Home() {
     if (category === 'Projects') return PROJECTS
     if (themePicker) return themes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
     if (category === 'Settings') {
-      const settings: WheelItem[] = [{ id: 'show-filtered', label: 'Show filtered content', setting: 'show-filtered', settingValue: preferences.showFiltered, small: true }]
+      const settings: WheelItem[] = [
+        { id: 'show-offensive', label: 'Show generally offensive content', setting: 'show-offensive', settingValue: preferences.showOffensive, small: true },
+        { id: 'show-filtered', label: 'Show sensitive content', setting: 'show-filtered', settingValue: preferences.showFiltered, small: true },
+      ]
       if (preferences.showFiltered) settings.push(...MODERATION_PREFERENCE_CATEGORIES.map(setting => ({ id: `filter-${setting}`, label: `Show ${MODERATION_LABELS[setting]}`, setting, settingValue: !preferences.moderated.includes(setting), small: true })))
       return settings
     }
@@ -250,9 +253,12 @@ export default function Home() {
     if (performance.now() < suppressClick.current) return
     if (item.setting) {
       tick(18)
-      if (item.setting === 'show-filtered') {
-        savePhrasePreferences({ showFiltered: !preferences.showFiltered, moderated: [] })
-        setMessage(!preferences.showFiltered ? 'Showing filtered content. All individual Show options start on.' : 'Filtered content is hidden by default.')
+      if (item.setting === 'show-offensive') {
+        savePhrasePreferences({ ...preferences, showOffensive: !preferences.showOffensive })
+        setMessage(preferences.showOffensive ? 'Generally offensive content is hidden.' : 'Showing generally offensive content.')
+      } else if (item.setting === 'show-filtered') {
+        savePhrasePreferences({ ...preferences, showFiltered: !preferences.showFiltered, moderated: [] })
+        setMessage(!preferences.showFiltered ? 'Showing sensitive content. All individual Show options start on.' : 'Sensitive content is hidden by default.')
       } else {
         const setting = item.setting as ModerationCategory
         const shown = !preferences.moderated.includes(setting)

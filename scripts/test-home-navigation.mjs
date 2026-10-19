@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { CATEGORIES as MODERATION_CATEGORIES } from './moderation-lab/core.mjs'
-const phrasePayload = texts => ({ phrases: texts.map((text, index) => ({ id: index + 1, text, hatefulness: { flagged: false, categories: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, false])), category_scores: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, 0])) } })) })
+const phrasePayload = texts => ({ phrases: texts.map((text, index) => ({ id: index + 1, text, school_safety: { school_safe: true, reason: '', model: 'gpt-6-luna', prompt_version: 1, reviewed_at: new Date().toISOString() }, hatefulness: { flagged: false, categories: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, false])), category_scores: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, 0])) } })) })
 const { chromium } = await import(process.env.PHI_PLAYWRIGHT_MODULE || 'playwright')
 const themes = JSON.parse(readFileSync(new URL('../src/lib/themes.json', import.meta.url), 'utf8'))
 const base = process.env.PHI_TEST_URL || 'http://localhost:5173'
@@ -65,7 +65,7 @@ try {
     await page.keyboard.press('ArrowRight')
     await page.keyboard.press('ArrowRight')
     await category(page, 'Settings')
-    assert.deepEqual(await page.getByRole('tab').allTextContents(), ['Theme', 'Hate speech'])
+    assert.deepEqual(await page.getByRole('tab').allTextContents(), ['Theme', 'Moderation'])
     await page.waitForTimeout(480)
     assert.equal(await page.locator('.home-phrase-wall:not(.home-ripple-out) .home-word').count(), themes.length)
     for (let index = 0; index < themes.length; index++) {
