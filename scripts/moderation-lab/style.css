@@ -1,0 +1,48 @@
+:root { color-scheme: dark; font: 15px/1.6 system-ui, sans-serif; color: #e7eaf0; background: #101217; --muted: #a4adbe; --line: #303642; --accent: #b7f598 }
+* { box-sizing: border-box }
+body { margin: 0 }
+header { padding: 22px 5vw; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--line) }
+.wordmark { font-size: 30px; font-weight: 800; letter-spacing: -2px }
+.badge,.eyebrow { font-size: 11px; letter-spacing: 2px; color: var(--accent) }
+.badge { border: 1px solid #526344; padding: 3px 9px; border-radius: 20px }
+main { max-width: 1500px; padding: 35px 5vw 70px; margin: auto }
+.intro { margin-bottom: 32px }
+h1 { font-size: clamp(40px,6vw,70px); line-height: 1; letter-spacing: -3px; margin: 14px 0 20px }
+.intro>p:last-child { color: var(--muted) }
+h2 { font-size: 16px; margin: 0 0 20px }
+.workspace { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(320px,1fr); gap: 24px; align-items: start }
+.card { background: #191d25; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin-bottom: 24px; min-width: 0 }
+label { display: block; font-size: 13px; margin-bottom: 8px }
+input,textarea,select,button { font: inherit }
+input[type=password],textarea,select,input[type=number] { color: inherit; background: #101319; border: 1px solid #48515f; border-radius: 8px; padding: 10px }
+input[type=password],textarea { width: 100% }
+textarea { resize: vertical; font-size: 14px }
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px }
+.hint { color: var(--muted); font-size: 12px; margin: 10px 0 20px }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px }
+button { color: #e7eaf0; background: #2b323e; border: 1px solid #48515f; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 650 }
+button.primary { color: #14220d; background: var(--accent); border-color: var(--accent) }
+button:disabled { opacity: .4; cursor: not-allowed }
+#status { margin-bottom: 0; font-size: 13px; overflow-wrap: anywhere }
+.error,#stale { color: #ffb2b9 }
+.heading { display: flex; align-items: start; justify-content: space-between; gap: 12px }
+.heading select { font-size: 12px; max-width: 55% }
+.slider { padding: 12px 0; border-top: 1px solid var(--line) }
+.slider-label { display: flex; justify-content: space-between; align-items: center; gap: 10px }
+.slider label { margin: 0; font-size: 13px }
+.slider input[type=number] { width: 90px; font-size: 12px; padding: 5px }
+.slider input[type=range] { width: 100%; accent-color: var(--accent); margin: 12px 0 0 }
+.slider small { color: var(--muted); font-size: 11px }
+.result { border: 1px solid var(--line); border-left-width: 3px; padding: 14px; margin: 12px 0; border-radius: 8px; overflow-wrap: anywhere }
+.result.flagged { border-color: #a34b59; background: #371f29 }
+.result.flagged .phrase { color: #ffabb6 }
+.phrase { white-space: pre-wrap; margin: 0 0 8px }
+.meta { color: var(--muted); font-size: 12px }
+.reason { color: #ffb2b9; font-size: 12px; margin: 5px 0 }
+details { font-size: 12px; margin-top: 8px }
+summary { cursor: pointer; color: var(--muted) }
+.score-row { display: flex; justify-content: space-between; gap: 10px }
+.score-row.above { color: #ffb2b9 }
+.file-label { margin-top: 20px }
+input[type=file] { max-width: 100%; font-size: 12px }
+@media(max-width:850px) { .workspace { grid-template-columns: 1fr } aside { grid-row: 2 } main { padding: 25px 5vw } .card { padding: 18px } }

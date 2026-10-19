@@ -3,13 +3,16 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as Re
 import { useNavigate } from 'react-router-dom'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useWheelMotion } from '../hooks/useWheelMotion'
-import { CATEGORIES, HOME_RESET_EVENT, NAVIGATION, PROJECTS, SOCIALS, tick } from '../lib/homeNavigation'
-import type { Category, WheelItem } from '../lib/homeNavigation'
+import { usePhrases } from '../hooks/usePhrases'
+import { savePhrasePreferences, usePhrasePreferences } from '../hooks/usePhrasePreferences'
+import { MODERATION_PREFERENCE_CATEGORIES, MODERATION_LABELS } from '../lib/phraseModeration'
+import type { ModerationCategory } from '../lib/phraseModeration'
+import { CATEGORIES, HOME_RESET_EVENT, NAVIGATION, PROJECTS, SOCIALS, SETTINGS_SUBTABS, homeSwipeTarget, tick } from '../lib/homeNavigation'
+import type { Category, HomeWheelSurface, WheelItem } from '../lib/homeNavigation'
 import { getSavedTheme, paintTheme, themes, THEME_STORAGE_KEY } from '../lib/themes'
 import '../stylesheets/home.css'
 
 const RADIUS = 10
-const FALLBACK = ['welcome', 'epic website', 'the system knows', 'with much effort', 'we love you', '2763']
 function shuffle<T>(items: T[]) {
   const deck = [...items]
   for (let index = deck.length - 1; index > 0; index--) {
@@ -21,7 +24,7 @@ function shuffle<T>(items: T[]) {
 
 type Layer = { id: number; category: Category; rows: WordRow[] }
 type WordRow = { item: WheelItem; index: number; scale: number; opacity: number; y: number; distance: number }
-type Gesture = { id: number; x: number; y: number; lastY: number; time: number; axis: 'x' | 'y' | null; dragged: boolean; category: boolean }
+type Gesture = { id: number; x: number; y: number; lastY: number; time: number; axis: 'x' | 'y' | null; dragged: boolean; surface: HomeWheelSurface }
 
 export default function Home() {
   const navigate = useNavigate()
@@ -32,8 +35,8 @@ export default function Home() {
   const [keyboardFocus, setKeyboardFocus] = useState(false)
   const category = CATEGORIES[categoryIndex]
   const [generation, setGeneration] = useState(0)
-  const [sourcePhrases, setSourcePhrases] = useState(FALLBACK)
-  const [phrases, setPhrases] = useState(FALLBACK)
+  const sourcePhrases = usePhrases()
+  const [phrases, setPhrases] = useState(sourcePhrases)
   const [phraseTape, setPhraseTape] = useState(new Map<number, string>())
   const deck = useRef<string[]>([])
   const lastPhrase = useRef('')
@@ -44,8 +47,7 @@ export default function Home() {
   const probeRef = useRef<HTMLSpanElement>(null)
   const [metrics, setMetrics] = useState({ font: 52, heights: [] as number[] })
   const applied = useRef(getSavedTheme())
-  const categoryRef = useRef<Category>(category)
-  categoryRef.current = category
+  const themePickerRef = useRef(false)
   const [message, setMessage] = useState('')
   const [outgoing, setOutgoing] = useState<Layer[]>([])
   const layersRef = useRef<Layer[]>([])
@@ -53,13 +55,24 @@ export default function Home() {
   const sequence = useRef(0)
   const gesture = useRef<Gesture | null>(null)
   const suppressClick = useRef(0)
-  const wheelAccumulator = useRef({ x: 0, y: 0, time: 0 })
+  const wheelAccumulator = useRef({ x: 0, y: 0, time: 0, surface: 'items' as HomeWheelSurface })
   const [categoryDrag, setCategoryDrag] = useState(0)
+  const preferences = usePhrasePreferences()
+  const settingsTabsRef = useRef<HTMLDivElement>(null)
+  const [settingsTabIndex, setSettingsTabIndex] = useState(0)
+  const [subtabDrag, setSubtabDrag] = useState(0)
+  const themePicker = category === 'Settings' && SETTINGS_SUBTABS[settingsTabIndex].id === 'theme'
+  themePickerRef.current = themePicker
 
   const items = useMemo<WheelItem[]>(() => {
     if (category === 'Socials') return SOCIALS
     if (category === 'Projects') return PROJECTS
-    if (category === 'Theme') return themes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
+    if (themePicker) return themes.map(theme => ({ id: theme.id, label: theme.name, themeId: theme.id }))
+    if (category === 'Settings') {
+      const settings: WheelItem[] = [{ id: 'show-filtered', label: 'Show filtered content', setting: 'show-filtered', settingValue: preferences.showFiltered, small: true }]
+      if (preferences.showFiltered) settings.push(...MODERATION_PREFERENCE_CATEGORIES.map(setting => ({ id: `filter-${setting}`, label: `Show ${MODERATION_LABELS[setting]}`, setting, settingValue: !preferences.moderated.includes(setting), small: true })))
+      return settings
+    }
     if (category === 'Navigate') {
       const destinations = NAVIGATION.filter(item => mobile || !item.game)
       return document.documentElement.dataset.themeDemo === 'true'
@@ -67,10 +80,10 @@ export default function Home() {
         : destinations
     }
     return []
-  }, [category, mobile])
-  const initial = category === 'Theme' ? Math.max(0, themes.findIndex(theme => theme.id === applied.current.id)) : 0
+  }, [category, mobile, preferences, themePicker])
+  const initial = themePicker ? Math.max(0, themes.findIndex(theme => theme.id === applied.current.id)) : 0
   const motion = useWheelMotion({
-    resetKey: `${category}:${generation}:${category === 'phi' ? phrases.join('\0') : items.length}`,
+    resetKey: `${category}:${generation}:${category === 'Settings' ? settingsTabIndex : ''}:${category === 'phi' ? phrases.join('\0') : items.map(item => item.id).join(',')}`,
     min: category === 'phi' ? -Infinity : 0,
     max: category === 'phi' ? Infinity : Math.max(0, items.length - 1),
     initial, auto: category === 'phi' && phrases.length > 1, reduced,
@@ -87,24 +100,8 @@ export default function Home() {
     return () => {
       document.body.classList.remove('body--home-lock')
       activeTimers.forEach(clearTimeout)
-      if (categoryRef.current === 'Theme') paintTheme(applied.current)
+      if (themePickerRef.current) paintTheme(applied.current)
     }
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch('https://api.phi.me.uk/kv/phrases', { signal: controller.signal })
-      .then(response => response.json())
-      .then((data: unknown) => {
-        const values: unknown[] = Array.isArray(data) ? data
-          : data && typeof data === 'object' && 'phrases' in data && Array.isArray(data.phrases) ? data.phrases : []
-        const clean = [...new Set(values.filter((value): value is string => typeof value === 'string').map(value => value.trim()).filter(Boolean))]
-        setSourcePhrases(shuffle(clean.length ? clean : FALLBACK))
-      })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === 'AbortError')) setSourcePhrases(shuffle(FALLBACK))
-      })
-    return () => controller.abort()
   }, [])
 
   // Measure at FULL size. Navigation wraps once at that width, then the entire
@@ -194,7 +191,7 @@ export default function Home() {
     const index = Math.max(0, Math.min(CATEGORIES.length - 1, next))
     if (index === categoryIndex && !reset) return
     if (haptic && index !== categoryIndex) tick(14)
-    if (category === 'Theme') paintTheme(applied.current)
+    if (themePicker) paintTheme(applied.current)
     if (wheelRef.current?.contains(document.activeElement)) wheelRef.current.focus({ preventScroll: true })
     settle()
     if (!reduced && index !== categoryIndex) {
@@ -210,10 +207,29 @@ export default function Home() {
       timers.current.add(timer)
     } else { layersRef.current = []; setOutgoing([]) }
     setMessage('')
+    setSettingsTabIndex(0)
+    setSubtabDrag(0)
     setCategoryDrag(0)
     setCategoryIndex(index)
     setGeneration(value => value + 1)
-  }, [categoryIndex, category, settle, reduced])
+  }, [categoryIndex, category, settle, reduced, themePicker])
+
+  function selectSettingsTab(index: number) {
+    const next = Math.max(0, Math.min(SETTINGS_SUBTABS.length - 1, index))
+    if (next !== settingsTabIndex) {
+      if (themePicker) paintTheme(applied.current)
+      tick(14)
+      settle()
+      setSettingsTabIndex(next)
+      setGeneration(value => value + 1)
+      setMessage('')
+    }
+  }
+  function moveAcross(direction: number, surface: HomeWheelSurface) {
+    const next = homeSwipeTarget({ surface, mainIndex: categoryIndex, mainCount: CATEGORIES.length, subIndex: settingsTabIndex, subCount: category === 'Settings' ? SETTINGS_SUBTABS.length : 0, direction })
+    if (next.mainIndex !== categoryIndex) changeCategory(next.mainIndex)
+    else selectSettingsTab(next.subIndex)
+  }
 
   useEffect(() => {
     const reset = () => changeCategory(2, false, true)
@@ -222,24 +238,39 @@ export default function Home() {
   }, [changeCategory])
 
   useEffect(() => {
-    if (category !== 'Theme') return
+    if (!themePicker) return
     const theme = themes[Math.round(motion.positionRef.current)]
     if (theme) {
       paintTheme(theme)
       if (theme.id !== applied.current.id) setMessage('')
     }
-  }, [category, selectedIndex, generation, motion.positionRef])
+  }, [themePicker, selectedIndex, generation, motion.positionRef])
 
   function activate(item: WheelItem) {
     if (performance.now() < suppressClick.current) return
-    if (item.themeId) {
+    if (item.setting) {
+      tick(18)
+      if (item.setting === 'show-filtered') {
+        savePhrasePreferences({ showFiltered: !preferences.showFiltered, moderated: [] })
+        setMessage(!preferences.showFiltered ? 'Showing filtered content. All individual Show options start on.' : 'Filtered content is hidden by default.')
+      } else {
+        const setting = item.setting as ModerationCategory
+        const shown = !preferences.moderated.includes(setting)
+        savePhrasePreferences({ ...preferences, moderated: shown ? [...preferences.moderated, setting] : preferences.moderated.filter(value => value !== setting) })
+        setMessage(`${shown ? 'Hiding' : 'Showing'} ${MODERATION_LABELS[setting]}.`)
+      }
+    } else if (item.themeId) {
       const theme = themes.find(value => value.id === item.themeId)!
       applied.current = theme
       paintTheme(theme)
       try { localStorage.setItem(THEME_STORAGE_KEY, theme.id); setMessage(`${theme.name} applied and saved.`) }
       catch { setMessage(`${theme.name} applied for this visit. Browser storage is unavailable.`) }
       tick(18)
-    } else if (item.category) { tick(18); changeCategory(CATEGORIES.indexOf(item.category), false, true) }
+    } else if (item.category) {
+      tick(18)
+      changeCategory(CATEGORIES.indexOf(item.category), false, true)
+      if (item.settingsTab) setSettingsTabIndex(SETTINGS_SUBTABS.findIndex(tab => tab.id === item.settingsTab))
+    }
     else if (item.href) {
       tick(18)
       if (item.external) window.location.assign(item.href)
@@ -252,8 +283,16 @@ export default function Home() {
     if (event.target instanceof HTMLElement && (event.target.matches('input, textarea, select') || event.target.isContentEditable)) return
     if (event.altKey || event.ctrlKey || event.metaKey) return
     if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof Node && !wheelRef.current?.contains(event.target) && !categoriesRef.current?.contains(event.target) && event.target !== document.body) return
+    if (event.target instanceof Node && settingsTabsRef.current?.contains(event.target)) {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault()
+        moveAcross(event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1, 'subtabs')
+      }
+      return
+    }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      event.preventDefault(); wheelRef.current?.focus({ preventScroll: true }); changeCategory(categoryIndex + (event.key === 'ArrowRight' ? 1 : -1))
+      const surface = event.target instanceof Node && categoriesRef.current?.contains(event.target) ? 'main' : 'items'
+      event.preventDefault(); wheelRef.current?.focus({ preventScroll: true }); moveAcross(event.key === 'ArrowRight' ? 1 : -1, surface)
     } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault(); wheelRef.current?.focus({ preventScroll: true }); motion.step(event.key === 'ArrowDown' ? 1 : -1)
     } else if (event.key === 'Enter' || event.key === ' ') {
@@ -272,40 +311,44 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handle)
   }, [])
 
-  const handlers = useRef({ categoryIndex, changeCategory, step: motion.step })
-  handlers.current = { categoryIndex, changeCategory, step: motion.step }
+  const handlers = useRef({ moveAcross, step: motion.step })
+  handlers.current = { moveAcross, step: motion.step }
   useEffect(() => {
     const upper = wheelRef.current
     const lower = categoriesRef.current
     if (!upper || !lower) return
-    const scroll = (event: WheelEvent, horizontalOnly: boolean) => {
+    const subtabs = settingsTabsRef.current
+    const scroll = (event: WheelEvent, surface: HomeWheelSurface) => {
       event.preventDefault()
       const state = wheelAccumulator.current
       const now = performance.now()
-      if (now - state.time > 220) { state.x = 0; state.y = 0 }
+      if (now - state.time > 220 || state.surface !== surface) { state.x = 0; state.y = 0 }
+      state.surface = surface
       state.time = now
       const multiplier = event.deltaMode === 1 ? 40 : event.deltaMode === 2 ? 400 : 1
-      const horizontal = horizontalOnly || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)
+      const horizontal = surface !== 'items' || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)
       const axis = horizontal ? 'x' : 'y'
       state[axis] += (horizontal ? event.deltaX || event.deltaY : event.deltaY) * multiplier
       if (Math.abs(state[axis]) < (horizontal ? 70 : 80)) return
       const direction = Math.sign(state[axis])
       state[axis] = 0
-      if (horizontal) handlers.current.changeCategory(handlers.current.categoryIndex + direction)
+      if (horizontal) handlers.current.moveAcross(direction, surface)
       else handlers.current.step(direction)
     }
-    const verticalWheel = (event: WheelEvent) => scroll(event, false)
-    const horizontalWheel = (event: WheelEvent) => scroll(event, true)
+    const verticalWheel = (event: WheelEvent) => scroll(event, 'items')
+    const horizontalWheel = (event: WheelEvent) => scroll(event, 'main')
+    const subtabWheel = (event: WheelEvent) => scroll(event, 'subtabs')
     upper.addEventListener('wheel', verticalWheel, { passive: false })
     lower.addEventListener('wheel', horizontalWheel, { passive: false })
-    return () => { upper.removeEventListener('wheel', verticalWheel); lower.removeEventListener('wheel', horizontalWheel) }
-  }, [])
+    subtabs?.addEventListener('wheel', subtabWheel, { passive: false })
+    return () => { upper.removeEventListener('wheel', verticalWheel); lower.removeEventListener('wheel', horizontalWheel); subtabs?.removeEventListener('wheel', subtabWheel) }
+  }, [category])
 
-  function pointerDown(event: ReactPointerEvent, categoryWheel: boolean) {
+  function pointerDown(event: ReactPointerEvent, surface: HomeWheelSurface) {
     setKeyboardFocus(false)
     if (event.pointerType === 'mouse' && event.button !== 0) return
     suppressClick.current = 0
-    gesture.current = { dragged: false, id: event.pointerId, x: event.clientX, y: event.clientY, lastY: event.clientY, time: event.timeStamp, category: categoryWheel, axis: categoryWheel ? compact ? 'x' : 'y' : null }
+    gesture.current = { dragged: false, id: event.pointerId, x: event.clientX, y: event.clientY, lastY: event.clientY, time: event.timeStamp, surface, axis: surface !== 'items' ? compact ? 'x' : 'y' : null }
   }
   function pointerMove(event: ReactPointerEvent) {
     const state = gesture.current
@@ -316,10 +359,13 @@ export default function Home() {
     if (!state.axis) state.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
     if (!state.dragged) {
       event.currentTarget.setPointerCapture(event.pointerId)
-      if (state.axis === 'y' && !state.category) motion.begin()
+      if (state.axis === 'y' && state.surface === 'items') motion.begin()
     }
-    if (state.category || state.axis === 'x') {
-      setCategoryDrag(Math.max(-180, Math.min(180, state.axis === 'x' ? dx : dy)))
+    if (state.surface !== 'items' || state.axis === 'x') {
+      const delta = state.axis === 'x' ? dx : dy
+      const destination = homeSwipeTarget({ surface: state.surface, mainIndex: categoryIndex, mainCount: CATEGORIES.length, subIndex: settingsTabIndex, subCount: category === 'Settings' ? SETTINGS_SUBTABS.length : 0, direction: delta < 0 ? 1 : -1 })
+      if (state.surface === 'main' || destination.mainIndex !== categoryIndex) setCategoryDrag(Math.max(-180, Math.min(180, delta)))
+      else setSubtabDrag(Math.max(-120, Math.min(120, delta)))
     } else {
       motion.drag(-(event.clientY - state.lastY) / Math.max(52, metrics.font * .7), (event.timeStamp - state.time) / 1000)
     }
@@ -334,14 +380,15 @@ export default function Home() {
     const moved = state.dragged
     if (moved) {
       suppressClick.current = performance.now() + 320
-      if (state.axis === 'y' && !state.category) motion.end(cancel)
+      if (state.axis === 'y' && state.surface === 'items') motion.end(cancel)
       else {
         const delta = state.axis === 'x' ? event.clientX - state.x : event.clientY - state.y
-        if (!cancel && Math.abs(delta) >= 40) changeCategory(categoryIndex + (delta < 0 ? 1 : -1))
+        if (!cancel && Math.abs(delta) >= 40) moveAcross(delta < 0 ? 1 : -1, state.surface)
       }
     }
     gesture.current = null
     setCategoryDrag(0)
+    setSubtabDrag(0)
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
   }
 
@@ -352,9 +399,13 @@ export default function Home() {
     if (item) activate(item)
   }
 
-  function renderInk(item: WheelItem, group: Category) {
-    return <span className="home-item-ink"><span>{item.label}</span>
-        {group === 'Theme' && <span className="home-theme-swatches" aria-hidden="true">{Object.entries(themes.find(theme => theme.id === item.themeId) ?? {}).filter(([key]) => ['background', 'primary', 'secondary', 'highlight'].includes(key)).map(([key, colour]) => <i key={key} style={{ backgroundColor: String(colour) }} />)}</span>}
+  function renderInk(item: WheelItem) {
+    return <span className="home-item-ink">{item.settingValue === undefined ? <span>{item.label}</span> : <span className="home-setting-text" data-enabled={item.settingValue}>
+        <span className="home-setting-outline">{item.label}</span>
+        <span className="home-setting-fill" aria-hidden="true">{item.label}</span>
+        <span className="home-setting-strike" aria-hidden="true">{item.label}</span>
+      </span>}
+        {item.themeId && <span className="home-theme-swatches" aria-hidden="true">{Object.entries(themes.find(theme => theme.id === item.themeId) ?? {}).filter(([key]) => ['background', 'primary', 'secondary', 'highlight'].includes(key)).map(([key, colour]) => <i key={key} style={{ backgroundColor: String(colour) }} />)}</span>}
         {item.id === 'jay' && <span className="gameshow-banner home-jay-banner" aria-hidden="true"><span className="gameshow-text">Jay Game</span><span className="gameshow-divider">Play in browser</span></span>}
       </span>
   }
@@ -370,36 +421,40 @@ export default function Home() {
         '--ripple-delay': `${Math.min(4, Math.abs(row.index - centreIndex)) * 22}ms`,
         opacity: row.opacity, transform: `translate3d(var(--home-phrase-x), ${row.y}px, 0)`, zIndex: focused ? 10 : 1,
       } as CSSProperties
-      const word = renderInk(row.item, group)
-      const className = `home-word ${group === 'phi' ? 'home-word--phrase' : ''} ${(old ? row.index === centreIndex : focused) ? 'is-focused' : ''}`
-      return <div className="home-wheel-row" key={row.item.id} style={style} aria-hidden={!focused}>
+      const word = renderInk(row.item)
+      const className = `home-word ${group === 'phi' ? 'home-word--phrase' : ''} ${row.item.small ? 'home-word--setting-child' : ''} ${(old ? row.index === centreIndex : focused) ? 'is-focused' : ''}`
+      return <div className={`home-wheel-row ${group === 'Settings' ? 'home-setting-row' : ''} ${row.item.small ? 'home-setting-child' : ''}`} key={row.item.id} style={style} aria-hidden={!focused}>
         {old || group === 'phi' ? <span className={className}>{word}</span>
           : row.item.href ? <a className={className} href={row.item.href} tabIndex={focused ? 0 : -1} aria-label={row.item.label}>{word}</a>
-          : <button type="button" className={className} tabIndex={focused ? 0 : -1} aria-label={group === 'Theme' ? `Apply ${row.item.label} theme` : row.item.label}>{word}</button>}
+          : <button type="button" className={className} tabIndex={focused ? 0 : -1} aria-pressed={row.item.settingValue} aria-expanded={row.item.expanded} aria-label={row.item.themeId ? `Apply ${row.item.label} theme` : row.item.settingValue === undefined ? row.item.label : `${row.item.label}: ${row.item.settingValue ? 'on' : 'off'}`}>{word}</button>}
       </div>
     })
   }
 
   return <main className="home-stage home-navigation" data-category={category} data-input={keyboardFocus ? 'keyboard' : 'pointer'}>
     <p id="home-wheel-help" className="home-phrase-announcement">{compact ? 'Swipe left or right to choose a category.' : 'Scroll or swipe the right wheel vertically to choose a category.'} Scroll up or down to choose an item. Tap anywhere in the item wheel or press Enter to activate the centred item. Arrow keys move along both axes.</p>
-    <div ref={wheelRef} className={`home-phrase-wheel-zone ${category === 'phi' ? 'is-phrases' : 'is-navigation'}`} tabIndex={0} role="region" aria-label={`${category} word wheel`} aria-describedby="home-wheel-help"
-      onClick={activateCentred} onPointerDown={event => pointerDown(event, false)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+    <div ref={wheelRef} id={category === 'Settings' ? 'home-settings-panel' : undefined} className={`home-phrase-wheel-zone ${category === 'phi' ? 'is-phrases' : 'is-navigation'}`} tabIndex={0} role={category === 'Settings' ? 'tabpanel' : 'region'} aria-labelledby={category === 'Settings' ? `home-${SETTINGS_SUBTABS[settingsTabIndex].id}-tab` : undefined} aria-label={`${category} word wheel`} aria-describedby="home-wheel-help"
+      onClick={activateCentred} onPointerDown={event => pointerDown(event, 'items')} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
       {outgoing.map(layer => <div className={`home-phrase-wall home-ripple-out ${layer.category === 'phi' ? 'home-phrase-wall--phrases' : ''}`} key={layer.id} aria-hidden="true" inert>{renderRows(layer.rows, layer.category, true)}</div>)}
       <div className={`home-phrase-wall ${category === 'phi' ? 'home-phrase-wall--phrases' : ''} ${generation && !reduced ? 'home-ripple-in' : ''}`} key={generation}>
         {renderRows(rows, category)}
       </div>
-      {category === 'Theme' && <p className="home-wheel-feedback" aria-hidden="true">{message || 'Scroll to preview · Tap anywhere to apply'}</p>}
+      {category === 'Settings' && <p className="home-wheel-feedback" aria-hidden="true">{message || (themePicker ? 'Scroll to preview · Tap anywhere to apply' : 'Scroll to focus · Tap anywhere to change · Outlined and crossed out means off')}</p>}
       <span ref={probeRef} className="home-size-probe" aria-hidden="true">phi</span>
       <div ref={measurementRef} className="home-word-measure" aria-hidden="true" inert>
-        {(category === 'phi' ? sourcePhrases.map((label, index) => ({ id: String(index), label })) : items).map(item => <span key={item.id} className={`home-word ${category === 'phi' ? 'home-word--phrase' : ''}`}>{renderInk(item, category)}</span>)}
+        {(category === 'phi' ? sourcePhrases.map((label, index) => ({ id: String(index), label })) : items).map(item => <span key={item.id} className={`home-word ${category === 'phi' ? 'home-word--phrase' : ''} ${'small' in item && item.small ? 'home-word--setting-child' : ''}`}>{renderInk(item)}</span>)}
       </div>
     </div>
+    {category === 'Settings' && <div ref={settingsTabsRef} className="home-settings-tabs" data-dragging={Boolean(subtabDrag)} role="tablist" aria-label="Settings submenus" aria-orientation={compact ? 'horizontal' : 'vertical'}
+      onPointerDown={event => pointerDown(event, 'subtabs')} onPointerMove={pointerMove} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+      {SETTINGS_SUBTABS.map((tab, index) => <button key={tab.id} id={`home-${tab.id}-tab`} type="button" role="tab" aria-selected={index === settingsTabIndex} tabIndex={index === settingsTabIndex ? 0 : -1} aria-controls="home-settings-panel" className="home-settings-tab" style={{ '--subtab-position': index - settingsTabIndex, '--subtab-drag': `${subtabDrag}px` } as CSSProperties} onClick={() => { if (performance.now() >= suppressClick.current) selectSettingsTab(index) }}>{tab.label}</button>)}
+    </div>}
     <div ref={categoriesRef} className={`home-category-wheel ${categoryDrag ? 'is-dragging' : ''}`} role="group" aria-label="Homepage categories" aria-describedby="home-wheel-help"
-      onPointerDown={event => pointerDown(event, true)} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
+      onPointerDown={event => pointerDown(event, 'main')} onPointerMove={event => pointerMove(event)} onPointerUp={event => pointerEnd(event)} onPointerCancel={event => pointerEnd(event, true)}>
       {CATEGORIES.map((name, index) => <button key={name} type="button" className="home-category" aria-pressed={index === categoryIndex} aria-label={`${name} category`} tabIndex={index === categoryIndex ? 0 : -1}
         style={{ '--category-position': index - categoryIndex, '--category-drag': `${categoryDrag}px`, '--category-opacity': Math.max(.24, .68 - Math.abs(index - categoryIndex) * .13) } as CSSProperties}
         onClick={() => { if (performance.now() >= suppressClick.current) changeCategory(index) }}>{name}</button>)}
     </div>
-    <span className="home-phrase-announcement" role="status" aria-live={category === 'phi' ? 'off' : 'polite'}>{message || `${category}: ${selected?.label ?? ''}${category === 'Theme' ? '. Previewing; activate to save.' : ''}`}</span>
+    <span className="home-phrase-announcement" role="status" aria-live={category === 'phi' ? 'off' : 'polite'}>{message || `${category}: ${selected?.label ?? ''}${themePicker ? '. Previewing; activate to save.' : ''}`}</span>
   </main>
 }
