@@ -85,7 +85,11 @@ export default function Chatroom() {
     setMessages((previous) => mergeMessages(previous, incoming))
     if (hasNew && !nearBottom.current) setNewMessages(true)
   }, [])
-  const room = useChatRoom(session, receive)
+  const nameTaken = useCallback(() => {
+    setSession(null)
+    setError('That username is currently in use. Choose another.')
+  }, [])
+  const room = useChatRoom(session, receive, nameTaken)
   const refreshRoom = room.refresh
   const floor = Math.max(room.floor, historyFloor)
 
