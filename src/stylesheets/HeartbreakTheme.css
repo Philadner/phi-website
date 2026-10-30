@@ -1,0 +1,50 @@
+/* The cover's side strip becomes the bottom edge of the collapsing header. */
+html[data-theme="808s-heartbreak"]:not([data-1998]) .home-stage {
+  background: var(--background);
+}
+
+html[data-theme="808s-heartbreak"]:not([data-1998]) :is(.logo, .logo:hover, .HeadingBigLeft) {
+  text-shadow: none;
+}
+
+html[data-theme="808s-heartbreak"]:not([data-1998]) .site-header {
+  --heartbreak-strip-height: 12px;
+  --header-min: var(--heartbreak-strip-height);
+  background: color-mix(in srgb, var(--background) calc((1 - var(--p)) * 90%), transparent);
+  border-bottom: 0;
+  /* Let the strip blur the page directly, without a parent backdrop layer. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-theme="808s-heartbreak"]:not([data-1998]) .site-header::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--heartbreak-strip-height);
+  pointer-events: none;
+  background: linear-gradient(to right,
+    rgb(153 36 115 / 94%) 0% 9.0909%,
+    rgb(47 57 110 / 94%) 9.0909% 18.1818%,
+    rgb(238 228 52 / 94%) 18.1818% 27.2727%,
+    rgb(155 204 200 / 94%) 27.2727% 36.3636%,
+    rgb(47 159 209 / 94%) 36.3636% 45.4545%,
+    rgb(9 157 133 / 94%) 45.4545% 54.5455%,
+    rgb(243 189 205 / 94%) 54.5455% 63.6364%,
+    rgb(207 216 87 / 94%) 63.6364% 72.7273%,
+    rgb(194 127 168 / 94%) 72.7273% 81.8182%,
+    rgb(211 46 115 / 94%) 81.8182% 90.9091%,
+    rgb(64 42 114 / 94%) 90.9091% 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="808s-heartbreak"]:not([data-1998]) .site-header__inner {
+  height: max(0px, calc(100% - var(--heartbreak-strip-height)));
+}
+
+html[data-theme="808s-heartbreak"]:not([data-1998]) .site-header:focus-within {
+  --p: 0 !important;
+  --squish: 0 !important;
+  --fade: 0 !important;
+}

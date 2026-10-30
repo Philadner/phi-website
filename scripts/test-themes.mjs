@@ -32,7 +32,7 @@ for (const id of ['mycp', 'hub']) {
   assert.equal(getSavedTheme().id, id)
 }
 
-const report = ['# Theme contrast audit', '', 'Each theme has four palette colours plus an independent text colour. Body text must meet 4.5:1 contrast against its background. Existing readable primary text colours are retained; other themes use black or white. MyCP preserves its original white, green, dark green and pink palette with black body text. Control labels can also use the text colour for contrast. phi retains its original CSS styling.', '', '| Theme | Body / background | Primary / background | Secondary / background | Button / highlight |', '|---|---:|---:|---:|---:|']
+const report = ['# Theme contrast audit', '', 'Each theme has four palette colours plus an independent text colour. Body text meets 4.5:1 contrast against its background except 808s & Heartbreak, which intentionally matches the supplied album cover lettering. Existing readable primary text colours are retained; other themes use black or white. MyCP preserves its original white, green, dark green and pink palette with black body text. Control labels can also use the text colour for contrast. phi retains its original CSS styling.', '', '| Theme | Body / background | Primary / background | Secondary / background | Button / highlight |', '|---|---:|---:|---:|---:|']
 for (const theme of themes) {
   paintTheme(theme)
   assert.equal(document.documentElement.dataset.theme, theme.id)
@@ -44,7 +44,16 @@ for (const theme of themes) {
   const colours = [theme.background, theme.primary, theme.secondary, theme.highlight, theme.text]
   for (const token of ['--theme-text', '--theme-muted', '--theme-border', '--theme-accent', '--action-background', '--action-text']) assert.ok(colours.includes(properties.get(token)), token)
   assert.equal(properties.get('--theme-text'), theme.text)
-  assert.ok(contrast(theme.text, theme.background) >= 4.5, `${theme.name} body text`)
+  if (theme.id === '808s-heartbreak') {
+    // The album cover's grey and off-white lettering are an intentional palette choice.
+    assert.equal(properties.get('--theme-text'), '#7F8485')
+    assert.equal(properties.get('--theme-muted'), '#EDF1EF')
+    assert.equal(properties.get('--theme-accent'), '#C72F28')
+    assert.equal(theme.background, '#D0D9D6')
+    assert.equal(theme.mode, 'light')
+  } else {
+    assert.ok(contrast(theme.text, theme.background) >= 4.5, `${theme.name} body text`)
+  }
   // Controls must use an AA pair whenever the palette and text colour provide one.
   const bestPair = Math.max(...colours.flatMap(background => colours.map(text => contrast(text, background))))
   assert.ok(contrast(properties.get('--action-text'), properties.get('--action-background')) >= Math.min(4.5, bestPair), theme.name)
@@ -53,7 +62,7 @@ for (const theme of themes) {
 document.documentElement.dataset = {}
 localStorage.getItem = () => { throw new Error('Storage disabled') }
 assert.equal(getSavedTheme().id, 'phi')
-report.push('', 'The four palette colours remain unchanged. Readable body text is independent of primary and secondary accents. Supporting text uses secondary when readable, otherwise the body text colour. The retired 1998 mode no longer overrides saved themes. Game pieces, chart signals and media artwork retain their semantic colours.', '')
+report.push('', '808s & Heartbreak uses the supplied cover background, heart red, grey primary lettering and off-white secondary lettering without contrast substitution. Other palettes retain independent readable body text; supporting text uses secondary when readable, otherwise the body text colour. The retired 1998 mode no longer overrides saved themes. Game pieces, chart signals and media artwork retain their semantic colours.', '')
 if (process.argv.includes('--write-audit')) writeFileSync(new URL('../docs/theme-contrast.md', import.meta.url), report.join('\n'))
 console.log(`PASS: ${themes.length} palettes, unknown/stored/blocked-storage fallback, paint/mode updates, and AA large-text button foregrounds for every theme`)
 

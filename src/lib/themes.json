@@ -72,12 +72,12 @@
   {
     "id": "808s-heartbreak",
     "name": "808s & Heartbreak",
-    "mode": "dark",
-    "background": "#313944",
-    "primary": "#F3F5F7",
-    "secondary": "#BEC5CC",
-    "highlight": "#E12D4F",
-    "text": "#F3F5F7"
+    "mode": "light",
+    "background": "#D0D9D6",
+    "primary": "#7F8485",
+    "secondary": "#EDF1EF",
+    "highlight": "#C72F28",
+    "text": "#7F8485"
   },
   {
     "id": "yeezus",

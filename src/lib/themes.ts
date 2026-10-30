@@ -35,11 +35,13 @@ export function paintTheme(theme: Theme, contrastRatio = contrast) {
   root.style.setProperty('--highlight-text', buttonText)
   const bestOn = (background: string) => candidates.reduce((best, color) =>
     contrastRatio(color, background) > contrastRatio(best, background) ? color : best)
-  const text = contrastRatio(theme.text, theme.background) >= 4.5 ? theme.text : bestOn(theme.background)
+  // Preserve the cover's lettering colours for the 808s album theme.
+  const albumLettering = theme.id === '808s-heartbreak'
+  const text = albumLettering || contrastRatio(theme.text, theme.background) >= 4.5 ? theme.text : bestOn(theme.background)
   root.style.setProperty('--theme-text', text)
-  root.style.setProperty('--theme-muted', contrastRatio(theme.secondary, theme.background) >= 4.5 ? theme.secondary : text)
+  root.style.setProperty('--theme-muted', albumLettering || contrastRatio(theme.secondary, theme.background) >= 4.5 ? theme.secondary : text)
   root.style.setProperty('--theme-border', contrastRatio(theme.secondary, theme.background) >= 3 ? theme.secondary : text)
-  root.style.setProperty('--theme-accent', contrastRatio(theme.highlight, theme.background) >= 4.5 ? theme.highlight : text)
+  root.style.setProperty('--theme-accent', albumLettering || contrastRatio(theme.highlight, theme.background) >= 4.5 ? theme.highlight : text)
   const action = contrastRatio(buttonText, theme.highlight) >= 4.5 ? theme.highlight : theme.primary
   root.style.setProperty('--action-background', action)
   root.style.setProperty('--action-text', bestOn(action))
