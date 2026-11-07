@@ -1,12 +1,7 @@
- import { useEffect, useMemo, useState } from "react";
-
-type NewsArticle = {
-  id?: string;
-  title: string;
-  content: string;
-  author?: string;
-  createdAt: string;
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePhrasePreferences } from '../hooks/usePhrasePreferences';
+import { newsVisible } from '../lib/newsModeration';
+import type { NewsArticle } from '../lib/newsModeration';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -15,6 +10,7 @@ function formatDate(iso: string) {
 }
 
 function News() {
+  const preferences = usePhrasePreferences();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,17 +33,14 @@ function News() {
 
   const apiUrl = useMemo(() => {
     if (document.documentElement.dataset.themeDemo === 'true') return '/api/theme-demo-news';
-    return (
-      (import.meta.env.VITE_NEWS_API_URL as string | undefined) ??
-      "https://api.phi.me.uk/kv/news"
-    );
+    return '/api/news';
   }, []);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch(apiUrl, { method: "GET" });
+      const r = await fetch(`${apiUrl}?includeFiltered=1`, { method: "GET", cache: 'no-store' });
       const json = (await r.json()) as unknown;
 
       if (!r.ok) {
@@ -68,11 +61,11 @@ function News() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +97,8 @@ function News() {
       setTitle("");
       setContent("");
       setAuthor("");
-      setSubmitMsg("Posted.");
+      const notice = typeof json === 'object' && json !== null && 'notice' in json && typeof json.notice === 'string' ? json.notice : '';
+      setSubmitMsg(notice ? `Posted. ${notice}` : "Posted.");
       await load();
     } catch (err: unknown) {
       setSubmitMsg(String(err));
@@ -227,7 +221,7 @@ function News() {
               {submitting ? "Posting..." : "Post"}
             </button>
 
-            {submitMsg ? <span style={{ color: "var(--news-text, gold)" }}>{submitMsg}</span> : null}
+            {submitMsg ? <span role="status" style={{ color: "var(--news-text, gold)" }}>{submitMsg}</span> : null}
           </div>
         </form>
       ) : null}
@@ -248,6 +242,7 @@ function News() {
 
       {!loading &&
         articles
+          .filter(article => newsVisible(article, preferences))
           .slice()
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((a, i) => (

@@ -1,6 +1,7 @@
 import type { ChatMessage, ChatSession } from '../lib/chat'
 import type { GameResponse, GameView } from '../lib/chatGames'
 import type { MusicAlbumPayload, MusicArtistPayload, MusicSearchResult, QueueTrack } from '../lib/musicTypes'
+import { MODERATION_CATEGORIES, SCHOOL_SAFETY_MODEL, SCHOOL_SAFETY_VERSION } from '../lib/phraseModeration'
 
 // Loaded only by the explicit theme-demo URL. All demo API traffic stays in this tab.
 export function installThemeFixtures() {
@@ -59,7 +60,7 @@ export function installThemeFixtures() {
     const body = typeof init?.body === 'string' ? JSON.parse(init.body) as Record<string, unknown> : {}
     const state = new URLSearchParams(location.search).get('demo-state')
     if (state === 'error') return json({ error: 'Demo: the service is temporarily unavailable.' }, 503)
-    if (url.pathname === '/api/theme-demo-news') return json(state === 'empty' ? [] : [{ id: 'demo-news', title: 'A sample news article', content: 'Checking long paragraphs, timestamps and the news form with your favourite theme.', author: 'Maya', createdAt: new Date().toISOString() }])
+    if (url.pathname === '/api/theme-demo-news') return json(state === 'empty' ? [] : [{ id: 'demo-news', title: 'A sample news article', content: 'Checking long paragraphs, timestamps and the news form with your favourite theme.', author: 'Maya', createdAt: new Date().toISOString(), hatefulness: { flagged: false, categories: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, false])), category_scores: Object.fromEntries(MODERATION_CATEGORIES.map(category => [category, 0])) }, school_safety: { school_safe: true, reason: '', model: SCHOOL_SAFETY_MODEL, prompt_version: SCHOOL_SAFETY_VERSION, reviewed_at: new Date().toISOString() } }])
     if (url.pathname === '/api/stats') return json({ deploymentsToday: 3, branch: 'labs', lastCommitMessage: 'Sample theme update', lastCommitAt: new Date().toISOString(), now: new Date().toISOString() })
     if (url.pathname === '/api/commits') return json([])
     if (/^\/api\/(dylan|phil)-tightness-presence$/.test(url.pathname)) return json({ ok: true })
