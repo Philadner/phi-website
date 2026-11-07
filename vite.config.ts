@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import phraseListHandler from './api/phrases'
 import appendPhraseHandler from './api/append'
+import newsHandler from './api/news'
 import react from '@vitejs/plugin-react'
 import { themes, contrast, paintTheme, themeVisible, THEME_STORAGE_KEY } from './src/lib/themes'
 import {
@@ -44,7 +45,7 @@ export default defineConfig({
         }
         server.middlewares.use(async (req, res, next) => {
           const url = new URL(req.url || '/', 'http://localhost')
-          if (url.pathname !== '/api/phrases' && url.pathname !== '/api/append') return next()
+          if (!['/api/phrases', '/api/append', '/api/news'].includes(url.pathname)) return next()
           const reply = Object.assign(res, {
             status(code: number) { res.statusCode = code; return reply },
             json(body: unknown) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(body)); return reply },
@@ -53,7 +54,7 @@ export default defineConfig({
             let text = ''
             for await (const chunk of req) {
               text += String(chunk)
-              if (Buffer.byteLength(text) > 16384) { reply.status(413).json({ error: 'Request too large.' }); return }
+              if (Buffer.byteLength(text) > 65536) { reply.status(413).json({ error: 'Request too large.' }); return }
             }
             let body: unknown
             try { body = text ? JSON.parse(text) : undefined } catch { reply.status(400).json({ error: 'Invalid JSON.' }); return }
@@ -63,7 +64,7 @@ export default defineConfig({
               query[key] = values.length === 1 ? values[0] : values
             }
             const request = Object.assign(req, { query, body }) as unknown as VercelRequest
-            await (url.pathname === '/api/phrases' ? phraseListHandler : appendPhraseHandler)(request, reply)
+            await (url.pathname === '/api/news' ? newsHandler : url.pathname === '/api/phrases' ? phraseListHandler : appendPhraseHandler)(request, reply)
           } catch { reply.status(500).json({ error: 'The local phrase API failed.' }) }
         })
       },
